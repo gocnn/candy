@@ -1,0 +1,27 @@
+# Commonly used .gitattributes configuration for Go projects
+
+# Ensure Go files use LF line endings (Unix-style) to avoid cross-platform issues
+*.go text eol=lf
+
+# Configuration files typically use LF
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+
+# Markdown documents use LF
+*.md text eol=lf
+
+# Script files use LF
+*.sh text eol=lf
+
+# Binary files should not be treated as text
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Go module files
+go.mod text eol=lf
+go.sum text eol=lf
