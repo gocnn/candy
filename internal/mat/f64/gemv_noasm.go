@@ -1,11 +1,13 @@
-package f32
+//go:build !amd64 || noasm || gccgo || safe
+
+package f64
 
 // GemvN computes
 //
 //	y = alpha * A * x + beta * y
 //
 // where A is an m×n dense matrix, x and y are vectors, and alpha and beta are scalars.
-func GemvN(m, n uintptr, alpha float32, a []float32, lda uintptr, x []float32, incX uintptr, beta float32, y []float32, incY uintptr) {
+func GemvN(m, n uintptr, alpha float64, a []float64, lda uintptr, x []float64, incX uintptr, beta float64, y []float64, incY uintptr) {
 	var kx, ky, i uintptr
 	if int(incX) < 0 {
 		kx = uintptr(-int(n-1) * int(incX))
@@ -16,25 +18,25 @@ func GemvN(m, n uintptr, alpha float32, a []float32, lda uintptr, x []float32, i
 
 	if incX == 1 && incY == 1 {
 		if beta == 0 {
-			for i = range m {
+			for i = 0; i < m; i++ {
 				y[i] = alpha * DotUnitary(a[lda*i:lda*i+n], x)
 			}
 			return
 		}
-		for i = range m {
+		for i = 0; i < m; i++ {
 			y[i] = y[i]*beta + alpha*DotUnitary(a[lda*i:lda*i+n], x)
 		}
 		return
 	}
 	iy := ky
 	if beta == 0 {
-		for i = range m {
+		for i = 0; i < m; i++ {
 			y[iy] = alpha * DotInc(x, a[lda*i:lda*i+n], n, incX, 1, kx, 0)
 			iy += incY
 		}
 		return
 	}
-	for i = range m {
+	for i = 0; i < m; i++ {
 		y[iy] = y[iy]*beta + alpha*DotInc(x, a[lda*i:lda*i+n], n, incX, 1, kx, 0)
 		iy += incY
 	}
@@ -45,7 +47,7 @@ func GemvN(m, n uintptr, alpha float32, a []float32, lda uintptr, x []float32, i
 //	y = alpha * Aᵀ * x + beta * y
 //
 // where A is an m×n dense matrix, x and y are vectors, and alpha and beta are scalars.
-func GemvT(m, n uintptr, alpha float32, a []float32, lda uintptr, x []float32, incX uintptr, beta float32, y []float32, incY uintptr) {
+func GemvT(m, n uintptr, alpha float64, a []float64, lda uintptr, x []float64, incX uintptr, beta float64, y []float64, incY uintptr) {
 	var kx, ky, i uintptr
 	if int(incX) < 0 {
 		kx = uintptr(-int(m-1) * int(incX))
@@ -75,13 +77,13 @@ func GemvT(m, n uintptr, alpha float32, a []float32, lda uintptr, x []float32, i
 	}
 
 	if incX == 1 && incY == 1 {
-		for i = range m {
-			AxpyUnitary(alpha*x[i], a[lda*i:lda*i+n], y)
+		for i = 0; i < m; i++ {
+			AxpyUnitaryTo(y, alpha*x[i], a[lda*i:lda*i+n], y)
 		}
 		return
 	}
 	ix := kx
-	for i = range m {
+	for i = 0; i < m; i++ {
 		AxpyInc(alpha*x[ix], a[lda*i:lda*i+n], y, n, 1, incY, 0, ky)
 		ix += incX
 	}

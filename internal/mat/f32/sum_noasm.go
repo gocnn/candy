@@ -1,5 +1,4 @@
 //go:build !amd64 || noasm || gccgo || safe
-// +build !amd64 noasm gccgo safe
 
 package f32
 

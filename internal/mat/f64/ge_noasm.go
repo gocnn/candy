@@ -1,14 +1,13 @@
 //go:build !amd64 || noasm || gccgo || safe
 
-package f32
+package f64
 
 // Ger performs the rank-one operation
 //
 //	A += alpha * x * yᵀ
 //
 // where A is an m×n dense matrix, x and y are vectors, and alpha is a scalar.
-func Ger(m, n uintptr, alpha float32, x []float32, incX uintptr, y []float32, incY uintptr, a []float32, lda uintptr) {
-
+func Ger(m, n uintptr, alpha float64, x []float64, incX uintptr, y []float64, incY uintptr, a []float64, lda uintptr) {
 	if incX == 1 && incY == 1 {
 		x = x[:m]
 		y = y[:n]
@@ -28,7 +27,7 @@ func Ger(m, n uintptr, alpha float32, x []float32, incX uintptr, y []float32, in
 
 	ix := kx
 	for i := 0; i < int(m); i++ {
-		AxpyInc(alpha*x[ix], y, a[uintptr(i)*lda:uintptr(i)*lda+n], uintptr(n), uintptr(incY), 1, uintptr(ky), 0)
+		AxpyInc(alpha*x[ix], y, a[uintptr(i)*lda:uintptr(i)*lda+n], n, incY, 1, ky, 0)
 		ix += incX
 	}
 }
