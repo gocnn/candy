@@ -267,7 +267,7 @@ gemv_clear: // beta == 0 is special cased to clear memory (no nan handling)
 	XORPS X2, X2
 	XORPS X3, X3
 
-	CMPQ incY+120(FP), $1 // Check for dense vector X (fast-path)
+	CMPQ incY+120(FP), $1 // Check for Tensor vector X (fast-path)
 	JNE  inc_clear
 
 	SHRQ $3, M
@@ -332,7 +332,7 @@ prep_end:
 	MOVQ M_DIM, M
 
 gemv_start:
-	CMPQ incX+80(FP), $1 // Check for dense vector X (fast-path)
+	CMPQ incX+80(FP), $1 // Check for Tensor vector X (fast-path)
 	JNE  inc
 
 	SHRQ $2, M

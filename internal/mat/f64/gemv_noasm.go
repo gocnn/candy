@@ -6,7 +6,7 @@ package f64
 //
 //	y = alpha * A * x + beta * y
 //
-// where A is an m×n dense matrix, x and y are vectors, and alpha and beta are scalars.
+// where A is an m×n Tensor matrix, x and y are vectors, and alpha and beta are scalars.
 func GemvN(m, n uintptr, alpha float64, a []float64, lda uintptr, x []float64, incX uintptr, beta float64, y []float64, incY uintptr) {
 	var kx, ky, i uintptr
 	if int(incX) < 0 {
@@ -46,7 +46,7 @@ func GemvN(m, n uintptr, alpha float64, a []float64, lda uintptr, x []float64, i
 //
 //	y = alpha * Aᵀ * x + beta * y
 //
-// where A is an m×n dense matrix, x and y are vectors, and alpha and beta are scalars.
+// where A is an m×n Tensor matrix, x and y are vectors, and alpha and beta are scalars.
 func GemvT(m, n uintptr, alpha float64, a []float64, lda uintptr, x []float64, incX uintptr, beta float64, y []float64, incY uintptr) {
 	var kx, ky, i uintptr
 	if int(incX) < 0 {

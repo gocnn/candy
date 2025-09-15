@@ -364,9 +364,9 @@ TEXT ·Ger(SB), 0, $16-120
 	SHLQ $BITSIZE, LDA
 	LEAQ (LDA)(LDA*2), LDA3   // LDA3 = LDA * 3
 
-	CMPQ incY+80(FP), $1 // Check for dense vector Y (fast-path)
+	CMPQ incY+80(FP), $1 // Check for Tensor vector Y (fast-path)
 	JNE  inc
-	CMPQ incX+48(FP), $1 // Check for dense vector X (fast-path)
+	CMPQ incX+48(FP), $1 // Check for Tensor vector X (fast-path)
 	JNE  inc
 
 	SHRQ $2, M

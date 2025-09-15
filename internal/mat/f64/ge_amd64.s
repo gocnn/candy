@@ -268,7 +268,7 @@ TEXT ·Ger(SB), NOSPLIT, $0
 	CMOVQLT TMP1, TMP2
 	LEAQ    (X_PTR)(TMP2*SIZE), X_PTR
 
-	CMPQ incY+80(FP), $1 // Check for dense vector Y (fast-path)
+	CMPQ incY+80(FP), $1 // Check for Tensor vector Y (fast-path)
 	JG   inc
 	JL   end
 

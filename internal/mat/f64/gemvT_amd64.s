@@ -294,7 +294,7 @@ TEXT ·GemvT(SB), NOSPLIT, $32-128
 	SHLQ $3, INC_X
 	LEAQ (INC_X)(INC_X*2), INC3_X // INC3_X = INC_X * 3
 
-	CMPQ incY+120(FP), $1 // Check for dense vector Y (fast-path)
+	CMPQ incY+120(FP), $1 // Check for Tensor vector Y (fast-path)
 	JNE  inc
 
 	MOVSD  $1.0, X0
