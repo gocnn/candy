@@ -8,6 +8,8 @@ import (
 	"github.com/qntx/goml"
 )
 
+var _ goml.Tensor[float64] = (*Tensor[float64])(nil)
+
 // A Tensor matrix implementation.
 type Tensor[T goml.D] struct {
 	data         []T
@@ -19,7 +21,7 @@ type Tensor[T goml.D] struct {
 }
 
 // Ones creates a tensor filled with ones.
-func Ones[T goml.D](shape goml.Shape) *Tensor[T] {
+func Ones[T goml.D](shape goml.Shape) goml.Tensor[T] {
 	size := shape.Size()
 	data := make([]T, size)
 	for i := range data {
@@ -33,12 +35,12 @@ func Ones[T goml.D](shape goml.Shape) *Tensor[T] {
 }
 
 // OnesLike creates a tensor with the same shape as the input, filled with ones.
-func OnesLike[T goml.D](d *Tensor[T]) *Tensor[T] {
+func OnesLike[T goml.D](d *Tensor[T]) goml.Tensor[T] {
 	return Ones[T](d.shape)
 }
 
 // Zeros creates a tensor filled with zeros.
-func Zeros[T goml.D](shape goml.Shape) *Tensor[T] {
+func Zeros[T goml.D](shape goml.Shape) goml.Tensor[T] {
 	size := shape.Size()
 	data := make([]T, size)
 	return &Tensor[T]{
@@ -49,12 +51,12 @@ func Zeros[T goml.D](shape goml.Shape) *Tensor[T] {
 }
 
 // ZerosLike creates a tensor with the same shape as the input, filled with zeros.
-func ZerosLike[T goml.D](d *Tensor[T]) *Tensor[T] {
+func ZerosLike[T goml.D](d *Tensor[T]) goml.Tensor[T] {
 	return Zeros[T](d.shape)
 }
 
 // Rand creates a tensor with uniform random values in [lo, hi).
-func Rand[T goml.D](lo, hi T, shape goml.Shape) *Tensor[T] {
+func Rand[T goml.D](lo, hi T, shape goml.Shape) goml.Tensor[T] {
 	size := shape.Size()
 	data := make([]T, size)
 	rangeVal := float64(hi - lo)
@@ -69,12 +71,12 @@ func Rand[T goml.D](lo, hi T, shape goml.Shape) *Tensor[T] {
 }
 
 // RandLike creates a tensor with the same shape as the input, filled with uniform random values in [lo, hi).
-func RandLike[T goml.D](d *Tensor[T], lo, hi T) *Tensor[T] {
+func RandLike[T goml.D](d *Tensor[T], lo, hi T) goml.Tensor[T] {
 	return Rand(lo, hi, d.shape)
 }
 
 // Randn creates a tensor with normal distribution (specified mean and std).
-func Randn[T goml.D](mean, std T, shape goml.Shape) *Tensor[T] {
+func Randn[T goml.D](mean, std T, shape goml.Shape) goml.Tensor[T] {
 	size := shape.Size()
 	data := make([]T, size)
 	for i := range data {
@@ -88,12 +90,12 @@ func Randn[T goml.D](mean, std T, shape goml.Shape) *Tensor[T] {
 }
 
 // RandnLike creates a tensor with the same shape as the input, filled with normal distribution.
-func RandnLike[T goml.D](d *Tensor[T], mean, std T) *Tensor[T] {
+func RandnLike[T goml.D](d *Tensor[T], mean, std T) goml.Tensor[T] {
 	return Randn(mean, std, d.shape)
 }
 
 // Full creates a tensor filled with the specified value.
-func Full[T goml.D](value T, shape goml.Shape) *Tensor[T] {
+func Full[T goml.D](value T, shape goml.Shape) goml.Tensor[T] {
 	size := shape.Size()
 	data := make([]T, size)
 	for i := range data {
@@ -107,12 +109,12 @@ func Full[T goml.D](value T, shape goml.Shape) *Tensor[T] {
 }
 
 // FullLike creates a tensor with the same shape as the input, filled with the specified value.
-func FullLike[T goml.D](d *Tensor[T], value T) *Tensor[T] {
+func FullLike[T goml.D](d *Tensor[T], value T) goml.Tensor[T] {
 	return Full(value, d.shape)
 }
 
 // Eye creates an identity matrix (2D tensor with 1s on diagonal, 0s elsewhere).
-func Eye[T goml.D](n int) *Tensor[T] {
+func Eye[T goml.D](n int) goml.Tensor[T] {
 	shape := goml.NewShape(n, n)
 	size := shape.Size()
 	data := make([]T, size)
@@ -127,12 +129,12 @@ func Eye[T goml.D](n int) *Tensor[T] {
 }
 
 // Arange creates a 1D tensor with linearly spaced values from start to end (exclusive).
-func Arange[T goml.D](start, end T) *Tensor[T] {
+func Arange[T goml.D](start, end T) goml.Tensor[T] {
 	return ArangeStep(start, end, T(1))
 }
 
 // ArangeStep creates a 1D tensor with linearly spaced values from start to end (exclusive) with given step.
-func ArangeStep[T goml.D](start, end, step T) *Tensor[T] {
+func ArangeStep[T goml.D](start, end, step T) goml.Tensor[T] {
 	if step == 0 {
 		panic("tensor: step cannot be zero")
 	}
@@ -162,7 +164,7 @@ func ArangeStep[T goml.D](start, end, step T) *Tensor[T] {
 }
 
 // FromSlice creates a tensor from a Go slice with the given shape.
-func FromSlice[T goml.D](slice []T) *Tensor[T] {
+func FromSlice[T goml.D](slice []T) goml.Tensor[T] {
 	shape := goml.NewShape(len(slice))
 	data := make([]T, len(slice))
 	copy(data, slice)
@@ -175,7 +177,7 @@ func FromSlice[T goml.D](slice []T) *Tensor[T] {
 }
 
 // Tril creates a lower triangular matrix (elements below diagonal are 1, others are 0).
-func Tril[T goml.D](n int) *Tensor[T] {
+func Tril[T goml.D](n int) goml.Tensor[T] {
 	shape := goml.NewShape(n, n)
 	size := shape.Size()
 	data := make([]T, size)
@@ -194,7 +196,7 @@ func Tril[T goml.D](n int) *Tensor[T] {
 }
 
 // Triu creates an upper triangular matrix (elements above diagonal are 1, others are 0).
-func Triu[T goml.D](n int) *Tensor[T] {
+func Triu[T goml.D](n int) goml.Tensor[T] {
 	shape := goml.NewShape(n, n)
 	size := shape.Size()
 	data := make([]T, size)
@@ -213,7 +215,7 @@ func Triu[T goml.D](n int) *Tensor[T] {
 }
 
 // Linspace creates a 1D tensor with linearly spaced values from start to end (inclusive).
-func Linspace[T goml.D](start, end T, steps int) *Tensor[T] {
+func Linspace[T goml.D](start, end T, steps int) goml.Tensor[T] {
 	if steps <= 0 {
 		panic("tensor: steps must be positive")
 	}
@@ -236,18 +238,38 @@ func Linspace[T goml.D](start, end T, steps int) *Tensor[T] {
 	}
 }
 
-func New[T goml.D]() *Tensor[T] {
+func New[T goml.D]() goml.Tensor[T] {
 	return &Tensor[T]{
 		requiresGrad: false,
 	}
 }
 
-func NewWith[T goml.D](data []T, shape goml.Shape, requiresGrad bool) *Tensor[T] {
+func NewWith[T goml.D](data []T, shape goml.Shape, requiresGrad bool) goml.Tensor[T] {
 	return &Tensor[T]{
 		data:         data,
 		shape:        shape,
 		requiresGrad: requiresGrad,
 	}
+}
+
+func (d *Tensor[T]) DType() goml.DType {
+	var zero T
+	switch any(zero).(type) {
+	case float32:
+		return goml.Float32
+	case float64:
+		return goml.Float64
+	default:
+		panic("unsupported type")
+	}
+}
+
+func (d *Tensor[T]) Device() goml.Device {
+	return goml.CPU
+}
+
+func (d *Tensor[T]) Size() int {
+	return d.shape.Size()
 }
 
 func (d *Tensor[T]) Data() []T {
@@ -274,45 +296,45 @@ func (d *Tensor[T]) SetRequiresGrad(requiresGrad bool) {
 	d.requiresGrad = requiresGrad
 }
 
-func (d *Tensor[T]) Grad() *Tensor[T] {
+func (d *Tensor[T]) Grad() goml.Tensor[T] {
 	d.gradMu.RLock()
 	defer d.gradMu.RUnlock()
 	return d.grad
 }
 
-func (d *Tensor[T]) SetGrad(grad *Tensor[T]) {
+func (d *Tensor[T]) SetGrad(grad goml.Tensor[T]) {
 	d.gradMu.Lock()
 	defer d.gradMu.Unlock()
-	d.grad = grad
+	d.grad = grad.(*Tensor[T])
 }
 
 // OnesLike creates a tensor with the same shape as this tensor, filled with ones.
-func (d *Tensor[T]) OnesLike() *Tensor[T] {
+func (d *Tensor[T]) OnesLike() goml.Tensor[T] {
 	return Ones[T](d.shape)
 }
 
 // ZerosLike creates a tensor with the same shape as this tensor, filled with zeros.
-func (d *Tensor[T]) ZerosLike() *Tensor[T] {
+func (d *Tensor[T]) ZerosLike() goml.Tensor[T] {
 	return Zeros[T](d.shape)
 }
 
 // RandLike creates a tensor with the same shape as this tensor, filled with uniform random values in [lo, hi).
-func (d *Tensor[T]) RandLike(lo, hi T) *Tensor[T] {
+func (d *Tensor[T]) RandLike(lo, hi T) goml.Tensor[T] {
 	return Rand(lo, hi, d.shape)
 }
 
 // RandnLike creates a tensor with the same shape as this tensor, filled with normal distribution (mean=0, std=1).
-func (d *Tensor[T]) RandnLike(mean, std T) *Tensor[T] {
+func (d *Tensor[T]) RandnLike(mean, std T) goml.Tensor[T] {
 	return Randn(mean, std, d.shape)
 }
 
 // FullLike creates a tensor with the same shape as this tensor, filled with the specified value.
-func (d *Tensor[T]) FullLike(value T) *Tensor[T] {
+func (d *Tensor[T]) FullLike(value T) goml.Tensor[T] {
 	return Full(value, d.shape)
 }
 
 // Clone creates a deep copy of this tensor.
-func (d *Tensor[T]) Clone() *Tensor[T] {
+func (d *Tensor[T]) Clone() goml.Tensor[T] {
 	data := make([]T, len(d.data))
 	copy(data, d.data)
 	return &Tensor[T]{

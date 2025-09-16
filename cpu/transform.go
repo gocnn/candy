@@ -8,7 +8,7 @@ import (
 
 // Reshape returns a new tensor with the specified shape.
 // Use -1 for one dimension to auto-infer its size.
-func (d *Tensor[T]) Reshape(dims ...int) *Tensor[T] {
+func (d *Tensor[T]) Reshape(dims ...int) goml.Tensor[T] {
 	newShape := d.shape.Reshape(dims...)
 
 	return &Tensor[T]{
@@ -345,4 +345,3 @@ func multiToFlatIndex(indices, strides []int) int {
 	}
 	return flatIndex
 }
-

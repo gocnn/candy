@@ -48,5 +48,5 @@ func (r *OpAdd[T]) Backward(gy goml.Tensor[T]) (err error) {
 // As special case, the first node may be null.
 // This help to keep the code as concise as possible e.g. during accumulation.
 func Add[T goml.D](x1 goml.Tensor[T], x2 goml.Tensor[T]) goml.Tensor[T] {
-	return NewOperator[T](NewAdd[T](x1, x2)).Run()
+	return NewOperator(NewAdd(x1, x2)).Run()
 }
