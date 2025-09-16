@@ -15,6 +15,32 @@ type scalar[T D] struct {
 	value T
 }
 
+// NewScalar creates a new Scalar from a numeric value
+func NewScalar[T D](value T) Scalar {
+	return scalar[T]{value: value}
+}
+
+// NewScalarFrom creates a Scalar from various numeric types
+func NewScalarFromFloat32(value float32) Scalar {
+	return scalar[float32]{value: value}
+}
+
+func NewScalarFromFloat64(value float64) Scalar {
+	return scalar[float64]{value: value}
+}
+
+func NewScalarFromInt(value int) Scalar {
+	return scalar[float64]{value: float64(value)}
+}
+
+func NewZeroScalar[T D]() Scalar {
+	return scalar[T]{value: T(0)}
+}
+
+func NewOneScalar[T D]() Scalar {
+	return scalar[T]{value: T(1)}
+}
+
 func (s scalar[T]) Float64() float64 {
 	return float64(s.value)
 }
@@ -32,22 +58,4 @@ func (s scalar[T]) DType() DType {
 	default:
 		return Float32 // fallback
 	}
-}
-
-// NewScalar creates a new Scalar from a numeric value
-func NewScalar[T D](value T) Scalar {
-	return scalar[T]{value: value}
-}
-
-// ScalarFrom creates a Scalar from various numeric types
-func ScalarFromFloat32(value float32) Scalar {
-	return scalar[float32]{value: value}
-}
-
-func ScalarFromFloat64(value float64) Scalar {
-	return scalar[float64]{value: value}
-}
-
-func ScalarFromInt(value int) Scalar {
-	return scalar[float64]{value: float64(value)}
 }

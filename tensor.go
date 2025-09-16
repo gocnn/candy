@@ -169,6 +169,7 @@ type Tensor[T D] interface {
 
 	// Gradient and Memory Operations
 	Backward() (Tensor[T], error)
+	AccGrad(gy Tensor[T]) error
 	TrackOp() error
 	ID() string
 	ToSlice() ([]T, error)

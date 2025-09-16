@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/qntx/goml"
-	"github.com/qntx/goml/backend/cpu"
+	"github.com/qntx/goml/cpu"
 )
 
 func main() {
