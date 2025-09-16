@@ -4,11 +4,6 @@ import (
 	"encoding/gob"
 )
 
-// T is the type constraint for matrices defined in this package.
-type T interface {
-	float32 | float64
-}
-
 // Tensor represents a multi-dimensional array with generic type T.
 type Tensor[T D] interface {
 	// Basic Properties

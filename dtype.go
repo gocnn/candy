@@ -1,5 +1,10 @@
 package goml
 
+// D is the type constraint for matrices defined in this package.
+type D interface {
+	float32 | float64
+}
+
 // DType represents the data type of tensors (enum for runtime use)
 type DType int
 
@@ -29,9 +34,4 @@ func (dt DType) BitSize() int {
 	default:
 		return 0
 	}
-}
-
-// D is the type constraint for matrices defined in this package.
-type D interface {
-	float32 | float64
 }
