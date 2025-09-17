@@ -8,16 +8,25 @@ import (
 type Tensor[T D] interface {
 	// Basic Properties
 	DType() DType
-	Shape() Shape
+	Layout() Layout
 	Device() Device
-	// Rank() int
 	Size() int
+	RequiresGrad() bool
+	Clone() Tensor[T]
+
+	// Convenience methods for shape access
+	Shape() Shape
+	// Dims() []int
+	// Ndim() int
+	// Rank() int
+
+	// Layout operations
 	// IsContiguous() bool
 	// IsFortranContiguous() bool
-	RequiresGrad() bool
-	// Stride() []int
-	// Layout() string
-	Clone() Tensor[T]
+	// Contiguous() Tensor[T]
+	// Transpose(dim1, dim2 int) Tensor[T]
+	// Permute(dims []int) Tensor[T]
+	// Narrow(dim, start, length int) Tensor[T]
 
 	// Tensor Creation
 	FullLike(value T) Tensor[T]
@@ -30,19 +39,16 @@ type Tensor[T D] interface {
 	Reshape(dims ...int) Tensor[T]
 	// Squeeze(dim ...int) (Tensor[T], error)
 	// Unsqueeze(dim int) (Tensor[T], error)
-	// Permute(dims []int) (Tensor[T], error)
 	// T() (Tensor[T], error)
-	// Transpose(dim1, dim2 int) (Tensor[T], error)
 	// Flatten() (Tensor[T], error)
 	// FlattenFrom(dim int) (Tensor[T], error)
 	// FlattenTo(dim int) (Tensor[T], error)
 	// Repeat(repeats []int) (Tensor[T], error)
 	// Expand(shape Shape) (Tensor[T], error)
-	// Contiguous() (Tensor[T], error)
 	// PadWithZeros(dim, before, after int) (Tensor[T], error)
 	// PadWithSame(dim, before, after int) (Tensor[T], error)
 
-	// // Indexing and Slicing
+	// Indexing and Slicing
 	// Narrow(dim, start, length int) (Tensor[T], error)
 	// Get(index ...int) (Tensor[T], error)
 	// GetOnDim(dim, index int) (Tensor[T], error)
@@ -68,7 +74,7 @@ type Tensor[T D] interface {
 	// Dot(other Tensor[T]) (Tensor[T], error)
 	// Affine(mul, add T) (Tensor[T], error)
 
-	// // Broadcasting Operations
+	// Broadcasting Operations
 	// BroadcastAs(shape Shape) (Tensor[T], error)
 	// BroadcastAdd(other Tensor[T]) (Tensor[T], error)
 	// BroadcastSub(other Tensor[T]) (Tensor[T], error)
@@ -78,7 +84,7 @@ type Tensor[T D] interface {
 	// BroadcastMaximum(other Tensor[T]) (Tensor[T], error)
 	// BroadcastMinimum(other Tensor[T]) (Tensor[T], error)
 
-	// // Element-wise Operations
+	// Element-wise Operations
 	// Neg() (Tensor[T], error)
 	// Abs() (Tensor[T], error)
 	// Sign() (Tensor[T], error)
@@ -96,14 +102,14 @@ type Tensor[T D] interface {
 	// Round() (Tensor[T], error)
 	// RoundTo(decimals int) (Tensor[T], error)
 
-	// // Activation Functions
+	// Activation Functions
 	// Relu() (Tensor[T], error)
 	// Gelu() (Tensor[T], error)
 	// GeluErf() (Tensor[T], error)
 	// Elu() (Tensor[T], error)
 	// Silu() (Tensor[T], error)
 
-	// // Reduction Operations
+	// Reduction Operations
 	// Sum(dim ...int) (Tensor[T], error)
 	// SumKeepDim(dim ...int) (Tensor[T], error)
 	// SumAll() (T, error)
@@ -126,7 +132,7 @@ type Tensor[T D] interface {
 	// ArgMin(dim int) ([]int, error)
 	// ArgMinKeepDim(dim int) ([]int, error)
 
-	// // Comparison Operations
+	// Comparison Operations
 	// Eq(other Tensor[T]) (Tensor[T], error)
 	// Ne(other Tensor[T]) (Tensor[T], error)
 	// Lt(other Tensor[T]) (Tensor[T], error)
@@ -141,13 +147,13 @@ type Tensor[T D] interface {
 	// BroadcastGe(other Tensor[T]) (Tensor[T], error)
 	// Cmp(other Tensor[T], op string) (Tensor[T], error)
 
-	// // Sorting and Conditional Operations
+	// Sorting and Conditional Operations
 	// Sort(dim int) (Tensor[T], Tensor[T], error)
 	// ArgSort(dim int) (Tensor[T], error)
 	// Clamp(min, max T) (Tensor[T], error)
 	// Where(cond Tensor[T], x, y Tensor[T]) (Tensor[T], error)
 
-	// // Convolution and Pooling
+	// Convolution and Pooling
 	// Conv1D(kernel Tensor[T], stride, padding int) (Tensor[T], error)
 	// Conv2D(kernel Tensor[T], stride, padding []int) (Tensor[T], error)
 	// ConvTranspose1D(kernel Tensor[T], stride, padding int) (Tensor[T], error)
@@ -159,11 +165,11 @@ type Tensor[T D] interface {
 	// UpsampleNearest1D(size int) (Tensor[T], error)
 	// UpsampleNearest2D(h, w int) (Tensor[T], error)
 
-	// // Specialized Operations
+	// Specialized Operations
 	// Embedding(indices []int) (Tensor[T], error)
 	// MeshGrid(tensors []Tensor[T]) ([]Tensor[T], error)
 
-	// // Gradient and Memory Operations
+	// Gradient and Memory Operations
 	// Backward() (Tensor[T], error)
 	AccGrad(gy Tensor[T]) error
 	// TrackOp() error
@@ -176,7 +182,7 @@ type Tensor[T D] interface {
 	// OneSet() (Tensor[T], error)
 	// ZeroSet() (Tensor[T], error)
 
-	// // File Operations
+	// File Operations
 	// ReadNpy(filePath string) (Tensor[T], error)
 	// ReadNpz(filePath string) (Tensor[T], error)
 	// ReadNpzByName(filePath, name string) (Tensor[T], error)
@@ -185,7 +191,7 @@ type Tensor[T D] interface {
 	// SaveSafetensors(filePath string) error
 	// WriteBytes() ([]byte, error)
 
-	// // Miscellaneous Operations
+	// Miscellaneous Operations
 	// Flip(dims []int) (Tensor[T], error)
 	// Roll(shift, dim int) (Tensor[T], error)
 	// Tril2(offset int) (Tensor[T], error)

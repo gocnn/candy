@@ -197,3 +197,76 @@ func (s Shape) BroadcastWith(other Shape) Shape {
 
 	return NewShapeFromSlice(result)
 }
+
+// StrideContiguous returns the stride for contiguous (row-major) layout.
+func (s Shape) StrideContiguous() []int {
+	if len(s.dims) == 0 {
+		return []int{}
+	}
+
+	stride := make([]int, len(s.dims))
+	stride[len(s.dims)-1] = 1
+
+	for i := len(s.dims) - 2; i >= 0; i-- {
+		stride[i] = stride[i+1] * s.dims[i+1]
+	}
+
+	return stride
+}
+
+// StrideFortran returns the stride for Fortran contiguous (column-major) layout.
+func (s Shape) StrideFortran() []int {
+	if len(s.dims) == 0 {
+		return []int{}
+	}
+
+	stride := make([]int, len(s.dims))
+	stride[0] = 1
+
+	for i := 1; i < len(s.dims); i++ {
+		stride[i] = stride[i-1] * s.dims[i-1]
+	}
+
+	return stride
+}
+
+// IsContiguous checks if the given stride represents contiguous (row-major) layout.
+func (s Shape) IsContiguous(stride []int) bool {
+	if len(stride) != len(s.dims) {
+		return false
+	}
+	if len(s.dims) == 0 {
+		return true
+	}
+
+	expectedStride := s.StrideContiguous()
+	for i, st := range stride {
+		if st != expectedStride[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// IsFortranContiguous checks if the given stride represents Fortran contiguous (column-major) layout.
+func (s Shape) IsFortranContiguous(stride []int) bool {
+	if len(stride) != len(s.dims) {
+		return false
+	}
+	if len(s.dims) == 0 {
+		return true
+	}
+
+	expectedStride := s.StrideFortran()
+	for i, st := range stride {
+		if st != expectedStride[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Rank returns the number of dimensions (same as Ndim, for compatibility).
+func (s Shape) Rank() int {
+	return len(s.dims)
+}

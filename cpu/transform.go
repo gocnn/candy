@@ -9,11 +9,11 @@ import (
 // Reshape returns a new tensor with the specified shape.
 // Use -1 for one dimension to auto-infer its size.
 func (d *Tensor[T]) Reshape(dims ...int) goml.Tensor[T] {
-	newShape := d.shape.Reshape(dims...)
+	newShape := d.Shape().Reshape(dims...)
 
 	return &Tensor[T]{
 		data:         d.data, // Share the same underlying data
-		shape:        newShape,
+		layout:       goml.Contiguous(newShape),
 		requiresGrad: d.requiresGrad,
 	}
 }
@@ -25,17 +25,17 @@ func (d *Tensor[T]) Squeeze(dims ...int) (*Tensor[T], error) {
 		return d.squeezeAll()
 	}
 
-	newDims := make([]int, 0, d.shape.Ndim())
-	currentDims := d.shape.Dims()
+	newDims := make([]int, 0, d.Shape().Ndim())
+	currentDims := d.Shape().Dims()
 
 	// Create a set of dimensions to squeeze
 	squeezeSet := make(map[int]bool)
 	for _, dim := range dims {
 		if dim < 0 {
-			dim = d.shape.Ndim() + dim
+			dim = d.Shape().Ndim() + dim
 		}
-		if dim < 0 || dim >= d.shape.Ndim() {
-			return nil, NewDimensionError("Squeeze", ErrDimensionOutOfRange, dim, d.shape.Ndim())
+		if dim < 0 || dim >= d.Shape().Ndim() {
+			return nil, NewDimensionError("Squeeze", ErrDimensionOutOfRange, dim, d.Shape().Ndim())
 		}
 		if currentDims[dim] != 1 {
 			return nil, NewOperationError("Squeeze", fmt.Sprintf("dimension %d has size %d, not 1", dim, currentDims[dim]))
@@ -52,15 +52,15 @@ func (d *Tensor[T]) Squeeze(dims ...int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		shape:        goml.NewShapeFromSlice(newDims),
+		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
 
 // squeezeAll removes all dimensions of size 1
 func (d *Tensor[T]) squeezeAll() (*Tensor[T], error) {
-	newDims := make([]int, 0, d.shape.Ndim())
-	for _, size := range d.shape.Dims() {
+	newDims := make([]int, 0, d.Shape().Ndim())
+	for _, size := range d.Shape().Dims() {
 		if size != 1 {
 			newDims = append(newDims, size)
 		}
@@ -73,7 +73,7 @@ func (d *Tensor[T]) squeezeAll() (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		shape:        goml.NewShapeFromSlice(newDims),
+		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -89,7 +89,7 @@ func (d *Tensor[T]) MustSqueeze(dims ...int) *Tensor[T] {
 
 // Unsqueeze adds a dimension of size 1 at the specified position.
 func (d *Tensor[T]) Unsqueeze(dim int) (*Tensor[T], error) {
-	ndim := d.shape.Ndim()
+	ndim := d.Shape().Ndim()
 	if dim < 0 {
 		dim = ndim + 1 + dim
 	}
@@ -97,7 +97,7 @@ func (d *Tensor[T]) Unsqueeze(dim int) (*Tensor[T], error) {
 		return nil, NewDimensionError("Unsqueeze", ErrDimensionOutOfRange, dim, ndim+1)
 	}
 
-	currentDims := d.shape.Dims()
+	currentDims := d.Shape().Dims()
 	newDims := make([]int, 0, ndim+1)
 
 	// Insert the new dimension
@@ -111,7 +111,7 @@ func (d *Tensor[T]) Unsqueeze(dim int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		shape:        goml.NewShapeFromSlice(newDims),
+		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -127,7 +127,7 @@ func (d *Tensor[T]) MustUnsqueeze(dim int) *Tensor[T] {
 
 // Flatten flattens dimensions from startDim to endDim (inclusive).
 func (d *Tensor[T]) Flatten(startDim, endDim int) (*Tensor[T], error) {
-	ndim := d.shape.Ndim()
+	ndim := d.Shape().Ndim()
 	if startDim < 0 {
 		startDim = ndim + startDim
 	}
@@ -145,7 +145,7 @@ func (d *Tensor[T]) Flatten(startDim, endDim int) (*Tensor[T], error) {
 		return nil, NewOperationError("Flatten", fmt.Sprintf("startDim %d > endDim %d", startDim, endDim))
 	}
 
-	currentDims := d.shape.Dims()
+	currentDims := d.Shape().Dims()
 	newDims := make([]int, 0, ndim-(endDim-startDim))
 
 	// Add dimensions before startDim
@@ -167,7 +167,7 @@ func (d *Tensor[T]) Flatten(startDim, endDim int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		shape:        goml.NewShapeFromSlice(newDims),
+		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -179,14 +179,14 @@ func (d *Tensor[T]) FlattenTo(endDim int) (*Tensor[T], error) {
 
 // FlattenFrom flattens from startDim to the last dimension.
 func (d *Tensor[T]) FlattenFrom(startDim int) (*Tensor[T], error) {
-	return d.Flatten(startDim, d.shape.Ndim()-1)
+	return d.Flatten(startDim, d.Shape().Ndim()-1)
 }
 
 // FlattenAll flattens the tensor to 1D.
 func (d *Tensor[T]) FlattenAll() *Tensor[T] {
 	return &Tensor[T]{
 		data:         d.data,
-		shape:        goml.NewShape(d.shape.Size()),
+		layout:       goml.Contiguous(goml.NewShape(d.Shape().Size())),
 		requiresGrad: d.requiresGrad,
 	}
 }
@@ -202,7 +202,7 @@ func (d *Tensor[T]) MustFlatten(startDim, endDim int) *Tensor[T] {
 
 // Transpose swaps two dimensions.
 func (d *Tensor[T]) Transpose(dim1, dim2 int) (*Tensor[T], error) {
-	ndim := d.shape.Ndim()
+	ndim := d.Shape().Ndim()
 	if dim1 < 0 {
 		dim1 = ndim + dim1
 	}
@@ -221,7 +221,7 @@ func (d *Tensor[T]) Transpose(dim1, dim2 int) (*Tensor[T], error) {
 		// No change needed
 		return &Tensor[T]{
 			data:         d.data,
-			shape:        d.shape,
+			layout:       d.layout,
 			requiresGrad: d.requiresGrad,
 		}, nil
 	}
@@ -238,7 +238,7 @@ func (d *Tensor[T]) Transpose(dim1, dim2 int) (*Tensor[T], error) {
 
 // T transposes the last two dimensions (for 2D tensors, this is matrix transpose).
 func (d *Tensor[T]) T() (*Tensor[T], error) {
-	ndim := d.shape.Ndim()
+	ndim := d.Shape().Ndim()
 	if ndim < 2 {
 		return nil, NewOperationError("T", fmt.Sprintf("tensor must have at least 2 dimensions, got %d", ndim))
 	}
@@ -256,7 +256,7 @@ func (d *Tensor[T]) MustT() *Tensor[T] {
 
 // Permute rearranges the dimensions according to the given permutation.
 func (d *Tensor[T]) Permute(dims ...int) (*Tensor[T], error) {
-	ndim := d.shape.Ndim()
+	ndim := d.Shape().Ndim()
 	if len(dims) != ndim {
 		return nil, NewOperationError("Permute", fmt.Sprintf("expected %d dimensions, got %d", ndim, len(dims)))
 	}
@@ -264,7 +264,7 @@ func (d *Tensor[T]) Permute(dims ...int) (*Tensor[T], error) {
 	// Validate permutation
 	used := make([]bool, ndim)
 	newDims := make([]int, ndim)
-	currentDims := d.shape.Dims()
+	currentDims := d.Shape().Dims()
 
 	for i, dim := range dims {
 		if dim < 0 {
@@ -287,7 +287,7 @@ func (d *Tensor[T]) Permute(dims ...int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         newData,
-		shape:        goml.NewShapeFromSlice(newDims),
+		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -296,7 +296,7 @@ func (d *Tensor[T]) Permute(dims ...int) (*Tensor[T], error) {
 func (d *Tensor[T]) permuteData(newData []T, dims []int) {
 	// This is a simplified implementation
 	// For production, you'd want to use more efficient algorithms
-	currentDims := d.shape.Dims()
+	currentDims := d.Shape().Dims()
 	newDims := make([]int, len(dims))
 	for i, dim := range dims {
 		newDims[i] = currentDims[dim]

@@ -8,29 +8,29 @@ import (
 
 // String returns a compact, readable string representation of the tensor.
 func (t *Tensor[T]) String() string {
-	if t.shape.Size() == 0 {
-		return fmt.Sprintf("tensor([], shape=[0], dtype=%T)", *new(T))
+	if t.Shape().Size() == 0 {
+		return fmt.Sprintf("tensor([], shape=[0], dtype=%T, device=%s)", *new(T), t.Device())
 	}
-	if t.shape.Ndim() == 0 {
-		return fmt.Sprintf("tensor(%v, shape=[], dtype=%T)", t.data[0], *new(T))
+	if t.Shape().Ndim() == 0 {
+		return fmt.Sprintf("tensor(%v, shape=[], dtype=%T, device=%s)", t.data[0], *new(T), t.Device())
 	}
 
 	var sb strings.Builder
 	sb.WriteString("tensor(")
-	t.format(&sb, 0, make([]int, t.shape.Ndim()))
-	sb.WriteString(fmt.Sprintf(", shape=%v, dtype=%T)", t.shape, *new(T)))
+	t.format(&sb, 0, make([]int, t.Shape().Ndim()))
+	sb.WriteString(fmt.Sprintf(", shape=%v, dtype=%T, device=%s)", t.Shape(), *new(T), t.Device()))
 	return sb.String()
 }
 
 // format recursively formats tensor dimensions.
 func (t *Tensor[T]) format(sb *strings.Builder, dim int, idx []int) {
-	if dim == t.shape.Ndim()-1 {
+	if dim == t.Shape().Ndim()-1 {
 		t.formatRow(sb, idx)
 		return
 	}
 
 	sb.WriteByte('[')
-	for i := 0; i < t.shape.At(dim); i++ {
+	for i := 0; i < t.Shape().At(dim); i++ {
 		if i > 0 {
 			sb.WriteString(",\n")
 			sb.WriteString(strings.Repeat(" ", dim+8))
@@ -44,7 +44,7 @@ func (t *Tensor[T]) format(sb *strings.Builder, dim int, idx []int) {
 // formatRow formats a single row of data with aligned values.
 func (t *Tensor[T]) formatRow(sb *strings.Builder, idx []int) {
 	sb.WriteByte('[')
-	rowSize := t.shape.At(t.shape.Ndim() - 1)
+	rowSize := t.Shape().At(t.Shape().Ndim() - 1)
 	maxWidth := t.globalMaxWidth() // Use global max width
 
 	for i := 0; i < rowSize; i++ {
@@ -61,8 +61,8 @@ func (t *Tensor[T]) formatRow(sb *strings.Builder, idx []int) {
 func (t *Tensor[T]) flatIndex(idx []int, last int) int {
 	flat := last
 	stride := 1
-	for i := t.shape.Ndim() - 2; i >= 0; i-- {
-		stride *= t.shape.At(i + 1)
+	for i := t.Shape().Ndim() - 2; i >= 0; i-- {
+		stride *= t.Shape().At(i + 1)
 		flat += idx[i] * stride
 	}
 	return flat
