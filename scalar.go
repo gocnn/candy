@@ -1,4 +1,4 @@
-package goml
+package spark
 
 // Scalar represents a scalar value that can be used in tensor operations
 type Scalar interface {

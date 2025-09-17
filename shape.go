@@ -1,4 +1,4 @@
-package goml
+package spark
 
 import (
 	"fmt"

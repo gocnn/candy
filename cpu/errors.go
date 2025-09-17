@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/qntx/goml"
+	"github.com/qntx/spark"
 )
 
 // Sentinel errors for common tensor operations
@@ -22,8 +22,8 @@ var (
 // ShapeError represents shape-related errors with context
 type ShapeError struct {
 	Op       string
-	Expected goml.Shape
-	Actual   goml.Shape
+	Expected spark.Shape
+	Actual   spark.Shape
 	Err      error
 }
 
@@ -88,7 +88,7 @@ func (e *OperationError) Unwrap() error {
 	return e.Err
 }
 
-func NewShapeError(op string, sentinelErr error, expected, actual goml.Shape) error {
+func NewShapeError(op string, sentinelErr error, expected, actual spark.Shape) error {
 	return &ShapeError{
 		Op:       op,
 		Expected: expected,

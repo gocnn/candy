@@ -3,15 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/qntx/goml"
-	"github.com/qntx/goml/cpu"
+	"github.com/qntx/spark"
+	"github.com/qntx/spark/cpu"
 )
 
 func main() {
 
 	// 1. Scalar (0-dimensional)
 	fmt.Println("1. Scalar (0-dimensional):")
-	scalar := cpu.Full[float32](3.14, goml.NewShape())
+	scalar := cpu.Full[float32](3.14, spark.NewShape())
 	fmt.Printf("%s\n\n", scalar)
 
 	// 2. Vector (1-dimensional)
@@ -47,17 +47,17 @@ func main() {
 
 	// 8. Random matrix
 	fmt.Println("8. Random matrix (2x4):")
-	randomMatrix := cpu.Rand[float32](0, 10, goml.NewShape(2, 4))
+	randomMatrix := cpu.Rand[float32](0, 10, spark.NewShape(2, 4))
 	fmt.Printf("%s\n\n", randomMatrix)
 
 	// 9. Ones matrix
 	fmt.Println("9. Ones matrix (3x3):")
-	ones := cpu.Ones[float32](goml.NewShape(3, 3))
+	ones := cpu.Ones[float32](spark.NewShape(3, 3))
 	fmt.Printf("%s\n\n", ones)
 
 	// 10. Zeros matrix
 	fmt.Println("10. Zeros matrix (2x5):")
-	zeros := cpu.Zeros[float32](goml.NewShape(2, 5))
+	zeros := cpu.Zeros[float32](spark.NewShape(2, 5))
 	fmt.Printf("%s\n\n", zeros)
 
 	// 11. Matrix with mixed number lengths (alignment test)

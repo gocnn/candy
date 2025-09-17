@@ -1,8 +1,8 @@
 package cpu
 
-import "github.com/qntx/goml"
+import "github.com/qntx/spark"
 
-func (d *Tensor[T]) AccGrad(grad goml.Tensor[T]) error {
+func (d *Tensor[T]) AccGrad(grad spark.Tensor[T]) error {
 	d.gradMu.Lock()
 	defer d.gradMu.Unlock()
 

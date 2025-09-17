@@ -1,7 +1,7 @@
 package cpu
 
-import "github.com/qntx/goml"
+import "github.com/qntx/spark"
 
-func (d *Tensor[T]) Add(other goml.Tensor[T]) (goml.Tensor[T], error) {
+func (d *Tensor[T]) Add(other spark.Tensor[T]) (spark.Tensor[T], error) {
 	return nil, nil
 }

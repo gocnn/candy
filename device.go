@@ -1,4 +1,4 @@
-package goml
+package spark
 
 type Device int
 

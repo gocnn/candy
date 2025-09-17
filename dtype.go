@@ -1,4 +1,4 @@
-package goml
+package spark
 
 // D is the type constraint for matrices defined in this package.
 type D interface {

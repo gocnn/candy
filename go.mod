@@ -1,3 +1,3 @@
-module github.com/qntx/goml
+module github.com/qntx/spark
 
 go 1.25

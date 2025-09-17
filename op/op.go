@@ -3,18 +3,18 @@ package op
 import (
 	"sync"
 
-	"github.com/qntx/goml"
+	"github.com/qntx/spark"
 )
 
 // Op represents an operator with automatic differentiation features.
 // It's used to define a new operator.
-type Op[T goml.D] interface {
+type Op[T spark.D] interface {
 	// Forward computes the output of the function.
-	Forward() (tensor goml.Tensor[T], err error)
+	Forward() (tensor spark.Tensor[T], err error)
 	// Backward computes the backward pass given the gradient of the output.
-	Backward(gy goml.Tensor[T]) (err error)
+	Backward(gy spark.Tensor[T]) (err error)
 	// Operands returns the list of operands.
-	Operands() []goml.Tensor[T]
+	Operands() []spark.Tensor[T]
 }
 
 // backwardState is an enumeration type associated to an Operator, to keep
@@ -51,16 +51,16 @@ const (
 
 // Operator is a type of node.
 // It's used to represent a function with automatic differentiation features.
-type Operator[T goml.D] struct {
+type Operator[T spark.D] struct {
 	// value stores the results of a forward evaluation, as mat.Matrix.
 	// It's set by executeForward() goroutine.
 	// Use the Value() method to get the actual value.
 	// It also contains the accumulated gradients. Use the Grad() method to get them.
-	value goml.Tensor[T]
+	value spark.Tensor[T]
 	// onceOperands is used to initialize the operands only once.
 	onceOperands sync.Once
 	// AutoGradFunction's operands are memoized here after the first request.
-	operands []goml.Tensor[T]
+	operands []spark.Tensor[T]
 	// backwardPass is the backward function to be executed.
 	op Op[T]
 	// broadcast is the channel used to broadcast the result of the forward pass.
@@ -80,12 +80,12 @@ type Operator[T goml.D] struct {
 }
 
 // NewOperator returns a new operator node.
-func NewOperator[T goml.D](op Op[T]) *Operator[T] {
+func NewOperator[T spark.D](op Op[T]) *Operator[T] {
 	return &Operator[T]{
 		op: op,
 	}
 }
 
-func (r *Operator[T]) Run() goml.Tensor[T] {
+func (r *Operator[T]) Run() spark.Tensor[T] {
 	return r.value
 }

@@ -3,17 +3,17 @@ package cpu
 import (
 	"fmt"
 
-	"github.com/qntx/goml"
+	"github.com/qntx/spark"
 )
 
 // Reshape returns a new tensor with the specified shape.
 // Use -1 for one dimension to auto-infer its size.
-func (d *Tensor[T]) Reshape(dims ...int) goml.Tensor[T] {
+func (d *Tensor[T]) Reshape(dims ...int) spark.Tensor[T] {
 	newShape := d.Shape().Reshape(dims...)
 
 	return &Tensor[T]{
 		data:         d.data, // Share the same underlying data
-		layout:       goml.Contiguous(newShape),
+		layout:       spark.Contiguous(newShape),
 		requiresGrad: d.requiresGrad,
 	}
 }
@@ -52,7 +52,7 @@ func (d *Tensor[T]) Squeeze(dims ...int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
+		layout:       spark.Contiguous(spark.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -73,7 +73,7 @@ func (d *Tensor[T]) squeezeAll() (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
+		layout:       spark.Contiguous(spark.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -111,7 +111,7 @@ func (d *Tensor[T]) Unsqueeze(dim int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
+		layout:       spark.Contiguous(spark.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -167,7 +167,7 @@ func (d *Tensor[T]) Flatten(startDim, endDim int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         d.data,
-		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
+		layout:       spark.Contiguous(spark.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
@@ -186,7 +186,7 @@ func (d *Tensor[T]) FlattenFrom(startDim int) (*Tensor[T], error) {
 func (d *Tensor[T]) FlattenAll() *Tensor[T] {
 	return &Tensor[T]{
 		data:         d.data,
-		layout:       goml.Contiguous(goml.NewShape(d.Shape().Size())),
+		layout:       spark.Contiguous(spark.NewShape(d.Shape().Size())),
 		requiresGrad: d.requiresGrad,
 	}
 }
@@ -287,7 +287,7 @@ func (d *Tensor[T]) Permute(dims ...int) (*Tensor[T], error) {
 
 	return &Tensor[T]{
 		data:         newData,
-		layout:       goml.Contiguous(goml.NewShapeFromSlice(newDims)),
+		layout:       spark.Contiguous(spark.NewShapeFromSlice(newDims)),
 		requiresGrad: d.requiresGrad,
 	}, nil
 }
