@@ -47,6 +47,6 @@ func (r *OpAdd[T]) Backward(gy spark.Tensor[T]) (err error) {
 // Add returns a new operator node as a result of the gradfn.Add function.
 // As special case, the first node may be null.
 // This help to keep the code as concise as possible e.g. during accumulation.
-func Add[T spark.D](x1 spark.Tensor[T], x2 spark.Tensor[T]) spark.Tensor[T] {
+func Add[T spark.D](x1 spark.Tensor[T], x2 spark.Tensor[T]) *Operator[T] {
 	return NewOperator(NewAdd(x1, x2)).Run()
 }
