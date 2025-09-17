@@ -1,6 +1,6 @@
-# spark
+# Spark
 
-Go ML inference operators.
+Spark is a ML framework for Go.
 
 ## Install
 
@@ -10,4 +10,4 @@ go get github.com/qntx/spark
 
 ## License
 
-MIT
+Spark has BSD 3-Clause License, see [LICENSE](LICENSE).
