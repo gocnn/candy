@@ -2,6 +2,7 @@ package spark
 
 import (
 	"github.com/qntx/spark/ag"
+	"github.com/qntx/spark/dot"
 	"github.com/qntx/spark/nn"
 )
 
@@ -51,4 +52,9 @@ var (
 	Sigmoid  = nn.Sigmoid
 	Softmax  = nn.Softmax
 	Tanh     = nn.Tanh
+)
+
+var (
+	Graph     = dot.Graph
+	SaveGraph = dot.SaveGraph
 )

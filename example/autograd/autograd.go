@@ -68,5 +68,5 @@ func main() {
 	fmt.Printf("New Output %s: %.6f\n", y2_new.Name, y2_new.At(0, 0))
 	fmt.Printf("New Loss: %.6f\n\n", newLoss)
 
-	dot.SaveGraph(loss, "graph.dot", dot.Opts{Verbose: true})
+	spark.SaveGraph(loss, "graph.dot", dot.Opts{Verbose: true})
 }
