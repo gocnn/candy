@@ -6,43 +6,35 @@ import (
 
 	"github.com/qntx/spark"
 	"github.com/qntx/spark/dot"
-	"github.com/qntx/spark/nn"
 )
 
 // Three-layer neural network with automatic differentiation
 // Structure: Input(2) -> Hidden(2, Sigmoid) -> Output(1, Sigmoid)
 func main() {
 	// Initialize data
-	x := spark.NewOf([]float64{0.35, 0.9})
-	x.Name = "X"
+	x := spark.NewOf([]float64{0.35, 0.9}).SetName("X")
 	target := 0.5
 
 	// Initialize weights
 	w0 := spark.NewOf(
 		[]float64{0.1, 0.8},
 		[]float64{0.4, 0.6},
-	)
-	w0.Name = "W0"
+	).SetName("W0")
+
 	w1 := spark.NewOf(
 		[]float64{0.3},
 		[]float64{0.9},
-	)
-	w1.Name = "W1"
+	).SetName("W1")
 
 	// Forward propagation
-	z1 := spark.MatMul(x, w0)
-	z1.Name = "Z1"
-	y1 := nn.Sigmoid(z1)
-	y1.Name = "Y1"
-	z2 := spark.MatMul(y1, w1)
-	z2.Name = "Z2"
-	y2 := nn.Sigmoid(z2)
-	y2.Name = "Y2"
+	z1 := spark.MatMul(x, w0).SetName("Z1")
+	y1 := spark.Sigmoid(z1).SetName("Y1")
+	z2 := spark.MatMul(y1, w1).SetName("Z2")
+	y2 := spark.Sigmoid(z2).SetName("Y2")
 
 	// Loss calculation
 	diff := spark.SubC(target, y2)
-	loss := spark.Mul(spark.New(0.5), spark.Mul(diff, diff))
-	loss.Name = "Loss"
+	loss := spark.Mul(spark.New(0.5), spark.Mul(diff, diff)).SetName("Loss")
 	lossValue := 0.5 * math.Pow(y2.At(0, 0)-target, 2)
 
 	// Backward propagation
@@ -57,9 +49,9 @@ func main() {
 
 	// Validation
 	z1_new := spark.MatMul(x, w0_new)
-	y1_new := nn.Sigmoid(z1_new)
+	y1_new := spark.Sigmoid(z1_new)
 	z2_new := spark.MatMul(y1_new, w1_new)
-	y2_new := nn.Sigmoid(z2_new)
+	y2_new := spark.Sigmoid(z2_new)
 	newLoss := 0.5 * math.Pow(y2_new.At(0, 0)-target, 2)
 
 	// Output results

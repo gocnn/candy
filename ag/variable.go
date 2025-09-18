@@ -62,6 +62,11 @@ func (v *Variable) Cleargrad() {
 	v.Grad = nil
 }
 
+func (v *Variable) SetName(name string) *Variable {
+	v.Name = name
+	return v
+}
+
 func (v *Variable) SetCreator(f *Operator) {
 	v.Creator = f
 	v.Generation = f.Generation + 1

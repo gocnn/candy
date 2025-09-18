@@ -1,6 +1,9 @@
 package spark
 
-import "github.com/qntx/spark/ag"
+import (
+	"github.com/qntx/spark/ag"
+	"github.com/qntx/spark/nn"
+)
 
 var (
 	New      = ag.New
@@ -24,7 +27,6 @@ var (
 	Div         = ag.Div
 	Sin         = ag.Sin
 	Cos         = ag.Cos
-	Tanh        = ag.Tanh
 	Exp         = ag.Exp
 	Log         = ag.Log
 	Pow         = ag.Pow
@@ -40,4 +42,13 @@ var (
 	Min         = ag.Min
 	Clip        = ag.Clip
 	GetItem     = ag.GetItem
+)
+
+var (
+	Accuracy = nn.Accuracy
+	Linear   = nn.Linear
+	ReLU     = nn.ReLU
+	Sigmoid  = nn.Sigmoid
+	Softmax  = nn.Softmax
+	Tanh     = nn.Tanh
 )
