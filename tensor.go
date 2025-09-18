@@ -1,9 +1,5 @@
 package spark
 
-import (
-	"encoding/gob"
-)
-
 // Tensor represents a multi-dimensional array with generic type T.
 type Tensor[T D] interface {
 	// Basic Properties
@@ -197,9 +193,4 @@ type Tensor[T D] interface {
 	// Tril2(offset int) (Tensor[T], error)
 	// Triu2(offset int) (Tensor[T], error)
 	// NormalizeAxis(dim int) (Tensor[T], error)
-}
-
-func init() {
-	gob.Register([]Tensor[float32]{})
-	gob.Register([]Tensor[float64]{})
 }

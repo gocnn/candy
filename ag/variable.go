@@ -166,17 +166,6 @@ func (v *Variable) String() string {
 	return fmt.Sprintf("%s%v(%v)", name, v.Shape(), v.Data)
 }
 
-func addFunc(fs []*Operator, f *Operator, seen map[*Operator]bool) []*Operator {
-	if _, ok := seen[f]; ok {
-		return fs
-	}
-
-	seen[f] = true
-	fs = append(fs, f)
-	sort.Slice(fs, func(i, j int) bool { return fs[i].Generation < fs[j].Generation })
-	return fs
-}
-
 func Zip(xs, gxs []*Variable) ([]*Variable, []*Variable) {
 	n := min(len(xs), len(gxs))
 	return xs[:n], gxs[:n]
@@ -199,6 +188,18 @@ func gys(y []*Variable) []*Variable {
 
 	return gys
 }
+
+func addFunc(fs []*Operator, f *Operator, seen map[*Operator]bool) []*Operator {
+	if _, ok := seen[f]; ok {
+		return fs
+	}
+
+	seen[f] = true
+	fs = append(fs, f)
+	sort.Slice(fs, func(i, j int) bool { return fs[i].Generation < fs[j].Generation })
+	return fs
+}
+
 func cleargrad(output []*Variable) {
 	for _, y := range output {
 		y.Cleargrad()
