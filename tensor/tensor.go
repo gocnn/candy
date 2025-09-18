@@ -1,8 +1,6 @@
 package tensor
 
 import (
-	"encoding/gob"
-
 	"github.com/qntx/spark"
 )
 
@@ -199,9 +197,4 @@ type Tensor[T spark.D] interface {
 	// Tril2(offset int) (Tensor[T], error)
 	// Triu2(offset int) (Tensor[T], error)
 	// NormalizeAxis(dim int) (Tensor[T], error)
-}
-
-func init() {
-	gob.Register([]Tensor[float32]{})
-	gob.Register([]Tensor[float64]{})
 }
