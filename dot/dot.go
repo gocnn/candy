@@ -2,6 +2,7 @@ package dot
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/qntx/spark/ag"
@@ -78,4 +79,12 @@ func AddFunc(fs []*ag.Operator, f *ag.Operator, seen map[*ag.Operator]bool) []*a
 	seen[f] = true
 	fs = append(fs, f)
 	return fs
+}
+
+// SaveGraph generates a DOT graph for the given variable and saves it to the specified file path
+func SaveGraph(v *ag.Variable, filepath string, opts ...Opts) error {
+	lines := Graph(v, opts...)
+	content := strings.Join(lines, "\n")
+
+	return os.WriteFile(filepath, []byte(content), 0644)
 }
