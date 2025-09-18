@@ -3,32 +3,32 @@ package nn
 import (
 	"math"
 
+	"github.com/qntx/spark/ad"
 	"github.com/qntx/spark/internal/mat"
-	"github.com/qntx/spark/tensor"
 )
 
-func ReLU(x ...*tensor.Variable) *tensor.Variable {
-	return (&tensor.Function{Forwarder: &ReLUT{}}).First(x...)
+func ReLU(x ...*ad.Variable) *ad.Variable {
+	return (&ad.Operator{Op: &ReLUT{}}).First(x...)
 }
 
 type ReLUT struct {
-	x *tensor.Variable
+	x *ad.Variable
 }
 
-func (f *ReLUT) Forward(x ...*tensor.Variable) []*tensor.Variable {
+func (f *ReLUT) Forward(x ...*ad.Variable) []*ad.Variable {
 	f.x = x[0]
 	y := mat.F(x[0].Data, maximum)
 
-	return []*tensor.Variable{
-		tensor.NewFrom(y),
+	return []*ad.Variable{
+		ad.NewFrom(y),
 	}
 }
 
-func (f *ReLUT) Backward(gy ...*tensor.Variable) []*tensor.Variable {
+func (f *ReLUT) Backward(gy ...*ad.Variable) []*ad.Variable {
 	mask := mat.Mask(f.x.Data, relu)
 
-	return []*tensor.Variable{
-		Mul(gy[0], tensor.NewFrom(mask)), // gy * mask
+	return []*ad.Variable{
+		ad.Mul(gy[0], ad.NewFrom(mask)), // gy * mask
 	}
 }
 

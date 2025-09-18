@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/qntx/spark/ad"
 	"github.com/qntx/spark/dot"
-	"github.com/qntx/spark/nn"
-	"github.com/qntx/spark/tensor"
 )
 
 var re = regexp.MustCompile(`0x[0-9a-fA-F]+`)
@@ -14,7 +13,7 @@ var re = regexp.MustCompile(`0x[0-9a-fA-F]+`)
 const dummyAddr = "0x**********"
 
 func ExampleVar() {
-	x := tensor.New(1)
+	x := ad.New(1)
 	x.Name = "x"
 
 	fmt.Println(re.ReplaceAllString(dot.Var(x), dummyAddr))
@@ -24,7 +23,7 @@ func ExampleVar() {
 	xvar0, xvar1 := dot.Var(x), dot.Var(x)
 	fmt.Println(xvar0 == xvar1)
 
-	y := tensor.New(1)
+	y := ad.New(1)
 	y.Name = "x"
 	fmt.Println(dot.Var(x) == dot.Var(y))
 
@@ -36,12 +35,12 @@ func ExampleVar() {
 }
 
 func ExampleFunc() {
-	f0 := &tensor.Function{Forwarder: &tensor.SinT{}}
+	f0 := &ad.Operator{Op: &ad.SinT{}}
 	for _, txt := range dot.Func(f0) {
 		fmt.Println(re.ReplaceAllString(txt, dummyAddr))
 	}
 
-	f1 := &tensor.Function{Forwarder: &tensor.SinT{}}
+	f1 := &ad.Operator{Op: &ad.SinT{}}
 	fmt.Println(dot.Func(f0)[0] == dot.Func(f1)[0])
 
 	// Output:
@@ -50,10 +49,10 @@ func ExampleFunc() {
 }
 
 func Example_func() {
-	f := &tensor.Function{
-		Input:     []*tensor.Variable{tensor.New(1)},
-		Output:    []*tensor.Variable{tensor.New(1)},
-		Forwarder: &tensor.SinT{},
+	f := &ad.Operator{
+		Input:  []*ad.Variable{ad.New(1)},
+		Output: []*ad.Variable{ad.New(1)},
+		Op:     &ad.SinT{},
 	}
 
 	for _, txt := range dot.Func(f) {
@@ -67,10 +66,10 @@ func Example_func() {
 }
 
 func ExampleGraph() {
-	x := tensor.New(1.0)
+	x := ad.New(1.0)
 	x.Name = "x"
 
-	y := nn.Sin(x)
+	y := ad.Sin(x)
 	y.Name = "y"
 
 	for _, txt := range dot.Graph(y) {
@@ -88,9 +87,9 @@ func ExampleGraph() {
 }
 
 func ExampleGraph_composite() {
-	x := tensor.New(1.0)
-	y := nn.Sin(x)
-	z := nn.Cos(y)
+	x := ad.New(1.0)
+	y := ad.Sin(x)
+	z := ad.Cos(y)
 	x.Name = "x"
 	y.Name = "y"
 	z.Name = "z"
@@ -114,11 +113,11 @@ func ExampleGraph_composite() {
 }
 
 func ExampleAddFunc() {
-	fs := make([]*tensor.Function, 0)
-	seen := make(map[*tensor.Function]bool)
+	fs := make([]*ad.Operator, 0)
+	seen := make(map[*ad.Operator]bool)
 
-	sin := &tensor.Function{Forwarder: &tensor.SinT{}}
-	cos := &tensor.Function{Forwarder: &tensor.CosT{}}
+	sin := &ad.Operator{Op: &ad.SinT{}}
+	cos := &ad.Operator{Op: &ad.CosT{}}
 	fs = dot.AddFunc(fs, sin, seen)
 	fs = dot.AddFunc(fs, cos, seen)
 	fmt.Println(fs)
@@ -128,6 +127,6 @@ func ExampleAddFunc() {
 	fmt.Println(fs)
 
 	// Output:
-	// [*tensor.SinT[] *tensor.CosT[]]
-	// [*tensor.SinT[] *tensor.CosT[]]
+	// [*ad.SinT[] *ad.CosT[]]
+	// [*ad.SinT[] *ad.CosT[]]
 }

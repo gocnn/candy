@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qntx/spark/tensor"
+	"github.com/qntx/spark/ad"
 )
 
 const (
@@ -17,7 +17,7 @@ type Opts struct {
 	Verbose bool
 }
 
-func Var(v *tensor.Variable, opts ...Opts) string {
+func Var(v *ad.Variable, opts ...Opts) string {
 	if len(opts) > 0 && opts[0].Verbose {
 		return fmt.Sprintf(varfmt, v, v)
 	}
@@ -25,7 +25,7 @@ func Var(v *tensor.Variable, opts ...Opts) string {
 	return fmt.Sprintf(varfmt, v, v.Name)
 }
 
-func Func(f *tensor.Function) []string {
+func Func(f *ad.Operator) []string {
 	s := f.String()
 	begin, end := strings.Index(s, "."), strings.Index(s, "T[")
 	out := []string{fmt.Sprintf(fncfmt, f, s[begin+1:end])}
@@ -41,9 +41,9 @@ func Func(f *tensor.Function) []string {
 	return out
 }
 
-func Graph(v *tensor.Variable, opts ...Opts) []string {
-	seen := make(map[*tensor.Function]bool)
-	fs := AddFunc(make([]*tensor.Function, 0), v.Creator, seen)
+func Graph(v *ad.Variable, opts ...Opts) []string {
+	seen := make(map[*ad.Operator]bool)
+	fs := AddFunc(make([]*ad.Operator, 0), v.Creator, seen)
 
 	out := append([]string{"digraph g {"}, Var(v, opts...))
 	for {
@@ -70,7 +70,7 @@ func Graph(v *tensor.Variable, opts ...Opts) []string {
 	return out
 }
 
-func AddFunc(fs []*tensor.Function, f *tensor.Function, seen map[*tensor.Function]bool) []*tensor.Function {
+func AddFunc(fs []*ad.Operator, f *ad.Operator, seen map[*ad.Operator]bool) []*ad.Operator {
 	if _, ok := seen[f]; ok {
 		return fs
 	}
