@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/qntx/spark/ag"
+	"github.com/qntx/spark"
 	"github.com/qntx/spark/dot"
 	"github.com/qntx/spark/nn"
 )
@@ -13,35 +13,35 @@ import (
 // Structure: Input(2) -> Hidden(2, Sigmoid) -> Output(1, Sigmoid)
 func main() {
 	// Initialize data
-	x := ag.NewOf([]float64{0.35, 0.9})
+	x := spark.NewOf([]float64{0.35, 0.9})
 	x.Name = "X"
 	target := 0.5
 
 	// Initialize weights
-	w0 := ag.NewOf(
+	w0 := spark.NewOf(
 		[]float64{0.1, 0.8},
 		[]float64{0.4, 0.6},
 	)
 	w0.Name = "W0"
-	w1 := ag.NewOf(
+	w1 := spark.NewOf(
 		[]float64{0.3},
 		[]float64{0.9},
 	)
 	w1.Name = "W1"
 
 	// Forward propagation
-	z1 := ag.MatMul(x, w0)
+	z1 := spark.MatMul(x, w0)
 	z1.Name = "Z1"
 	y1 := nn.Sigmoid(z1)
 	y1.Name = "Y1"
-	z2 := ag.MatMul(y1, w1)
+	z2 := spark.MatMul(y1, w1)
 	z2.Name = "Z2"
 	y2 := nn.Sigmoid(z2)
 	y2.Name = "Y2"
 
 	// Loss calculation
-	diff := ag.SubC(target, y2)
-	loss := ag.Mul(ag.New(0.5), ag.Mul(diff, diff))
+	diff := spark.SubC(target, y2)
+	loss := spark.Mul(spark.New(0.5), spark.Mul(diff, diff))
 	loss.Name = "Loss"
 	lossValue := 0.5 * math.Pow(y2.At(0, 0)-target, 2)
 
@@ -52,13 +52,13 @@ func main() {
 
 	// Weight update
 	lr := 0.1
-	w0_new := ag.Sub(w0, ag.MulC(lr, w0.Grad))
-	w1_new := ag.Sub(w1, ag.MulC(lr, w1.Grad))
+	w0_new := spark.Sub(w0, spark.MulC(lr, w0.Grad))
+	w1_new := spark.Sub(w1, spark.MulC(lr, w1.Grad))
 
 	// Validation
-	z1_new := ag.MatMul(x, w0_new)
+	z1_new := spark.MatMul(x, w0_new)
 	y1_new := nn.Sigmoid(z1_new)
-	z2_new := ag.MatMul(y1_new, w1_new)
+	z2_new := spark.MatMul(y1_new, w1_new)
 	y2_new := nn.Sigmoid(z2_new)
 	newLoss := 0.5 * math.Pow(y2_new.At(0, 0)-target, 2)
 

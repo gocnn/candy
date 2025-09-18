@@ -7,7 +7,6 @@ import (
 	"github.com/qntx/spark/internal/mat"
 )
 
-
 func ExampleZero() {
 	for _, r := range mat.Zero(2, 3).Seq2() {
 		fmt.Println(r)
