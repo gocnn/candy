@@ -13,5 +13,4 @@ go get github.com/qntx/spark
 
 ## License
 
-Spark has BSD 3-Clause License, see [LICENSE](LICENSE).
-Logo icon: [Fire Bold](https://phosphoricons.com/) by Phosphor (MIT License).
+Spark has BSD 3-Clause License, see [LICENSE](LICENSE).Logo icon: [Fire Bold](https://phosphoricons.com/) by Phosphor (MIT License).
