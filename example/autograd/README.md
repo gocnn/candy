@@ -4,6 +4,8 @@ A concise guide to understanding backpropagation (BP) in a three-layer fully con
 
 ## Network Structure
 
+![Neural Network Architecture](network.png)
+
 - **Input Layer (Layer 0)**: 2 neurons, input \( X = \begin{bmatrix} 0.35 & 0.9 \end{bmatrix} \) (row vector).
 - **Hidden Layer (Layer 1)**: 2 neurons.
 - **Output Layer (Layer 2)**: 1 neuron, target output \( \text{target} = 0.5 \).
@@ -87,12 +89,29 @@ $$
   $$
 
 **Actual computed updates**:
+
 - \( W_1 = \begin{bmatrix} 0.29756 \\ 0.89717 \end{bmatrix} \)
 - \( W_0 = \begin{bmatrix} 0.09990 & 0.79973 \\ 0.39974 & 0.59930 \end{bmatrix} \)
+
+## Computational Graph
+
+The Spark automatic differentiation framework builds a computational graph during forward propagation, which is then used for efficient backpropagation:
+
+![Computational Graph](graphviz.png)
+
+The graph shows:
+
+- **Orange nodes**: Variables and computed values
+- **Blue boxes**: Operations (MatMul, Sigmoid, Sub, Mul)
+- **Arrows**: Data flow and dependencies
+- **Root node**: Loss function at the top
+
+This computational graph enables automatic gradient computation through reverse-mode differentiation.
 
 ## Validation Results
 
 After weight updates:
+
 - **New Output**: \( Y_2 = 0.690077 \)
 - **New Loss**: \( 0.018065 \)
 - **Loss Reduction**: \( 0.018210 - 0.018065 = 0.000145 \)
