@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/qntx/spark/ad"
+	"github.com/qntx/spark/ag"
 	"github.com/qntx/spark/dot"
 )
 
@@ -13,7 +13,7 @@ var re = regexp.MustCompile(`0x[0-9a-fA-F]+`)
 const dummyAddr = "0x**********"
 
 func ExampleVar() {
-	x := ad.New(1)
+	x := ag.New(1)
 	x.Name = "x"
 
 	fmt.Println(re.ReplaceAllString(dot.Var(x), dummyAddr))
@@ -23,7 +23,7 @@ func ExampleVar() {
 	xvar0, xvar1 := dot.Var(x), dot.Var(x)
 	fmt.Println(xvar0 == xvar1)
 
-	y := ad.New(1)
+	y := ag.New(1)
 	y.Name = "x"
 	fmt.Println(dot.Var(x) == dot.Var(y))
 
@@ -35,12 +35,12 @@ func ExampleVar() {
 }
 
 func ExampleFunc() {
-	f0 := &ad.Operator{Op: &ad.SinT{}}
+	f0 := &ag.Operator{Op: &ag.SinT{}}
 	for _, txt := range dot.Func(f0) {
 		fmt.Println(re.ReplaceAllString(txt, dummyAddr))
 	}
 
-	f1 := &ad.Operator{Op: &ad.SinT{}}
+	f1 := &ag.Operator{Op: &ag.SinT{}}
 	fmt.Println(dot.Func(f0)[0] == dot.Func(f1)[0])
 
 	// Output:
@@ -49,10 +49,10 @@ func ExampleFunc() {
 }
 
 func Example_func() {
-	f := &ad.Operator{
-		Input:  []*ad.Variable{ad.New(1)},
-		Output: []*ad.Variable{ad.New(1)},
-		Op:     &ad.SinT{},
+	f := &ag.Operator{
+		Input:  []*ag.Variable{ag.New(1)},
+		Output: []*ag.Variable{ag.New(1)},
+		Op:     &ag.SinT{},
 	}
 
 	for _, txt := range dot.Func(f) {
@@ -66,10 +66,10 @@ func Example_func() {
 }
 
 func ExampleGraph() {
-	x := ad.New(1.0)
+	x := ag.New(1.0)
 	x.Name = "x"
 
-	y := ad.Sin(x)
+	y := ag.Sin(x)
 	y.Name = "y"
 
 	for _, txt := range dot.Graph(y) {
@@ -87,9 +87,9 @@ func ExampleGraph() {
 }
 
 func ExampleGraph_composite() {
-	x := ad.New(1.0)
-	y := ad.Sin(x)
-	z := ad.Cos(y)
+	x := ag.New(1.0)
+	y := ag.Sin(x)
+	z := ag.Cos(y)
 	x.Name = "x"
 	y.Name = "y"
 	z.Name = "z"
@@ -113,11 +113,11 @@ func ExampleGraph_composite() {
 }
 
 func ExampleAddFunc() {
-	fs := make([]*ad.Operator, 0)
-	seen := make(map[*ad.Operator]bool)
+	fs := make([]*ag.Operator, 0)
+	seen := make(map[*ag.Operator]bool)
 
-	sin := &ad.Operator{Op: &ad.SinT{}}
-	cos := &ad.Operator{Op: &ad.CosT{}}
+	sin := &ag.Operator{Op: &ag.SinT{}}
+	cos := &ag.Operator{Op: &ag.CosT{}}
 	fs = dot.AddFunc(fs, sin, seen)
 	fs = dot.AddFunc(fs, cos, seen)
 	fmt.Println(fs)
@@ -127,6 +127,6 @@ func ExampleAddFunc() {
 	fmt.Println(fs)
 
 	// Output:
-	// [*ad.SinT[] *ad.CosT[]]
-	// [*ad.SinT[] *ad.CosT[]]
+	// [*ag.SinT[] *ag.CosT[]]
+	// [*ag.SinT[] *ag.CosT[]]
 }

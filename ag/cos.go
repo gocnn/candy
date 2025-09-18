@@ -1,4 +1,4 @@
-package ad
+package ag
 
 import "github.com/qntx/spark/internal/mat"
 

@@ -1,14 +1,14 @@
-package ad_test
+package ag_test
 
 import (
 	"fmt"
 	"math/rand/v2"
 
-	"github.com/qntx/spark/ad"
+	"github.com/qntx/spark/ag"
 )
 
 func ExampleVariable() {
-	v := ad.New(1, 2, 3, 4)
+	v := ag.New(1, 2, 3, 4)
 	fmt.Println(v)
 
 	// Output:
@@ -16,7 +16,7 @@ func ExampleVariable() {
 }
 
 func ExampleVariable_Name() {
-	v := ad.New(1, 2, 3, 4)
+	v := ag.New(1, 2, 3, 4)
 	v.Name = "v"
 	fmt.Println(v)
 
@@ -25,7 +25,7 @@ func ExampleVariable_Name() {
 }
 
 func ExampleVariable_Name_matrix() {
-	v := ad.NewOf(
+	v := ag.NewOf(
 		[]float64{1, 2, 3},
 		[]float64{4, 5, 6},
 	)
@@ -36,23 +36,23 @@ func ExampleVariable_Name_matrix() {
 }
 
 func ExampleZeroLike() {
-	v := ad.New(1, 2, 3, 4)
-	fmt.Println(ad.ZeroLike(v))
+	v := ag.New(1, 2, 3, 4)
+	fmt.Println(ag.ZeroLike(v))
 
 	// Output:
 	// variable[1 4]([0 0 0 0])
 }
 
 func ExampleOneLike() {
-	v := ad.New(1, 2, 3, 4)
-	fmt.Println(ad.OneLike(v))
+	v := ag.New(1, 2, 3, 4)
+	fmt.Println(ag.OneLike(v))
 
 	// Output:
 	// variable[1 4]([1 1 1 1])
 }
 
 func ExampleZero() {
-	fmt.Println(ad.Zero([]int{2, 3}))
+	fmt.Println(ag.Zero([]int{2, 3}))
 
 	// Output:
 	// variable[2 3]([[0 0 0] [0 0 0]])
@@ -60,7 +60,7 @@ func ExampleZero() {
 
 func ExampleRand() {
 	s := rand.NewPCG(0, 0)
-	v := ad.Rand([]int{2, 3}, s)
+	v := ag.Rand([]int{2, 3}, s)
 
 	shape := v.Shape()
 	for i := range shape[0] {
@@ -79,7 +79,7 @@ func ExampleRand() {
 
 func ExampleRandn() {
 	s := rand.NewPCG(0, 0)
-	v := ad.Randn([]int{2, 3}, s)
+	v := ag.Randn([]int{2, 3}, s)
 
 	shape := v.Shape()
 	for i := range shape[0] {
@@ -97,24 +97,24 @@ func ExampleRandn() {
 }
 
 func ExampleVariable_Unchain() {
-	x := ad.New(1.0)
+	x := ag.New(1.0)
 
-	y := ad.Pow(2.0)(x)
+	y := ag.Pow(2.0)(x)
 	fmt.Println(y.Creator) // Pow
 
 	y.Unchain()
 	fmt.Println(y.Creator) // nil
 
 	// Output:
-	// *ad.PowT[variable(1)]
+	// *ag.PowT[variable(1)]
 	// <nil>
 }
 
 func ExampleVariable_UnchainBackward() {
-	x := ad.New(1.0)
+	x := ag.New(1.0)
 
-	y := ad.Pow(2.0)(x)
-	z := ad.Sin(y)
+	y := ag.Pow(2.0)(x)
+	z := ag.Sin(y)
 	fmt.Println(y.Creator) // Pow
 	fmt.Println(z.Creator) // Sin
 
@@ -128,16 +128,16 @@ func ExampleVariable_UnchainBackward() {
 	fmt.Println(z.Creator) // nil
 
 	// Output:
-	// *ad.PowT[variable(1)]
-	// *ad.SinT[variable(1)]
+	// *ag.PowT[variable(1)]
+	// *ag.SinT[variable(1)]
 	// <nil>
-	// *ad.SinT[variable(1)]
+	// *ag.SinT[variable(1)]
 	// <nil>
 	// <nil>
 }
 
 func ExampleVariable_Backward() {
-	x := ad.New(1.0)
+	x := ag.New(1.0)
 	x.Backward()
 	fmt.Println(x.Grad)
 
@@ -151,8 +151,8 @@ func ExampleVariable_Backward() {
 }
 
 func Example_add() {
-	fmt.Println(ad.AddGrad(nil, ad.New(1)))
-	fmt.Println(ad.AddGrad(ad.New(1), ad.New(2)))
+	fmt.Println(ag.AddGrad(nil, ag.New(1)))
+	fmt.Println(ag.AddGrad(ag.New(1), ag.New(2)))
 
 	// Output:
 	// variable(1)
@@ -160,14 +160,14 @@ func Example_add() {
 }
 
 func Example_zip() {
-	xs := []*ad.Variable{
-		ad.New(1),
-		ad.New(2),
+	xs := []*ag.Variable{
+		ag.New(1),
+		ag.New(2),
 	}
-	gxs := []*ad.Variable{
-		ad.New(1),
+	gxs := []*ag.Variable{
+		ag.New(1),
 	}
-	xs, gxs = ad.Zip(xs, gxs)
+	xs, gxs = ag.Zip(xs, gxs)
 	fmt.Println(len(xs), len(gxs))
 
 	// Output:

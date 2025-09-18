@@ -1,4 +1,4 @@
-package ad
+package ag
 
 type config struct {
 	EnableBackprop bool

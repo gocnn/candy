@@ -1,40 +1,40 @@
-package ad
+package ag
 
 import (
 	"github.com/qntx/spark/internal/mat"
 	"github.com/qntx/spark/internal/vec"
 )
 
-func DivC(c float64, x ...*Variable) *Variable {
+// SubC returns a variable that c - x[0].
+func SubC(c float64, x ...*Variable) *Variable {
 	return (&Operator{
-		Op: &DivT{},
+		Op: &SubT{},
 	}).First(New(c), x[0])
 }
 
-func Div(x ...*Variable) *Variable {
+// Sub returns a variable that x[0] - x[1].
+func Sub(x ...*Variable) *Variable {
 	return (&Operator{
-		Op: &DivT{},
+		Op: &SubT{},
 	}).First(x...)
 }
 
-type DivT struct {
-	x0, x1           *Variable
+type SubT struct {
 	x0Shape, x1Shape []int
 }
 
-func (f *DivT) Forward(x ...*Variable) []*Variable {
-	f.x0, f.x1 = x[0], x[1]
+func (f *SubT) Forward(x ...*Variable) []*Variable {
 	f.x0Shape, f.x1Shape = x[0].Shape(), x[1].Shape()
 
-	y := mat.Div(x[0].Data, x[1].Data)
+	y := mat.Sub(x[0].Data, x[1].Data)
 	return []*Variable{
 		NewFrom(y),
 	}
 }
 
-func (f *DivT) Backward(gy ...*Variable) []*Variable {
-	gx0 := Div(gy[0], f.x1)
-	gx1 := Mul(gy[0], Div(Neg(f.x0), Mul(f.x1, f.x1))) // gy * (-x0 / x1^2)
+func (f *SubT) Backward(gy ...*Variable) []*Variable {
+	gx0 := gy[0]
+	gx1 := Neg(gy[0]) // -1.0 * gy
 
 	if vec.Equal(f.x0Shape, f.x1Shape) {
 		return []*Variable{

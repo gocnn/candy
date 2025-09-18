@@ -1,4 +1,4 @@
-package ad
+package ag
 
 func Square(x ...*Variable) *Variable {
 	return (&Operator{

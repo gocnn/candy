@@ -1,31 +1,31 @@
 package nn
 
 import (
-	"github.com/qntx/spark/ad"
+	"github.com/qntx/spark/ag"
 	"github.com/qntx/spark/internal/mat"
 )
 
-func Tanh(x ...*ad.Variable) *ad.Variable {
-	return (&ad.Operator{
+func Tanh(x ...*ag.Variable) *ag.Variable {
+	return (&ag.Operator{
 		Op: &TanhT{},
 	}).First(x...)
 }
 
 type TanhT struct {
-	y *ad.Variable
+	y *ag.Variable
 }
 
-func (f *TanhT) Forward(x ...*ad.Variable) []*ad.Variable {
+func (f *TanhT) Forward(x ...*ag.Variable) []*ag.Variable {
 	y := mat.Tanh(x[0].Data)
-	f.y = ad.NewFrom(y)
+	f.y = ag.NewFrom(y)
 
-	return []*ad.Variable{
+	return []*ag.Variable{
 		f.y,
 	}
 }
 
-func (f *TanhT) Backward(gy ...*ad.Variable) []*ad.Variable {
-	return []*ad.Variable{
-		ad.Mul(gy[0], ad.SubC(1.0, ad.Mul(f.y, f.y))), // gy * (1-y^2)
+func (f *TanhT) Backward(gy ...*ag.Variable) []*ag.Variable {
+	return []*ag.Variable{
+		ag.Mul(gy[0], ag.SubC(1.0, ag.Mul(f.y, f.y))), // gy * (1-y^2)
 	}
 }

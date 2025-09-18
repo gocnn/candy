@@ -1,4 +1,4 @@
-package ad
+package ag
 
 func GetItem(slices []int) func(x ...*Variable) *Variable {
 	return (&Operator{
