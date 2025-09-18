@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/qntx/spark/ag"
+	"github.com/qntx/spark/dot"
 	"github.com/qntx/spark/nn"
 )
 
@@ -73,5 +74,9 @@ func main() {
 	fmt.Printf("Updated Weights %s: %s\n", w0.Name, w0_new)
 	fmt.Printf("Updated Weights %s: %s\n\n", w1.Name, w1_new)
 	fmt.Printf("New Output %s: %.6f\n", y2_new.Name, y2_new.At(0, 0))
-	fmt.Printf("New Loss: %.6f\n", newLoss)
+	fmt.Printf("New Loss: %.6f\n\n", newLoss)
+
+	for _, txt := range dot.Graph(loss, dot.Opts{Verbose: true}) {
+		fmt.Println(txt)
+	}
 }
