@@ -2,27 +2,27 @@ package ag
 
 import "github.com/qntx/spark/internal/mat"
 
-func Log(x ...*Variable) *Variable {
+func Log(x ...*Var) *Var {
 	return (&Operator{
 		Op: &LogT{},
 	}).First(x...)
 }
 
 type LogT struct {
-	x *Variable
+	x *Var
 }
 
-func (f *LogT) Forward(x ...*Variable) []*Variable {
+func (f *LogT) Forward(x ...*Var) []*Var {
 	f.x = x[0]
 
 	y := mat.Log(x[0].Data)
-	return []*Variable{
+	return []*Var{
 		NewFrom(y),
 	}
 }
 
-func (f *LogT) Backward(gy ...*Variable) []*Variable {
-	return []*Variable{
+func (f *LogT) Backward(gy ...*Var) []*Var {
+	return []*Var{
 		Div(gy[0], f.x), // gy / x
 	}
 }

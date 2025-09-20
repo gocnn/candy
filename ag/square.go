@@ -1,6 +1,6 @@
 package ag
 
-func Square(x ...*Variable) *Variable {
+func Square(x ...*Var) *Var {
 	return (&Operator{
 		Op: &SquareT{
 			PowT{

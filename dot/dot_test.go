@@ -50,8 +50,8 @@ func ExampleFunc() {
 
 func Example_func() {
 	f := &ag.Operator{
-		Input:  []*ag.Variable{ag.New(1)},
-		Output: []*ag.Variable{ag.New(1)},
+		Input:  []*ag.Var{ag.New(1)},
+		Output: []*ag.Var{ag.New(1)},
 		Op:     &ag.SinT{},
 	}
 

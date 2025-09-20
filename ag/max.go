@@ -6,28 +6,28 @@ import (
 	"github.com/qntx/spark/internal/mat"
 )
 
-func Max(x ...*Variable) *Variable {
+func Max(x ...*Var) *Var {
 	return (&Operator{
 		Op: &MaxT{},
 	}).First(x...)
 }
 
 type MaxT struct {
-	x, y *Variable
+	x, y *Var
 }
 
-func (f *MaxT) Forward(x ...*Variable) []*Variable {
+func (f *MaxT) Forward(x ...*Var) []*Var {
 	f.x = x[0]
 	f.y = New(mat.Max(x[0].Data))
 
-	return []*Variable{
+	return []*Var{
 		f.y,
 	}
 }
 
-func (f *MaxT) Backward(gy ...*Variable) []*Variable {
+func (f *MaxT) Backward(gy ...*Var) []*Var {
 	mask := NewFrom(mat.F2(f.x.Data, f.y.Data, IsClose))
-	return []*Variable{
+	return []*Var{
 		Mul(gy[0], mask),
 	}
 }

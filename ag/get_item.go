@@ -1,6 +1,6 @@
 package ag
 
-func GetItem(slices []int) func(x ...*Variable) *Variable {
+func GetItem(slices []int) func(x ...*Var) *Var {
 	return (&Operator{
 		Op: &GetItemT{
 			Slices: slices,
@@ -13,7 +13,7 @@ type GetItemT struct {
 	xShape []int
 }
 
-func (f *GetItemT) Forward(x ...*Variable) []*Variable {
+func (f *GetItemT) Forward(x ...*Var) []*Var {
 	f.xShape = x[0].Shape()
 
 	y := make([][]float64, len(f.Slices))
@@ -21,13 +21,13 @@ func (f *GetItemT) Forward(x ...*Variable) []*Variable {
 		y[i] = x[0].Data.Row(idx)
 	}
 
-	return []*Variable{
+	return []*Var{
 		NewOf(y...),
 	}
 }
 
-func (f *GetItemT) Backward(gy ...*Variable) []*Variable {
-	return []*Variable{
+func (f *GetItemT) Backward(gy ...*Var) []*Var {
+	return []*Var{
 		GetItemGrad(f.Slices, f.xShape)(gy...),
 	}
 }

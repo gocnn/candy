@@ -160,11 +160,11 @@ func Example_add() {
 }
 
 func Example_zip() {
-	xs := []*ag.Variable{
+	xs := []*ag.Var{
 		ag.New(1),
 		ag.New(2),
 	}
-	gxs := []*ag.Variable{
+	gxs := []*ag.Var{
 		ag.New(1),
 	}
 	xs, gxs = ag.Zip(xs, gxs)

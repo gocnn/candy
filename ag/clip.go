@@ -2,7 +2,7 @@ package ag
 
 import "github.com/qntx/spark/internal/mat"
 
-func Clip(min, max float64) func(x ...*Variable) *Variable {
+func Clip(min, max float64) func(x ...*Var) *Var {
 	return (&Operator{
 		Op: &ClipT{
 			Min: min,
@@ -13,21 +13,21 @@ func Clip(min, max float64) func(x ...*Variable) *Variable {
 
 type ClipT struct {
 	Min, Max float64
-	x        *Variable
+	x        *Var
 }
 
-func (f *ClipT) Forward(x ...*Variable) []*Variable {
+func (f *ClipT) Forward(x ...*Var) []*Var {
 	f.x = x[0]
 
 	y := mat.Clip(x[0].Data, f.Min, f.Max)
-	return []*Variable{
+	return []*Var{
 		NewFrom(y),
 	}
 }
 
-func (f *ClipT) Backward(gy ...*Variable) []*Variable {
+func (f *ClipT) Backward(gy ...*Var) []*Var {
 	mask := mat.Mask(f.x.Data, clip(f.Min, f.Max))
-	return []*Variable{
+	return []*Var{
 		Mul(gy[0], NewFrom(mask)), // gy * mask
 	}
 }

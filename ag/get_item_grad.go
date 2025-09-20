@@ -5,7 +5,7 @@ import (
 	"github.com/qntx/spark/internal/vec"
 )
 
-func GetItemGrad(slices, inShape []int) func(x ...*Variable) *Variable {
+func GetItemGrad(slices, inShape []int) func(x ...*Var) *Var {
 	return (&Operator{
 		Op: &GetItemGradT{
 			Slices:  slices,
@@ -19,19 +19,19 @@ type GetItemGradT struct {
 	InShape []int
 }
 
-func (f *GetItemGradT) Forward(gy ...*Variable) []*Variable {
+func (f *GetItemGradT) Forward(gy ...*Var) []*Var {
 	gx := mat.Zero(f.InShape[0], f.InShape[1])
 	for i, idx := range f.Slices {
 		gx.SetRow(idx, vec.Add(gx.Row(idx), gy[0].Data.Row(i)))
 	}
 
-	return []*Variable{
+	return []*Var{
 		NewFrom(gx),
 	}
 }
 
-func (f *GetItemGradT) Backward(ggx ...*Variable) []*Variable {
-	return []*Variable{
+func (f *GetItemGradT) Backward(ggx ...*Var) []*Var {
+	return []*Var{
 		GetItem(f.Slices)(ggx...),
 	}
 }

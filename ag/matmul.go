@@ -2,27 +2,27 @@ package ag
 
 import "github.com/qntx/spark/internal/mat"
 
-func MatMul(x ...*Variable) *Variable {
+func MatMul(x ...*Var) *Var {
 	return (&Operator{
 		Op: &MatMulT{},
 	}).First(x...)
 }
 
 type MatMulT struct {
-	x, w *Variable
+	x, w *Var
 }
 
-func (f *MatMulT) Forward(x ...*Variable) []*Variable {
+func (f *MatMulT) Forward(x ...*Var) []*Var {
 	f.x, f.w = x[0], x[1]
 
 	y := mat.MatMul(x[0].Data, x[1].Data)
-	return []*Variable{
+	return []*Var{
 		NewFrom(y),
 	}
 }
 
-func (f *MatMulT) Backward(gy ...*Variable) []*Variable {
-	return []*Variable{
+func (f *MatMulT) Backward(gy ...*Var) []*Var {
+	return []*Var{
 		MatMul(gy[0], Transpose(f.w)), // gy * w.T
 		MatMul(Transpose(f.x), gy[0]), // x.T * gy
 	}

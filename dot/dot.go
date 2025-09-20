@@ -18,7 +18,7 @@ type Opts struct {
 	Verbose bool
 }
 
-func Var(v *ag.Variable, opts ...Opts) string {
+func Var(v *ag.Var, opts ...Opts) string {
 	if len(opts) > 0 && opts[0].Verbose {
 		return fmt.Sprintf(varfmt, v, v)
 	}
@@ -42,7 +42,7 @@ func Func(f *ag.Operator) []string {
 	return out
 }
 
-func Graph(v *ag.Variable, opts ...Opts) []string {
+func Graph(v *ag.Var, opts ...Opts) []string {
 	seen := make(map[*ag.Operator]bool)
 	fs := AddFunc(make([]*ag.Operator, 0), v.Creator, seen)
 
@@ -82,7 +82,7 @@ func AddFunc(fs []*ag.Operator, f *ag.Operator, seen map[*ag.Operator]bool) []*a
 }
 
 // SaveGraph generates a DOT graph for the given variable and saves it to the specified file path
-func SaveGraph(v *ag.Variable, filepath string, opts ...Opts) error {
+func SaveGraph(v *ag.Var, filepath string, opts ...Opts) error {
 	lines := Graph(v, opts...)
 	content := strings.Join(lines, "\n")
 

@@ -2,7 +2,7 @@ package ag
 
 import "github.com/qntx/spark/internal/mat"
 
-func Neg(x ...*Variable) *Variable {
+func Neg(x ...*Var) *Var {
 	return (&Operator{
 		Op: &NegT{},
 	}).First(x...)
@@ -10,15 +10,15 @@ func Neg(x ...*Variable) *Variable {
 
 type NegT struct{}
 
-func (f *NegT) Forward(x ...*Variable) []*Variable {
+func (f *NegT) Forward(x ...*Var) []*Var {
 	y := mat.MulC(-1.0, x[0].Data)
-	return []*Variable{
+	return []*Var{
 		NewFrom(y),
 	}
 }
 
-func (f *NegT) Backward(gy ...*Variable) []*Variable {
-	return []*Variable{
+func (f *NegT) Backward(gy ...*Var) []*Var {
+	return []*Var{
 		Neg(gy[0]),
 	}
 }

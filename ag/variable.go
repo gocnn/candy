@@ -8,75 +8,75 @@ import (
 	"github.com/qntx/spark/internal/mat"
 )
 
-type Variable struct {
+type Var struct {
 	Name string
 
 	Data *mat.Matrix
-	Grad *Variable
+	Grad *Var
 
 	Creator    *Operator
 	Generation int
 }
 
-func New(v ...float64) *Variable {
-	return &Variable{Data: mat.New(v)}
+func New(v ...float64) *Var {
+	return &Var{Data: mat.New(v)}
 }
 
-func NewOf(v ...[]float64) *Variable {
-	return &Variable{Data: mat.New(v...)}
+func NewOf(v ...[]float64) *Var {
+	return &Var{Data: mat.New(v...)}
 }
 
-func NewFrom(v *mat.Matrix) *Variable {
-	return &Variable{Data: v}
+func NewFrom(v *mat.Matrix) *Var {
+	return &Var{Data: v}
 }
 
-func ZeroLike(v *Variable) *Variable {
-	return &Variable{Data: mat.ZeroLike(v.Data)}
+func ZeroLike(v *Var) *Var {
+	return &Var{Data: mat.ZeroLike(v.Data)}
 }
 
-func OneLike(v *Variable) *Variable {
-	return &Variable{Data: mat.OneLike(v.Data)}
+func OneLike(v *Var) *Var {
+	return &Var{Data: mat.OneLike(v.Data)}
 }
 
-func Zero(shape []int) *Variable {
-	return &Variable{Data: mat.Zero(shape[0], shape[1])}
+func Zero(shape []int) *Var {
+	return &Var{Data: mat.Zero(shape[0], shape[1])}
 }
 
-func Rand(shape []int, s ...rand.Source) *Variable {
-	return &Variable{Data: mat.Rand(shape[0], shape[1], s...)}
+func Rand(shape []int, s ...rand.Source) *Var {
+	return &Var{Data: mat.Rand(shape[0], shape[1], s...)}
 }
 
-func Randn(shape []int, s ...rand.Source) *Variable {
-	return &Variable{Data: mat.Randn(shape[0], shape[1], s...)}
+func Randn(shape []int, s ...rand.Source) *Var {
+	return &Var{Data: mat.Randn(shape[0], shape[1], s...)}
 }
 
-func (v *Variable) At(coord ...int) float64 {
+func (v *Var) At(coord ...int) float64 {
 	return v.Data.At(coord[0], coord[1])
 }
 
-func (v *Variable) Shape() []int {
+func (v *Var) Shape() []int {
 	return mat.Shape(v.Data)
 }
 
-func (v *Variable) Cleargrad() {
+func (v *Var) Cleargrad() {
 	v.Grad = nil
 }
 
-func (v *Variable) SetName(name string) *Variable {
+func (v *Var) SetName(name string) *Var {
 	v.Name = name
 	return v
 }
 
-func (v *Variable) SetCreator(f *Operator) {
+func (v *Var) SetCreator(f *Operator) {
 	v.Creator = f
 	v.Generation = f.Generation + 1
 }
 
-func (v *Variable) Unchain() {
+func (v *Var) Unchain() {
 	v.Creator = nil
 }
 
-func (v *Variable) UnchainBackward() {
+func (v *Var) UnchainBackward() {
 	if v.Creator == nil {
 		return
 	}
@@ -104,7 +104,7 @@ func (v *Variable) UnchainBackward() {
 	}
 }
 
-func (v *Variable) Backward(opts ...Opts) {
+func (v *Var) Backward(opts ...Opts) {
 	if v.Grad == nil {
 		v.Grad = OneLike(v)
 	}
@@ -154,7 +154,7 @@ func (v *Variable) Backward(opts ...Opts) {
 	}
 }
 
-func (v *Variable) String() string {
+func (v *Var) String() string {
 	name := "variable"
 	if v.Name != "" {
 		name = v.Name
@@ -171,12 +171,12 @@ func (v *Variable) String() string {
 	return fmt.Sprintf("%s%v(%v)", name, v.Shape(), v.Data)
 }
 
-func Zip(xs, gxs []*Variable) ([]*Variable, []*Variable) {
+func Zip(xs, gxs []*Var) ([]*Var, []*Var) {
 	n := min(len(xs), len(gxs))
 	return xs[:n], gxs[:n]
 }
 
-func AddGrad(xgrad, gx *Variable) *Variable {
+func AddGrad(xgrad, gx *Var) *Var {
 	if xgrad == nil {
 		return gx
 	}
@@ -185,8 +185,8 @@ func AddGrad(xgrad, gx *Variable) *Variable {
 	return Add(xgrad, gx)
 }
 
-func gys(y []*Variable) []*Variable {
-	gys := make([]*Variable, len(y))
+func gys(y []*Var) []*Var {
+	gys := make([]*Var, len(y))
 	for i := range y {
 		gys[i] = y[i].Grad
 	}
@@ -205,7 +205,7 @@ func addFunc(fs []*Operator, f *Operator, seen map[*Operator]bool) []*Operator {
 	return fs
 }
 
-func cleargrad(output []*Variable) {
+func cleargrad(output []*Var) {
 	for _, y := range output {
 		y.Cleargrad()
 	}
