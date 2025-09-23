@@ -1,5 +1,14 @@
 package spark
 
+type Tensor_[T D] struct {
+	storage BackendStorage
+	layout  Layout
+	op      BackpropOp
+	isVar   bool
+	dtype   DType
+	device  Device
+}
+
 // Tensor represents a multi-dimensional array with generic type T.
 // type Tensor[T D] interface {
 // 	// Basic Properties
