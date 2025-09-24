@@ -171,7 +171,7 @@ func (s Shape) BroadcastShapeBinaryOp(rhs Shape, op string) (Shape, error) {
 	maxN := max(lhsN, rhsN)
 	bcastDims := make([]int, maxN)
 
-	for i := 0; i < maxN; i++ {
+	for i := range maxN {
 		l := 1
 		if i < lhsN {
 			l = lhsDims[lhsN-1-i]

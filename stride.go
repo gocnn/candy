@@ -1,6 +1,7 @@
 package spark
 
 import (
+	"fmt"
 	"iter"
 	"slices"
 )
@@ -15,21 +16,27 @@ type StridedIndex struct {
 }
 
 // NewStridedIndex creates a new StridedIndex iterator.
+// Panics if dims and stride lengths mismatch or if any dimension is negative.
+// Sets nextStorageIndex to nil for empty dimensions.
 func NewStridedIndex(dims, stride []int, startOffset int) *StridedIndex {
 	if len(dims) != len(stride) {
-		panic("dims and stride must have the same length")
+		panic(fmt.Sprintf("dims and stride length mismatch: %d != %d", len(dims), len(stride)))
 	}
-	elemCount := 1
 	for _, d := range dims {
 		if d < 0 {
-			panic("negative dimensions not allowed")
+			panic(fmt.Sprintf("negative dimension not allowed: %d", d))
 		}
-		elemCount *= d
 	}
 	var next *int
-	if elemCount > 0 {
-		n := startOffset
-		next = &n
+	if len(dims) > 0 {
+		elemCount := 1
+		for _, d := range dims {
+			elemCount *= d
+		}
+		if elemCount > 0 {
+			n := startOffset
+			next = &n
+		}
 	}
 	return &StridedIndex{
 		nextStorageIndex: next,
@@ -41,30 +48,30 @@ func NewStridedIndex(dims, stride []int, startOffset int) *StridedIndex {
 
 // NewStridedIndexFromLayout creates a StridedIndex from a Layout.
 func NewStridedIndexFromLayout(l Layout) *StridedIndex {
-	return NewStridedIndex(l.Dims(), l.stride, l.startOffset)
+	return NewStridedIndex(l.Dims(), l.Stride(), l.StartOffset())
 }
 
-func (si *StridedIndex) NextStorageIndex() int {
-	if si.nextStorageIndex == nil {
-		return -1
-	}
-	return *si.nextStorageIndex
+// NextStorageIndex returns the next storage index or nil if iteration is complete.
+func (si *StridedIndex) NextStorageIndex() *int {
+	return si.nextStorageIndex
 }
 
+// IsComplete returns true if the iterator has no more elements.
 func (si *StridedIndex) IsComplete() bool {
 	return si.nextStorageIndex == nil
 }
 
+// MultiIndex returns a copy of the current multi-dimensional index.
 func (si *StridedIndex) MultiIndex() []int {
 	return slices.Clone(si.multiIndex)
 }
 
-// Dims returns a copy of the dimensions of the tensor.
+// Dims returns a copy of the tensor dimensions.
 func (si *StridedIndex) Dims() []int {
 	return slices.Clone(si.dims)
 }
 
-// Stride returns a copy of the strides of the tensor.
+// Stride returns a copy of the tensor strides.
 func (si *StridedIndex) Stride() []int {
 	return slices.Clone(si.stride)
 }
@@ -76,7 +83,7 @@ func (si *StridedIndex) All() iter.Seq[int] {
 			storageIndex := *si.nextStorageIndex
 			updated := false
 			nextStorageIndex := storageIndex
-			// Increment the multi-index like an odometer, starting from the least significant dimension.
+			// Increment the multi-index like an odometer, from right to left.
 			for i := len(si.multiIndex) - 1; i >= 0; i-- {
 				nextI := si.multiIndex[i] + 1
 				if nextI < si.dims[i] {
@@ -118,36 +125,49 @@ type StridedBlocks struct {
 	BlockStartIndex *StridedIndex // Used for MultipleBlocks: iterator over block start offsets.
 }
 
-// In the Layout struct, add the following method:
-
 // StridedBlocks computes the strided blocks representation for the layout.
 // It identifies contiguous inner dimensions and represents the layout as either
 // a single block or multiple blocks with strided starts.
 func (l Layout) StridedBlocks() StridedBlocks {
+	dims := l.Dims()
+	strides := l.Stride()
+
+	// Handle scalar case
+	if len(dims) == 0 {
+		return StridedBlocks{
+			Type:        SingleBlock,
+			StartOffset: l.StartOffset(),
+			Len:         1,
+		}
+	}
+
+	// Compute block length for contiguous dimensions from the right
 	blockLen := 1
 	contiguousDims := 0
-	dims := l.Dims()
-	strides := l.stride
-	// Count contiguous dimensions from the right (innermost).
+	currentStride := 1
 	for i := len(dims) - 1; i >= 0; i-- {
-		if strides[i] != blockLen {
+		if strides[i] != currentStride {
 			break
 		}
 		blockLen *= dims[i]
 		contiguousDims++
+		currentStride *= dims[i]
 	}
+
 	indexDims := len(dims) - contiguousDims
 	if indexDims == 0 {
 		return StridedBlocks{
 			Type:        SingleBlock,
-			StartOffset: l.startOffset,
+			StartOffset: l.StartOffset(),
 			Len:         blockLen,
 		}
 	}
+
+	// Create iterator for non-contiguous outer dimensions
 	blockStartIndex := NewStridedIndex(
 		dims[:indexDims],
 		strides[:indexDims],
-		l.startOffset,
+		l.StartOffset(),
 	)
 	return StridedBlocks{
 		Type:            MultipleBlocks,

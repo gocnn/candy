@@ -199,7 +199,7 @@ func (l Layout) OffsetsB() (ContiguousOffsetsWithBroadcast, bool) {
 	startCont := 0
 	endCont := len(dims)
 
-	for i := 0; i < len(dims); i++ {
+	for i := range dims {
 		if strides[i] != 0 {
 			break
 		}
