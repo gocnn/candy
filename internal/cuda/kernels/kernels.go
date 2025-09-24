@@ -7,7 +7,10 @@ var Kernels embed.FS
 
 // GetKernel returns the content of a specific PTX kernel file
 func GetKernel(name string) ([]byte, error) {
-	return Kernels.ReadFile(name + ".ptx")
+	if len(name) < 4 || name[len(name)-4:] != ".ptx" {
+		name = name + ".ptx"
+	}
+	return Kernels.ReadFile(name)
 }
 
 // ListKernels returns all available kernel names
