@@ -38,7 +38,7 @@ gen:
 
 # Build the project
 .PHONY: build
-build:
+build: gen
 	$(GO) build $(GOFLAGS) ./...
 
 # Benchmark the project
