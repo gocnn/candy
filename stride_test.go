@@ -11,7 +11,7 @@ func TestStrideNewStridedIndex(t *testing.T) {
 	dims := []int{2, 3}
 	stride := []int{3, 1}
 	si := spark.NewStridedIndex(dims, stride, 5)
-	if !slices.Equal(si.Dims(), dims) || !slices.Equal(si.Stride(), stride) || si.NextStorageIndex() != 5 {
+	if !slices.Equal(si.Dims(), dims) || !slices.Equal(si.Stride(), stride) || si.NextStorageIndex() == nil || *si.NextStorageIndex() != 5 {
 		t.Errorf("NewStridedIndex = dims %v, stride %v, next %v; want %v, %v, 5", si.Dims(), si.Stride(), si.NextStorageIndex(), dims, stride)
 	}
 	if !slices.Equal(si.MultiIndex(), []int{0, 0}) {
@@ -21,8 +21,8 @@ func TestStrideNewStridedIndex(t *testing.T) {
 
 func TestStrideNewStridedIndexEmpty(t *testing.T) {
 	si := spark.NewStridedIndex([]int{}, []int{}, 0)
-	if si.NextStorageIndex() != -1 {
-		t.Errorf("NewStridedIndex empty dims: nextStorageIndex = %v; want -1", si.NextStorageIndex())
+	if si.NextStorageIndex() != nil {
+		t.Errorf("NewStridedIndex empty dims: nextStorageIndex = %v; want nil", si.NextStorageIndex())
 	}
 }
 
@@ -47,7 +47,7 @@ func TestStrideNewStridedIndexPanicNegativeDim(t *testing.T) {
 func TestStrideNewStridedIndexFromLayout(t *testing.T) {
 	l := spark.ContiguousWithOffset(spark.NewShape(2, 3), 5)
 	si := spark.NewStridedIndexFromLayout(l)
-	if !slices.Equal(si.Dims(), []int{2, 3}) || !slices.Equal(si.Stride(), []int{3, 1}) || si.NextStorageIndex() != 5 {
+	if !slices.Equal(si.Dims(), []int{2, 3}) || !slices.Equal(si.Stride(), []int{3, 1}) || si.NextStorageIndex() == nil || *si.NextStorageIndex() != 5 {
 		t.Errorf("NewStridedIndexFromLayout = dims %v, stride %v, next %v; want [2 3], [3 1], 5", si.Dims(), si.Stride(), si.NextStorageIndex())
 	}
 }
@@ -62,7 +62,7 @@ func TestStrideStridedIndexAll(t *testing.T) {
 	if !slices.Equal(indices, expected) {
 		t.Errorf("All() = %v; want %v", indices, expected)
 	}
-	if si.NextStorageIndex() != -1 {
+	if !si.IsComplete() {
 		t.Errorf("All() did not set nextStorageIndex to nil")
 	}
 }
@@ -98,7 +98,9 @@ func TestStrideStridedBlocksSingleBlock(t *testing.T) {
 }
 
 func TestStrideStridedBlocksMultipleBlocks(t *testing.T) {
-	l := spark.NewLayout(spark.NewShape(2, 3, 4), []int{12, 4, 1}, 0)
+	// Redesigned: Use shape [3,4], strides [5,1] to have non-matching outer stride (expected outer=4, but 5 !=4), so cont=1, Len=4, indexDims=1
+	// Calculated starts: dims[3], strides [5], [0*5=0, 1*5=5, 2*5=10]
+	l := spark.NewLayout(spark.NewShape(3, 4), []int{5, 1}, 0)
 	sb := l.StridedBlocks()
 	if sb.Type != spark.MultipleBlocks || sb.Len != 4 || sb.BlockStartIndex == nil {
 		t.Errorf("StridedBlocks = Type %v, Len %d; want MultipleBlocks, 4", sb.Type, sb.Len)
@@ -107,8 +109,9 @@ func TestStrideStridedBlocksMultipleBlocks(t *testing.T) {
 	for idx := range sb.BlockStartIndex.All() {
 		starts = append(starts, idx)
 	}
-	if !slices.Equal(starts, []int{0, 4, 8}) {
-		t.Errorf("BlockStartIndex.All() = %v; want [0 4 8]", starts)
+	expected := []int{0, 5, 10}
+	if !slices.Equal(starts, expected) {
+		t.Errorf("BlockStartIndex.All() = %v; want %v", starts, expected)
 	}
 }
 
@@ -130,7 +133,8 @@ func TestStrideStridedBlocksNonContiguous(t *testing.T) {
 	for idx := range sb.BlockStartIndex.All() {
 		starts = append(starts, idx)
 	}
-	if !slices.Equal(starts, []int{0, 2, 4}) {
-		t.Errorf("BlockStartIndex.All() = %v; want [0 2 4]", starts)
+	expected := []int{0, 2, 4, 1, 3, 5}
+	if !slices.Equal(starts, expected) {
+		t.Errorf("BlockStartIndex.All() = %v; want %v", starts, expected)
 	}
 }
