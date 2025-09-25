@@ -1,38 +1,41 @@
+// mnist.go
 package mnist
 
 import (
 	"bufio"
-	"compress/gzip"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gocnn/spark"
+	"github.com/gocnn/spark/dataset/progress"
 )
+
+const MNISTImageSize = 28
 
 // MNIST download URLs - modify these to use different mirror sources
 const (
 	// Primary source: Google Cloud Storage
 	BaseURL = "https://storage.googleapis.com/cvdf-datasets/mnist/%s.gz"
-
 	// Alternative sources (uncomment to use):
 	// BaseURL = "https://github.com/cvdfoundation/mnist/raw/main/%s.gz"
 	// BaseURL = "https://huggingface.co/datasets/mnist/resolve/main/data/%s.gz"
 	// BaseURL = "http://yann.lecun.com/exdb/mnist/%s.gz" // Original (often unavailable)
 )
 
-// Dataset holds MNIST images and labels.
-type Dataset struct {
-	images  [][]float32 // Flattened, normalized images [0,1]
-	labels  []uint8     // Labels (0-9)
+// Dataset holds MNIST images and labels with generic precision.
+type Dataset[T spark.D] struct {
+	images  [][]T   // Flattened, normalized images [0,1]
+	labels  []uint8 // Labels (0-9)
 	root    string
 	isTrain bool
 }
 
-// New creates an MNIST dataset, downloading files if needed.
-func New(root string, train, download bool) (*Dataset, error) {
-	ds := &Dataset{root: root, isTrain: train}
+// New creates an MNIST dataset with specified precision type.
+func New[T spark.D](root string, train, download bool) (*Dataset[T], error) {
+	ds := &Dataset[T]{root: root, isTrain: train}
 	if err := ds.ensureFiles(download); err != nil {
 		return nil, fmt.Errorf("ensure files: %w", err)
 	}
@@ -42,26 +45,49 @@ func New(root string, train, download bool) (*Dataset, error) {
 	return ds, nil
 }
 
-// ensureFiles verifies or downloads MNIST data files.
-func (d *Dataset) ensureFiles(download bool) error {
-	for _, file := range d.fileNames() {
-		path := filepath.Join(d.root, file)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if !download {
-				return fmt.Errorf("file %s missing, download disabled", file)
-			}
-			if err := d.download(file); err != nil {
-				return fmt.Errorf("download %s: %w", file, err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("check file %s: %w", file, err)
-		}
+// Len returns the number of samples in the dataset.
+func (d *Dataset[T]) Len() int {
+	return len(d.images)
+}
+
+// Get returns the image and label at index i.
+func (d *Dataset[T]) Get(i int) ([]T, uint8) {
+	return d.images[i], d.labels[i]
+}
+
+// GetRaw returns the raw uint8 image data (0-255) and label.
+func (d *Dataset[T]) GetRaw(i int) ([]uint8, uint8) {
+	raw := make([]uint8, len(d.images[i]))
+	for j, pixel := range d.images[i] {
+		raw[j] = uint8(float64(pixel) * 255)
 	}
-	return nil
+	return raw, d.labels[i]
+}
+
+// ensureFiles verifies or downloads MNIST data files using the generic downloader.
+func (d *Dataset[T]) ensureFiles(download bool) error {
+	files := make([]progress.File, 0, 2)
+	for _, name := range d.fileNames() {
+		files = append(files, progress.File{
+			URL:    fmt.Sprintf(BaseURL, name),
+			Name:   name,
+			Needed: true, // All MNIST files are required
+		})
+	}
+
+	client := progress.New(progress.Config{
+		Dir:      d.root,
+		Files:    files,
+		Download: download,
+		Progress: true, // Show progress bars
+		Gzip:     true, // Auto-decompress .gz files
+	})
+
+	return client.Ensure()
 }
 
 // fileNames returns the dataset file names based on training or testing mode.
-func (d *Dataset) fileNames() []string {
+func (d *Dataset[T]) fileNames() []string {
 	prefix := "t10k"
 	if d.isTrain {
 		prefix = "train"
@@ -72,54 +98,19 @@ func (d *Dataset) fileNames() []string {
 	}
 }
 
-// download fetches and decompresses an MNIST file.
-func (d *Dataset) download(file string) error {
-	url := fmt.Sprintf(BaseURL, file)
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("fetch %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad response: %s", resp.Status)
-	}
-
-	gzr, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return fmt.Errorf("decompress: %w", err)
-	}
-	defer gzr.Close()
-
-	if err := os.MkdirAll(d.root, 0755); err != nil {
-		return fmt.Errorf("create dir %s: %w", d.root, err)
-	}
-
-	path := filepath.Join(d.root, file)
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create file %s: %w", path, err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, gzr); err != nil {
-		return fmt.Errorf("write file %s: %w", path, err)
-	}
-	return nil
-}
-
 // load reads and normalizes MNIST image and label data.
-func (d *Dataset) load() error {
+func (d *Dataset[T]) load() error {
 	imgPath, lblPath := filepath.Join(d.root, d.fileNames()[0]), filepath.Join(d.root, d.fileNames()[1])
 	images, err := readImages(imgPath)
 	if err != nil {
 		return fmt.Errorf("read images: %w", err)
 	}
 
-	d.images = make([][]float32, len(images))
+	d.images = make([][]T, len(images))
 	for i, img := range images {
-		d.images[i] = make([]float32, len(img))
+		d.images[i] = make([]T, len(img))
 		for j, px := range img {
-			d.images[i][j] = float32(px) / 255 // Normalize to [0,1]
+			d.images[i][j] = T(px) / 255 // Normalize to [0,1]
 		}
 	}
 
@@ -128,16 +119,6 @@ func (d *Dataset) load() error {
 		return fmt.Errorf("read labels: %w", err)
 	}
 	return nil
-}
-
-// Len returns the number of samples in the dataset.
-func (d *Dataset) Len() int {
-	return len(d.images)
-}
-
-// Get returns the image and label at index i.
-func (d *Dataset) Get(i int) ([]float32, uint8) {
-	return d.images[i], d.labels[i]
 }
 
 // readImages reads raw MNIST image data.
@@ -202,4 +183,34 @@ func readLabels(path string) ([]uint8, error) {
 		return nil, fmt.Errorf("read labels: %w", err)
 	}
 	return labels, nil
+}
+
+// PrintImage displays a 28x28 MNIST image as ASCII art in the terminal.
+//
+// Parameters:
+//
+//	pixels []float32: A slice of 784 float32 values representing the pixel intensities
+//	of a 28x28 MNIST image. Each value should be in the range [0, 1].
+//
+// Behavior:
+//
+//	The function maps pixel intensity values to different ASCII characters to
+//	visually represent the image. Higher intensity pixels are shown as "██",
+//	medium as "▓▓" or "░░", and low intensity as spaces.
+func PrintImage[T spark.D](pixels []T) {
+	for i := range MNISTImageSize {
+		for j := range MNISTImageSize {
+			pixel := pixels[i*MNISTImageSize+j]
+			if pixel > 0.5 {
+				fmt.Print("██")
+			} else if pixel > 0.3 {
+				fmt.Print("▓▓")
+			} else if pixel > 0.1 {
+				fmt.Print("░░")
+			} else {
+				fmt.Print("  ")
+			}
+		}
+		fmt.Println()
+	}
 }

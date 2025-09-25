@@ -1,27 +1,25 @@
-package mnist
+package cifar10
 
 import (
 	"iter"
 	"math/rand"
-
-	"github.com/gocnn/spark"
 )
 
-// DataLoader manages batch iteration over a generic dataset.
-type DataLoader[T spark.D] struct {
-	dataset   *Dataset[T]
+// DataLoader manages batch iteration over a dataset.
+type DataLoader struct {
+	dataset   *Dataset
 	batchSize int
 	shuffle   bool
 	indices   []int
 }
 
 // NewDataLoader creates a DataLoader for batch iteration.
-func (ds *Dataset[T]) NewDataLoader(batchSize int, shuffle bool) *DataLoader[T] {
+func (ds *Dataset) NewDataLoader(batchSize int, shuffle bool) *DataLoader {
 	indices := make([]int, ds.Len())
 	for i := range indices {
 		indices[i] = i
 	}
-	dl := &DataLoader[T]{
+	dl := &DataLoader{
 		dataset:   ds,
 		batchSize: batchSize,
 		shuffle:   shuffle,
@@ -34,12 +32,14 @@ func (ds *Dataset[T]) NewDataLoader(batchSize int, shuffle bool) *DataLoader[T] 
 }
 
 // All returns an iterator over batch pairs using iter.Seq2.
-func (dl *DataLoader[T]) All() iter.Seq2[[][]T, []uint8] {
-	return func(yield func([][]T, []uint8) bool) {
+// This approach provides direct access to images and labels without wrapper struct.
+// Usage: for images, labels := range dl.All() { ... }
+func (dl *DataLoader) All() iter.Seq2[[][]float32, []uint8] {
+	return func(yield func([][]float32, []uint8) bool) {
 		for start := 0; start < len(dl.indices); start += dl.batchSize {
 			end := min(start+dl.batchSize, len(dl.indices))
 			batchIndices := dl.indices[start:end]
-			images := make([][]T, len(batchIndices))
+			images := make([][]float32, len(batchIndices))
 			labels := make([]uint8, len(batchIndices))
 			for i, idx := range batchIndices {
 				images[i], labels[i] = dl.dataset.Get(idx)
@@ -52,23 +52,23 @@ func (dl *DataLoader[T]) All() iter.Seq2[[][]T, []uint8] {
 }
 
 // Reset reshuffles the indices if shuffle is enabled.
-func (dl *DataLoader[T]) Reset() {
+func (dl *DataLoader) Reset() {
 	if dl.shuffle {
 		rand.Shuffle(len(dl.indices), func(i, j int) { dl.indices[i], dl.indices[j] = dl.indices[j], dl.indices[i] })
 	}
 }
 
 // Len returns the number of batches in the DataLoader.
-func (dl *DataLoader[T]) Len() int {
+func (dl *DataLoader) Len() int {
 	return (len(dl.indices) + dl.batchSize - 1) / dl.batchSize
 }
 
 // BatchSize returns the batch size.
-func (dl *DataLoader[T]) BatchSize() int {
+func (dl *DataLoader) BatchSize() int {
 	return dl.batchSize
 }
 
 // IsShuffled returns whether the DataLoader shuffles data.
-func (dl *DataLoader[T]) IsShuffled() bool {
+func (dl *DataLoader) IsShuffled() bool {
 	return dl.shuffle
 }
