@@ -11,7 +11,7 @@ func main() {
 // 	"fmt"
 // 	"math"
 
-// 	"github.com/qntx/spark"
+// 	"github.com/gocnn/spark"
 // 	"github.com/qntx/spark/dot"
 // )
 

@@ -1,6 +1,6 @@
 package cpu
 
-import "github.com/qntx/spark"
+import "github.com/gocnn/spark"
 
 type CpuStorage[T spark.D] struct {
 	data   []T

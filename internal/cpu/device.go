@@ -1,6 +1,6 @@
 package cpu
 
-import "github.com/qntx/spark"
+import "github.com/gocnn/spark"
 
 type CpuDevice struct {
 	location spark.DeviceLocation
