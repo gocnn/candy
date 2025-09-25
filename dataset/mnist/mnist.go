@@ -203,3 +203,21 @@ func readLabels(path string) ([]uint8, error) {
 	}
 	return labels, nil
 }
+
+func PrintImage(pixels []float32) {
+	for i := range 28 {
+		for j := range 28 {
+			pixel := pixels[i*28+j]
+			if pixel > 0.5 {
+				fmt.Print("██")
+			} else if pixel > 0.3 {
+				fmt.Print("▓▓")
+			} else if pixel > 0.1 {
+				fmt.Print("░░")
+			} else {
+				fmt.Print("  ")
+			}
+		}
+		fmt.Println()
+	}
+}
