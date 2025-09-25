@@ -57,3 +57,18 @@ func (dl *DataLoader) Reset() {
 		rand.Shuffle(len(dl.indices), func(i, j int) { dl.indices[i], dl.indices[j] = dl.indices[j], dl.indices[i] })
 	}
 }
+
+// Len returns the number of batches in the DataLoader.
+func (dl *DataLoader) Len() int {
+	return (len(dl.indices) + dl.batchSize - 1) / dl.batchSize
+}
+
+// BatchSize returns the batch size.
+func (dl *DataLoader) BatchSize() int {
+	return dl.batchSize
+}
+
+// IsShuffled returns whether the DataLoader shuffles data.
+func (dl *DataLoader) IsShuffled() bool {
+	return dl.shuffle
+}
