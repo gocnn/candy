@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark/dataset"
 	"github.com/gocnn/spark/dataset/cifar10"
 )
 
 func main() {
-	ds, err := dataset.CIFAR10("./data", true, true)
+	ds, err := cifar10.New("./data", true, true)
 	if err != nil {
 		panic(err)
 	}

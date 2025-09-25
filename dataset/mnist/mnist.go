@@ -9,8 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gocnn/spark"
 	"github.com/gocnn/spark/dataset/progress"
 )
+
+const MNISTImageSize = 28
 
 // MNIST download URLs - modify these to use different mirror sources
 const (
@@ -22,17 +25,17 @@ const (
 	// BaseURL = "http://yann.lecun.com/exdb/mnist/%s.gz" // Original (often unavailable)
 )
 
-// Dataset holds MNIST images and labels.
-type Dataset struct {
-	images  [][]float32 // Flattened, normalized images [0,1]
-	labels  []uint8     // Labels (0-9)
+// Dataset holds MNIST images and labels with generic precision.
+type Dataset[T spark.D] struct {
+	images  [][]T   // Flattened, normalized images [0,1]
+	labels  []uint8 // Labels (0-9)
 	root    string
 	isTrain bool
 }
 
-// New creates an MNIST dataset, downloading files if needed.
-func New(root string, train, download bool) (*Dataset, error) {
-	ds := &Dataset{root: root, isTrain: train}
+// New creates an MNIST dataset with specified precision type.
+func New[T spark.D](root string, train, download bool) (*Dataset[T], error) {
+	ds := &Dataset[T]{root: root, isTrain: train}
 	if err := ds.ensureFiles(download); err != nil {
 		return nil, fmt.Errorf("ensure files: %w", err)
 	}
@@ -43,17 +46,26 @@ func New(root string, train, download bool) (*Dataset, error) {
 }
 
 // Len returns the number of samples in the dataset.
-func (d *Dataset) Len() int {
+func (d *Dataset[T]) Len() int {
 	return len(d.images)
 }
 
 // Get returns the image and label at index i.
-func (d *Dataset) Get(i int) ([]float32, uint8) {
+func (d *Dataset[T]) Get(i int) ([]T, uint8) {
 	return d.images[i], d.labels[i]
 }
 
+// GetRaw returns the raw uint8 image data (0-255) and label.
+func (d *Dataset[T]) GetRaw(i int) ([]uint8, uint8) {
+	raw := make([]uint8, len(d.images[i]))
+	for j, pixel := range d.images[i] {
+		raw[j] = uint8(float64(pixel) * 255)
+	}
+	return raw, d.labels[i]
+}
+
 // ensureFiles verifies or downloads MNIST data files using the generic downloader.
-func (d *Dataset) ensureFiles(download bool) error {
+func (d *Dataset[T]) ensureFiles(download bool) error {
 	files := make([]progress.File, 0, 2)
 	for _, name := range d.fileNames() {
 		files = append(files, progress.File{
@@ -75,7 +87,7 @@ func (d *Dataset) ensureFiles(download bool) error {
 }
 
 // fileNames returns the dataset file names based on training or testing mode.
-func (d *Dataset) fileNames() []string {
+func (d *Dataset[T]) fileNames() []string {
 	prefix := "t10k"
 	if d.isTrain {
 		prefix = "train"
@@ -87,18 +99,18 @@ func (d *Dataset) fileNames() []string {
 }
 
 // load reads and normalizes MNIST image and label data.
-func (d *Dataset) load() error {
+func (d *Dataset[T]) load() error {
 	imgPath, lblPath := filepath.Join(d.root, d.fileNames()[0]), filepath.Join(d.root, d.fileNames()[1])
 	images, err := readImages(imgPath)
 	if err != nil {
 		return fmt.Errorf("read images: %w", err)
 	}
 
-	d.images = make([][]float32, len(images))
+	d.images = make([][]T, len(images))
 	for i, img := range images {
-		d.images[i] = make([]float32, len(img))
+		d.images[i] = make([]T, len(img))
 		for j, px := range img {
-			d.images[i][j] = float32(px) / 255 // Normalize to [0,1]
+			d.images[i][j] = T(px) / 255 // Normalize to [0,1]
 		}
 	}
 
@@ -173,10 +185,22 @@ func readLabels(path string) ([]uint8, error) {
 	return labels, nil
 }
 
-func PrintImage(pixels []float32) {
-	for i := range 28 {
-		for j := range 28 {
-			pixel := pixels[i*28+j]
+// PrintImage displays a 28x28 MNIST image as ASCII art in the terminal.
+//
+// Parameters:
+//
+//	pixels []float32: A slice of 784 float32 values representing the pixel intensities
+//	of a 28x28 MNIST image. Each value should be in the range [0, 1].
+//
+// Behavior:
+//
+//	The function maps pixel intensity values to different ASCII characters to
+//	visually represent the image. Higher intensity pixels are shown as "██",
+//	medium as "▓▓" or "░░", and low intensity as spaces.
+func PrintImage[T spark.D](pixels []T) {
+	for i := range MNISTImageSize {
+		for j := range MNISTImageSize {
+			pixel := pixels[i*MNISTImageSize+j]
 			if pixel > 0.5 {
 				fmt.Print("██")
 			} else if pixel > 0.3 {

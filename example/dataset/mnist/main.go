@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark/dataset"
 	"github.com/gocnn/spark/dataset/mnist"
 )
 
 func main() {
-	ds, err := dataset.MNIST("./data", true, true)
+	ds, err := mnist.New[float64]("./data", true, true)
 	if err != nil {
 		panic(err)
 	}
