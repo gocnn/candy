@@ -74,11 +74,12 @@ func (c *Client) Download(f File, path string) error {
 	}
 
 	if c.cfg.Gzip && filepath.Ext(f.URL) == ".gz" {
-		body, err = gzip.NewReader(body)
+		gr, err := gzip.NewReader(body)
 		if err != nil {
 			return fmt.Errorf("decompress: %w", err)
 		}
-		defer body.(*gzip.Reader).Close()
+		defer gr.Close()
+		body = gr
 	}
 
 	if err := os.MkdirAll(c.cfg.Dir, 0755); err != nil {
