@@ -1,21 +1,21 @@
+// mnist.go
 package mnist
 
 import (
 	"bufio"
-	"compress/gzip"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/gocnn/spark/dataset/progress"
 )
 
 // MNIST download URLs - modify these to use different mirror sources
 const (
 	// Primary source: Google Cloud Storage
 	BaseURL = "https://storage.googleapis.com/cvdf-datasets/mnist/%s.gz"
-
 	// Alternative sources (uncomment to use):
 	// BaseURL = "https://github.com/cvdfoundation/mnist/raw/main/%s.gz"
 	// BaseURL = "https://huggingface.co/datasets/mnist/resolve/main/data/%s.gz"
@@ -42,22 +42,36 @@ func New(root string, train, download bool) (*Dataset, error) {
 	return ds, nil
 }
 
-// ensureFiles verifies or downloads MNIST data files.
+// Len returns the number of samples in the dataset.
+func (d *Dataset) Len() int {
+	return len(d.images)
+}
+
+// Get returns the image and label at index i.
+func (d *Dataset) Get(i int) ([]float32, uint8) {
+	return d.images[i], d.labels[i]
+}
+
+// ensureFiles verifies or downloads MNIST data files using the generic downloader.
 func (d *Dataset) ensureFiles(download bool) error {
-	for _, file := range d.fileNames() {
-		path := filepath.Join(d.root, file)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if !download {
-				return fmt.Errorf("file %s missing, download disabled", file)
-			}
-			if err := d.download(file); err != nil {
-				return fmt.Errorf("download %s: %w", file, err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("check file %s: %w", file, err)
-		}
+	files := make([]progress.File, 0, 2)
+	for _, name := range d.fileNames() {
+		files = append(files, progress.File{
+			URL:    fmt.Sprintf(BaseURL, name),
+			Name:   name,
+			Needed: true, // All MNIST files are required
+		})
 	}
-	return nil
+
+	client := progress.New(progress.Config{
+		Dir:      d.root,
+		Files:    files,
+		Download: download,
+		Progress: true, // Show progress bars
+		Gzip:     true, // Auto-decompress .gz files
+	})
+
+	return client.Ensure()
 }
 
 // fileNames returns the dataset file names based on training or testing mode.
@@ -70,41 +84,6 @@ func (d *Dataset) fileNames() []string {
 		fmt.Sprintf("%s-images-idx3-ubyte", prefix),
 		fmt.Sprintf("%s-labels-idx1-ubyte", prefix),
 	}
-}
-
-// download fetches and decompresses an MNIST file.
-func (d *Dataset) download(file string) error {
-	url := fmt.Sprintf(BaseURL, file)
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("fetch %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad response: %s", resp.Status)
-	}
-
-	gzr, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return fmt.Errorf("decompress: %w", err)
-	}
-	defer gzr.Close()
-
-	if err := os.MkdirAll(d.root, 0755); err != nil {
-		return fmt.Errorf("create dir %s: %w", d.root, err)
-	}
-
-	path := filepath.Join(d.root, file)
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create file %s: %w", path, err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, gzr); err != nil {
-		return fmt.Errorf("write file %s: %w", path, err)
-	}
-	return nil
 }
 
 // load reads and normalizes MNIST image and label data.
@@ -128,16 +107,6 @@ func (d *Dataset) load() error {
 		return fmt.Errorf("read labels: %w", err)
 	}
 	return nil
-}
-
-// Len returns the number of samples in the dataset.
-func (d *Dataset) Len() int {
-	return len(d.images)
-}
-
-// Get returns the image and label at index i.
-func (d *Dataset) Get(i int) ([]float32, uint8) {
-	return d.images[i], d.labels[i]
 }
 
 // readImages reads raw MNIST image data.
