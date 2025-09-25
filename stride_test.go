@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/qntx/spark"
+	"github.com/gocnn/spark"
 )
 
 func TestStrideNewStridedIndex(t *testing.T) {
