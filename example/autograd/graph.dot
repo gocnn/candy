@@ -1,0 +1,41 @@
+digraph g {
+"0xc000020900" [label="Loss(0.01821032492066472)", color=orange, style=filled]
+"0xc00007a1e0" [label="Mul", color=lightblue, style=filled, shape=box]
+"0xc000020780" -> "0xc00007a1e0"
+"0xc000020840" -> "0xc00007a1e0"
+"0xc00007a1e0" -> "0xc000020900"
+"0xc000020780" [label="variable(0.5)", color=orange, style=filled]
+"0xc000020840" [label="variable(0.03642064984132944)", color=orange, style=filled]
+"0xc00007a190" [label="Mul", color=lightblue, style=filled, shape=box]
+"0xc000020720" -> "0xc00007a190"
+"0xc000020720" -> "0xc00007a190"
+"0xc00007a190" -> "0xc000020840"
+"0xc000020720" [label="variable(-0.19084194989920178)", color=orange, style=filled]
+"0xc000020720" [label="variable(-0.19084194989920178)", color=orange, style=filled]
+"0xc00007a140" [label="Sub", color=lightblue, style=filled, shape=box]
+"0xc000020660" -> "0xc00007a140"
+"0xc0000205d0" -> "0xc00007a140"
+"0xc00007a140" -> "0xc000020720"
+"0xc000020660" [label="variable(0.5)", color=orange, style=filled]
+"0xc0000205d0" [label="Y2(0.6908419498992018)", color=orange, style=filled]
+"0xc00007a0f0" [label="Sigmoid", color=lightblue, style=filled, shape=box]
+"0xc0000204e0" -> "0xc00007a0f0"
+"0xc00007a0f0" -> "0xc0000205d0"
+"0xc0000204e0" [label="Z2(0.8040584358453323)", color=orange, style=filled]
+"0xc00007a0a0" [label="MatMul", color=lightblue, style=filled, shape=box]
+"0xc000020480" -> "0xc00007a0a0"
+"0xc000020330" -> "0xc00007a0a0"
+"0xc00007a0a0" -> "0xc0000204e0"
+"0xc000020480" [label="Y1[1 2]([0.5974857658270161 0.6942363401080305])", color=orange, style=filled]
+"0xc000020330" [label="W1[2 1]([[0.3] [0.9]])", color=orange, style=filled]
+"0xc00007a050" [label="Sigmoid", color=lightblue, style=filled, shape=box]
+"0xc000020390" -> "0xc00007a050"
+"0xc00007a050" -> "0xc000020480"
+"0xc000020390" [label="Z1[1 2]([0.395 0.8200000000000001])", color=orange, style=filled]
+"0xc00007a000" [label="MatMul", color=lightblue, style=filled, shape=box]
+"0xc000020210" -> "0xc00007a000"
+"0xc0000202a0" -> "0xc00007a000"
+"0xc00007a000" -> "0xc000020390"
+"0xc000020210" [label="X[1 2]([0.35 0.9])", color=orange, style=filled]
+"0xc0000202a0" [label="W0[2 2]([[0.1 0.8] [0.4 0.6]])", color=orange, style=filled]
+}
