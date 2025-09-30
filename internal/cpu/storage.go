@@ -1,9 +1,15 @@
 package cpu
 
-import "github.com/gocnn/spark"
+import (
+	"slices"
+
+	"github.com/gocnn/spark"
+)
 
 type CpuStorage[T spark.D] struct {
-	data   []T
-	dtype  spark.DType
-	device *CpuDevice
+	data []T
+}
+
+func (s *CpuStorage[T]) Clone() CpuStorage[T] {
+	return CpuStorage[T]{data: slices.Clone(s.data)}
 }
