@@ -10,10 +10,10 @@ import (
 // CpuDevice is a CPU-based implementation of the BackendDevice interface.
 type CpuDevice[T spark.D] struct{}
 
-// NewCpuDevice creates a new CpuDevice.
-func NewCpuDevice[T spark.D](size ...int) (spark.BackendDevice[T], error) {
-	return &CpuDevice[T]{}, nil
-}
+// // NewCpuDevice creates a new CpuDevice.
+// func NewCpuDevice[T spark.D](size ...int) (spark.BackendDevice[T], error) {
+// 	return &CpuDevice[T]{}, nil
+// }
 
 // Location returns the device location as "cpu".
 func (c *CpuDevice[T]) Location() spark.DeviceLocation {
