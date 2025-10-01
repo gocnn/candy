@@ -50,6 +50,54 @@ func NaiveConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation 
 	}
 }
 
+// NaiveConv1dStridedF32 performs 1D convolution for float32 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float32(0)
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += src[srcIdx] * kernel[kernelIdx]
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConv1dStridedF64 performs 1D convolution for float64 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float64(0)
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += src[srcIdx] * kernel[kernelIdx]
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
 // Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
 //
 // GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
