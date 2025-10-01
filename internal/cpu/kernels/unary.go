@@ -2,8 +2,8 @@ package kernels
 
 import "math"
 
-// UnaryCopyF32 performs element-wise copy for float32 (contiguous memory)
-func UnaryCopyF32(numel int, inp, out []float32) {
+// UCopyF32 performs element-wise copy for float32 (contiguous memory)
+func UCopyF32(numel int, inp, out []float32) {
 	if inp == nil {
 		return // No-op for in-place
 	}
@@ -12,10 +12,10 @@ func UnaryCopyF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryCopyStridedF32 performs element-wise copy for float32 (strided memory)
-func UnaryCopyStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UCopyStridedF32 performs element-wise copy for float32 (strided memory)
+func UCopyStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCopyF32(numel, inp, out)
+		UCopyF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -27,8 +27,8 @@ func UnaryCopyStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryCopyF64 performs element-wise copy for float64 (contiguous memory)
-func UnaryCopyF64(numel int, inp, out []float64) {
+// UCopyF64 performs element-wise copy for float64 (contiguous memory)
+func UCopyF64(numel int, inp, out []float64) {
 	if inp == nil {
 		return // No-op for in-place
 	}
@@ -37,10 +37,10 @@ func UnaryCopyF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryCopyStridedF64 performs element-wise copy for float64 (strided memory)
-func UnaryCopyStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UCopyStridedF64 performs element-wise copy for float64 (strided memory)
+func UCopyStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCopyF64(numel, inp, out)
+		UCopyF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -52,8 +52,8 @@ func UnaryCopyStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryNegF32 performs element-wise negation for float32 (contiguous memory)
-func UnaryNegF32(numel int, inp, out []float32) {
+// UNegF32 performs element-wise negation for float32 (contiguous memory)
+func UNegF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = -out[i]
@@ -65,10 +65,10 @@ func UnaryNegF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryNegStridedF32 performs element-wise negation for float32 (strided memory)
-func UnaryNegStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UNegStridedF32 performs element-wise negation for float32 (strided memory)
+func UNegStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryNegF32(numel, inp, out)
+		UNegF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -83,8 +83,8 @@ func UnaryNegStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryNegF64 performs element-wise negation for float64 (contiguous memory)
-func UnaryNegF64(numel int, inp, out []float64) {
+// UNegF64 performs element-wise negation for float64 (contiguous memory)
+func UNegF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = -out[i]
@@ -96,10 +96,10 @@ func UnaryNegF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryNegStridedF64 performs element-wise negation for float64 (strided memory)
-func UnaryNegStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UNegStridedF64 performs element-wise negation for float64 (strided memory)
+func UNegStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryNegF64(numel, inp, out)
+		UNegF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -114,8 +114,8 @@ func UnaryNegStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryRecipF32 performs element-wise reciprocal for float32 (contiguous memory)
-func UnaryRecipF32(numel int, inp, out []float32) {
+// URecipF32 performs element-wise reciprocal for float32 (contiguous memory)
+func URecipF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = 1.0 / out[i]
@@ -127,10 +127,10 @@ func UnaryRecipF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryRecipStridedF32 performs element-wise reciprocal for float32 (strided memory)
-func UnaryRecipStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// URecipStridedF32 performs element-wise reciprocal for float32 (strided memory)
+func URecipStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryRecipF32(numel, inp, out)
+		URecipF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -145,8 +145,8 @@ func UnaryRecipStridedF32(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryRecipF64 performs element-wise reciprocal for float64 (contiguous memory)
-func UnaryRecipF64(numel int, inp, out []float64) {
+// URecipF64 performs element-wise reciprocal for float64 (contiguous memory)
+func URecipF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = 1.0 / out[i]
@@ -158,10 +158,10 @@ func UnaryRecipF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryRecipStridedF64 performs element-wise reciprocal for float64 (strided memory)
-func UnaryRecipStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// URecipStridedF64 performs element-wise reciprocal for float64 (strided memory)
+func URecipStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryRecipF64(numel, inp, out)
+		URecipF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -176,8 +176,8 @@ func UnaryRecipStridedF64(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryExpF32 performs element-wise exponential for float32 (contiguous memory)
-func UnaryExpF32(numel int, inp, out []float32) {
+// UExpF32 performs element-wise exponential for float32 (contiguous memory)
+func UExpF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Exp(float64(out[i])))
@@ -189,10 +189,10 @@ func UnaryExpF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryExpStridedF32 performs element-wise exponential for float32 (strided memory)
-func UnaryExpStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UExpStridedF32 performs element-wise exponential for float32 (strided memory)
+func UExpStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryExpF32(numel, inp, out)
+		UExpF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -207,8 +207,8 @@ func UnaryExpStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryExpF64 performs element-wise exponential for float64 (contiguous memory)
-func UnaryExpF64(numel int, inp, out []float64) {
+// UExpF64 performs element-wise exponential for float64 (contiguous memory)
+func UExpF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Exp(out[i])
@@ -220,10 +220,10 @@ func UnaryExpF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryExpStridedF64 performs element-wise exponential for float64 (strided memory)
-func UnaryExpStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UExpStridedF64 performs element-wise exponential for float64 (strided memory)
+func UExpStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryExpF64(numel, inp, out)
+		UExpF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -238,8 +238,8 @@ func UnaryExpStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryLogF32 performs element-wise logarithm for float32 (contiguous memory)
-func UnaryLogF32(numel int, inp, out []float32) {
+// ULogF32 performs element-wise logarithm for float32 (contiguous memory)
+func ULogF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Log(float64(out[i])))
@@ -251,10 +251,10 @@ func UnaryLogF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryLogStridedF32 performs element-wise logarithm for float32 (strided memory)
-func UnaryLogStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// ULogStridedF32 performs element-wise logarithm for float32 (strided memory)
+func ULogStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryLogF32(numel, inp, out)
+		ULogF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -269,8 +269,8 @@ func UnaryLogStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryLogF64 performs element-wise logarithm for float64 (contiguous memory)
-func UnaryLogF64(numel int, inp, out []float64) {
+// ULogF64 performs element-wise logarithm for float64 (contiguous memory)
+func ULogF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Log(out[i])
@@ -282,10 +282,10 @@ func UnaryLogF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryLogStridedF64 performs element-wise logarithm for float64 (strided memory)
-func UnaryLogStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// ULogStridedF64 performs element-wise logarithm for float64 (strided memory)
+func ULogStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryLogF64(numel, inp, out)
+		ULogF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -300,8 +300,8 @@ func UnaryLogStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnarySinF32 performs element-wise sine for float32 (contiguous memory)
-func UnarySinF32(numel int, inp, out []float32) {
+// USinF32 performs element-wise sine for float32 (contiguous memory)
+func USinF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Sin(float64(out[i])))
@@ -313,10 +313,10 @@ func UnarySinF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySinStridedF32 performs element-wise sine for float32 (strided memory)
-func UnarySinStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USinStridedF32 performs element-wise sine for float32 (strided memory)
+func USinStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySinF32(numel, inp, out)
+		USinF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -331,8 +331,8 @@ func UnarySinStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnarySinF64 performs element-wise sine for float64 (contiguous memory)
-func UnarySinF64(numel int, inp, out []float64) {
+// USinF64 performs element-wise sine for float64 (contiguous memory)
+func USinF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Sin(out[i])
@@ -344,10 +344,10 @@ func UnarySinF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySinStridedF64 performs element-wise sine for float64 (strided memory)
-func UnarySinStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USinStridedF64 performs element-wise sine for float64 (strided memory)
+func USinStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySinF64(numel, inp, out)
+		USinF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -362,8 +362,8 @@ func UnarySinStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryCosF32 performs element-wise cosine for float32 (contiguous memory)
-func UnaryCosF32(numel int, inp, out []float32) {
+// UCosF32 performs element-wise cosine for float32 (contiguous memory)
+func UCosF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Cos(float64(out[i])))
@@ -375,10 +375,10 @@ func UnaryCosF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryCosStridedF32 performs element-wise cosine for float32 (strided memory)
-func UnaryCosStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UCosStridedF32 performs element-wise cosine for float32 (strided memory)
+func UCosStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCosF32(numel, inp, out)
+		UCosF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -393,8 +393,8 @@ func UnaryCosStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryCosF64 performs element-wise cosine for float64 (contiguous memory)
-func UnaryCosF64(numel int, inp, out []float64) {
+// UCosF64 performs element-wise cosine for float64 (contiguous memory)
+func UCosF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Cos(out[i])
@@ -406,10 +406,10 @@ func UnaryCosF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryCosStridedF64 performs element-wise cosine for float64 (strided memory)
-func UnaryCosStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UCosStridedF64 performs element-wise cosine for float64 (strided memory)
+func UCosStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCosF64(numel, inp, out)
+		UCosF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -424,8 +424,8 @@ func UnaryCosStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryTanhF32 performs element-wise tanh for float32 (contiguous memory)
-func UnaryTanhF32(numel int, inp, out []float32) {
+// UTanhF32 performs element-wise tanh for float32 (contiguous memory)
+func UTanhF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Tanh(float64(out[i])))
@@ -437,10 +437,10 @@ func UnaryTanhF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryTanhStridedF32 performs element-wise tanh for float32 (strided memory)
-func UnaryTanhStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UTanhStridedF32 performs element-wise tanh for float32 (strided memory)
+func UTanhStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryTanhF32(numel, inp, out)
+		UTanhF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -455,8 +455,8 @@ func UnaryTanhStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryTanhF64 performs element-wise tanh for float64 (contiguous memory)
-func UnaryTanhF64(numel int, inp, out []float64) {
+// UTanhF64 performs element-wise tanh for float64 (contiguous memory)
+func UTanhF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Tanh(out[i])
@@ -468,10 +468,10 @@ func UnaryTanhF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryTanhStridedF64 performs element-wise tanh for float64 (strided memory)
-func UnaryTanhStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UTanhStridedF64 performs element-wise tanh for float64 (strided memory)
+func UTanhStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryTanhF64(numel, inp, out)
+		UTanhF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -486,8 +486,8 @@ func UnaryTanhStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryErfF32 performs element-wise erf for float32 (contiguous memory)
-func UnaryErfF32(numel int, inp, out []float32) {
+// UErfF32 performs element-wise erf for float32 (contiguous memory)
+func UErfF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Erf(float64(out[i])))
@@ -499,10 +499,10 @@ func UnaryErfF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryErfStridedF32 performs element-wise erf for float32 (strided memory)
-func UnaryErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UErfStridedF32 performs element-wise erf for float32 (strided memory)
+func UErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryErfF32(numel, inp, out)
+		UErfF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -517,8 +517,8 @@ func UnaryErfStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryErfF64 performs element-wise erf for float64 (contiguous memory)
-func UnaryErfF64(numel int, inp, out []float64) {
+// UErfF64 performs element-wise erf for float64 (contiguous memory)
+func UErfF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Erf(out[i])
@@ -530,10 +530,10 @@ func UnaryErfF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryErfStridedF64 performs element-wise erf for float64 (strided memory)
-func UnaryErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UErfStridedF64 performs element-wise erf for float64 (strided memory)
+func UErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryErfF64(numel, inp, out)
+		UErfF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -548,8 +548,8 @@ func UnaryErfStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryCeilF32 performs element-wise ceil for float32 (contiguous memory)
-func UnaryCeilF32(numel int, inp, out []float32) {
+// UCeilF32 performs element-wise ceil for float32 (contiguous memory)
+func UCeilF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Ceil(float64(out[i])))
@@ -561,10 +561,10 @@ func UnaryCeilF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryCeilStridedF32 performs element-wise ceil for float32 (strided memory)
-func UnaryCeilStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UCeilStridedF32 performs element-wise ceil for float32 (strided memory)
+func UCeilStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCeilF32(numel, inp, out)
+		UCeilF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -579,8 +579,8 @@ func UnaryCeilStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryCeilF64 performs element-wise ceil for float64 (contiguous memory)
-func UnaryCeilF64(numel int, inp, out []float64) {
+// UCeilF64 performs element-wise ceil for float64 (contiguous memory)
+func UCeilF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Ceil(out[i])
@@ -592,10 +592,10 @@ func UnaryCeilF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryCeilStridedF64 performs element-wise ceil for float64 (strided memory)
-func UnaryCeilStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UCeilStridedF64 performs element-wise ceil for float64 (strided memory)
+func UCeilStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryCeilF64(numel, inp, out)
+		UCeilF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -610,8 +610,8 @@ func UnaryCeilStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryFloorF32 performs element-wise floor for float32 (contiguous memory)
-func UnaryFloorF32(numel int, inp, out []float32) {
+// UFloorF32 performs element-wise floor for float32 (contiguous memory)
+func UFloorF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Floor(float64(out[i])))
@@ -623,10 +623,10 @@ func UnaryFloorF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryFloorStridedF32 performs element-wise floor for float32 (strided memory)
-func UnaryFloorStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UFloorStridedF32 performs element-wise floor for float32 (strided memory)
+func UFloorStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryFloorF32(numel, inp, out)
+		UFloorF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -641,8 +641,8 @@ func UnaryFloorStridedF32(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryFloorF64 performs element-wise floor for float64 (contiguous memory)
-func UnaryFloorF64(numel int, inp, out []float64) {
+// UFloorF64 performs element-wise floor for float64 (contiguous memory)
+func UFloorF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Floor(out[i])
@@ -654,10 +654,10 @@ func UnaryFloorF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryFloorStridedF64 performs element-wise floor for float64 (strided memory)
-func UnaryFloorStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UFloorStridedF64 performs element-wise floor for float64 (strided memory)
+func UFloorStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryFloorF64(numel, inp, out)
+		UFloorF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -672,8 +672,8 @@ func UnaryFloorStridedF64(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryRoundF32 performs element-wise round for float32 (contiguous memory)
-func UnaryRoundF32(numel int, inp, out []float32) {
+// URoundF32 performs element-wise round for float32 (contiguous memory)
+func URoundF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Round(float64(out[i])))
@@ -685,10 +685,10 @@ func UnaryRoundF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryRoundStridedF32 performs element-wise round for float32 (strided memory)
-func UnaryRoundStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// URoundStridedF32 performs element-wise round for float32 (strided memory)
+func URoundStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryRoundF32(numel, inp, out)
+		URoundF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -703,8 +703,8 @@ func UnaryRoundStridedF32(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryRoundF64 performs element-wise round for float64 (contiguous memory)
-func UnaryRoundF64(numel int, inp, out []float64) {
+// URoundF64 performs element-wise round for float64 (contiguous memory)
+func URoundF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Round(out[i])
@@ -716,10 +716,10 @@ func UnaryRoundF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryRoundStridedF64 performs element-wise round for float64 (strided memory)
-func UnaryRoundStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// URoundStridedF64 performs element-wise round for float64 (strided memory)
+func URoundStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryRoundF64(numel, inp, out)
+		URoundF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -734,8 +734,8 @@ func UnaryRoundStridedF64(numel, numDims int, dims, strides []int, inp, out []fl
 	}
 }
 
-// UnaryNormcdfF32 performs element-wise normal CDF for float32 (contiguous memory)
-func UnaryNormcdfF32(numel int, inp, out []float32) {
+// UNormcdfF32 performs element-wise normal CDF for float32 (contiguous memory)
+func UNormcdfF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -749,10 +749,10 @@ func UnaryNormcdfF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryNormcdfStridedF32 performs element-wise normal CDF for float32 (strided memory)
-func UnaryNormcdfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UNormcdfStridedF32 performs element-wise normal CDF for float32 (strided memory)
+func UNormcdfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryNormcdfF32(numel, inp, out)
+		UNormcdfF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -769,8 +769,8 @@ func UnaryNormcdfStridedF32(numel, numDims int, dims, strides []int, inp, out []
 	}
 }
 
-// UnaryNormcdfF64 performs element-wise normal CDF for float64 (contiguous memory)
-func UnaryNormcdfF64(numel int, inp, out []float64) {
+// UNormcdfF64 performs element-wise normal CDF for float64 (contiguous memory)
+func UNormcdfF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = 0.5 * (1 + math.Erf(out[i]/math.Sqrt(2)))
@@ -782,10 +782,10 @@ func UnaryNormcdfF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryNormcdfStridedF64 performs element-wise normal CDF for float64 (strided memory)
-func UnaryNormcdfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UNormcdfStridedF64 performs element-wise normal CDF for float64 (strided memory)
+func UNormcdfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryNormcdfF64(numel, inp, out)
+		UNormcdfF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -800,8 +800,8 @@ func UnaryNormcdfStridedF64(numel, numDims int, dims, strides []int, inp, out []
 	}
 }
 
-// UnaryAbsF32 performs element-wise absolute value for float32 (contiguous memory)
-func UnaryAbsF32(numel int, inp, out []float32) {
+// UAbsF32 performs element-wise absolute value for float32 (contiguous memory)
+func UAbsF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Abs(float64(out[i])))
@@ -813,10 +813,10 @@ func UnaryAbsF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryAbsStridedF32 performs element-wise absolute value for float32 (strided memory)
-func UnaryAbsStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UAbsStridedF32 performs element-wise absolute value for float32 (strided memory)
+func UAbsStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryAbsF32(numel, inp, out)
+		UAbsF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -831,8 +831,8 @@ func UnaryAbsStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnaryAbsF64 performs element-wise absolute value for float64 (contiguous memory)
-func UnaryAbsF64(numel int, inp, out []float64) {
+// UAbsF64 performs element-wise absolute value for float64 (contiguous memory)
+func UAbsF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Abs(out[i])
@@ -844,10 +844,10 @@ func UnaryAbsF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryAbsStridedF64 performs element-wise absolute value for float64 (strided memory)
-func UnaryAbsStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UAbsStridedF64 performs element-wise absolute value for float64 (strided memory)
+func UAbsStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryAbsF64(numel, inp, out)
+		UAbsF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -862,8 +862,8 @@ func UnaryAbsStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnarySqrF32 performs element-wise square for float32 (contiguous memory)
-func UnarySqrF32(numel int, inp, out []float32) {
+// USqrF32 performs element-wise square for float32 (contiguous memory)
+func USqrF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = out[i] * out[i]
@@ -875,10 +875,10 @@ func UnarySqrF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySqrStridedF32 performs element-wise square for float32 (strided memory)
-func UnarySqrStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USqrStridedF32 performs element-wise square for float32 (strided memory)
+func USqrStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySqrF32(numel, inp, out)
+		USqrF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -893,8 +893,8 @@ func UnarySqrStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnarySqrF64 performs element-wise square for float64 (contiguous memory)
-func UnarySqrF64(numel int, inp, out []float64) {
+// USqrF64 performs element-wise square for float64 (contiguous memory)
+func USqrF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = out[i] * out[i]
@@ -906,10 +906,10 @@ func UnarySqrF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySqrStridedF64 performs element-wise square for float64 (strided memory)
-func UnarySqrStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USqrStridedF64 performs element-wise square for float64 (strided memory)
+func USqrStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySqrF64(numel, inp, out)
+		USqrF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -924,8 +924,8 @@ func UnarySqrStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 	}
 }
 
-// UnarySqrtF32 performs element-wise square root for float32 (contiguous memory)
-func UnarySqrtF32(numel int, inp, out []float32) {
+// USqrtF32 performs element-wise square root for float32 (contiguous memory)
+func USqrtF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Sqrt(float64(out[i])))
@@ -937,10 +937,10 @@ func UnarySqrtF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySqrtStridedF32 performs element-wise square root for float32 (strided memory)
-func UnarySqrtStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USqrtStridedF32 performs element-wise square root for float32 (strided memory)
+func USqrtStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySqrtF32(numel, inp, out)
+		USqrtF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -955,8 +955,8 @@ func UnarySqrtStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnarySqrtF64 performs element-wise square root for float64 (contiguous memory)
-func UnarySqrtF64(numel int, inp, out []float64) {
+// USqrtF64 performs element-wise square root for float64 (contiguous memory)
+func USqrtF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Sqrt(out[i])
@@ -968,10 +968,10 @@ func UnarySqrtF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySqrtStridedF64 performs element-wise square root for float64 (strided memory)
-func UnarySqrtStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USqrtStridedF64 performs element-wise square root for float64 (strided memory)
+func USqrtStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySqrtF64(numel, inp, out)
+		USqrtF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -986,8 +986,8 @@ func UnarySqrtStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryGeluF32 performs element-wise GELU for float32 (contiguous memory)
-func UnaryGeluF32(numel int, inp, out []float32) {
+// UGeluF32 performs element-wise GELU for float32 (contiguous memory)
+func UGeluF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -1007,10 +1007,10 @@ func UnaryGeluF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryGeluStridedF32 performs element-wise GELU for float32 (strided memory)
-func UnaryGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UGeluStridedF32 performs element-wise GELU for float32 (strided memory)
+func UGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryGeluF32(numel, inp, out)
+		UGeluF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1033,8 +1033,8 @@ func UnaryGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryGeluF64 performs element-wise GELU for float64 (contiguous memory)
-func UnaryGeluF64(numel int, inp, out []float64) {
+// UGeluF64 performs element-wise GELU for float64 (contiguous memory)
+func UGeluF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1054,10 +1054,10 @@ func UnaryGeluF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryGeluStridedF64 performs element-wise GELU for float64 (strided memory)
-func UnaryGeluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UGeluStridedF64 performs element-wise GELU for float64 (strided memory)
+func UGeluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryGeluF64(numel, inp, out)
+		UGeluF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1080,8 +1080,8 @@ func UnaryGeluStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryGeluErfF32 performs element-wise GELU (ERF-based) for float32 (contiguous memory)
-func UnaryGeluErfF32(numel int, inp, out []float32) {
+// UGeluErfF32 performs element-wise GELU (ERF-based) for float32 (contiguous memory)
+func UGeluErfF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -1095,10 +1095,10 @@ func UnaryGeluErfF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryGeluErfStridedF32 performs element-wise GELU (ERF-based) for float32 (strided memory)
-func UnaryGeluErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UGeluErfStridedF32 performs element-wise GELU (ERF-based) for float32 (strided memory)
+func UGeluErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryGeluErfF32(numel, inp, out)
+		UGeluErfF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1115,8 +1115,8 @@ func UnaryGeluErfStridedF32(numel, numDims int, dims, strides []int, inp, out []
 	}
 }
 
-// UnaryGeluErfF64 performs element-wise GELU (ERF-based) for float64 (contiguous memory)
-func UnaryGeluErfF64(numel int, inp, out []float64) {
+// UGeluErfF64 performs element-wise GELU (ERF-based) for float64 (contiguous memory)
+func UGeluErfF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1130,10 +1130,10 @@ func UnaryGeluErfF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryGeluErfStridedF64 performs element-wise GELU (ERF-based) for float64 (strided memory)
-func UnaryGeluErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UGeluErfStridedF64 performs element-wise GELU (ERF-based) for float64 (strided memory)
+func UGeluErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryGeluErfF64(numel, inp, out)
+		UGeluErfF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1150,8 +1150,8 @@ func UnaryGeluErfStridedF64(numel, numDims int, dims, strides []int, inp, out []
 	}
 }
 
-// UnaryReluF32 performs element-wise ReLU for float32 (contiguous memory)
-func UnaryReluF32(numel int, inp, out []float32) {
+// UReluF32 performs element-wise ReLU for float32 (contiguous memory)
+func UReluF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			if out[i] < 0 {
@@ -1169,10 +1169,10 @@ func UnaryReluF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnaryReluStridedF32 performs element-wise ReLU for float32 (strided memory)
-func UnaryReluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// UReluStridedF32 performs element-wise ReLU for float32 (strided memory)
+func UReluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryReluF32(numel, inp, out)
+		UReluF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1193,8 +1193,8 @@ func UnaryReluStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryReluF64 performs element-wise ReLU for float64 (contiguous memory)
-func UnaryReluF64(numel int, inp, out []float64) {
+// UReluF64 performs element-wise ReLU for float64 (contiguous memory)
+func UReluF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			if out[i] < 0 {
@@ -1212,10 +1212,10 @@ func UnaryReluF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnaryReluStridedF64 performs element-wise ReLU for float64 (strided memory)
-func UnaryReluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// UReluStridedF64 performs element-wise ReLU for float64 (strided memory)
+func UReluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryReluF64(numel, inp, out)
+		UReluF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1236,8 +1236,8 @@ func UnaryReluStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryEluF32 performs element-wise ELU for float32 with parameter alpha (contiguous memory)
-func UnaryEluF32(alpha float32, numel int, inp, out []float32) {
+// UEluF32 performs element-wise ELU for float32 with parameter alpha (contiguous memory)
+func UEluF32(alpha float32, numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1257,10 +1257,10 @@ func UnaryEluF32(alpha float32, numel int, inp, out []float32) {
 	}
 }
 
-// UnaryEluStridedF32 performs element-wise ELU for float32 with parameter alpha (strided memory)
-func UnaryEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, inp, out []float32) {
+// UEluStridedF32 performs element-wise ELU for float32 with parameter alpha (strided memory)
+func UEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryEluF32(alpha, numel, inp, out)
+		UEluF32(alpha, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1283,8 +1283,8 @@ func UnaryEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, 
 	}
 }
 
-// UnaryEluF64 performs element-wise ELU for float64 with parameter alpha (contiguous memory)
-func UnaryEluF64(alpha float64, numel int, inp, out []float64) {
+// UEluF64 performs element-wise ELU for float64 with parameter alpha (contiguous memory)
+func UEluF64(alpha float64, numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1304,10 +1304,10 @@ func UnaryEluF64(alpha float64, numel int, inp, out []float64) {
 	}
 }
 
-// UnaryEluStridedF64 performs element-wise ELU for float64 with parameter alpha (strided memory)
-func UnaryEluStridedF64(alpha float64, numel, numDims int, dims, strides []int, inp, out []float64) {
+// UEluStridedF64 performs element-wise ELU for float64 with parameter alpha (strided memory)
+func UEluStridedF64(alpha float64, numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryEluF64(alpha, numel, inp, out)
+		UEluF64(alpha, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1330,8 +1330,8 @@ func UnaryEluStridedF64(alpha float64, numel, numDims int, dims, strides []int, 
 	}
 }
 
-// UnarySiluF32 performs element-wise SiLU for float32 (contiguous memory)
-func UnarySiluF32(numel int, inp, out []float32) {
+// USiluF32 performs element-wise SiLU for float32 (contiguous memory)
+func USiluF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -1345,10 +1345,10 @@ func UnarySiluF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySiluStridedF32 performs element-wise SiLU for float32 (strided memory)
-func UnarySiluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USiluStridedF32 performs element-wise SiLU for float32 (strided memory)
+func USiluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySiluF32(numel, inp, out)
+		USiluF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1365,8 +1365,8 @@ func UnarySiluStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnarySiluF64 performs element-wise SiLU for float64 (contiguous memory)
-func UnarySiluF64(numel int, inp, out []float64) {
+// USiluF64 performs element-wise SiLU for float64 (contiguous memory)
+func USiluF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1380,10 +1380,10 @@ func UnarySiluF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySiluStridedF64 performs element-wise SiLU for float64 (strided memory)
-func UnarySiluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USiluStridedF64 performs element-wise SiLU for float64 (strided memory)
+func USiluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySiluF64(numel, inp, out)
+		USiluF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1400,8 +1400,8 @@ func UnarySiluStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnaryPowfF32 performs element-wise power for float32 with parameter param (contiguous memory)
-func UnaryPowfF32(param float32, numel int, inp, out []float32) {
+// UPowfF32 performs element-wise power for float32 with parameter param (contiguous memory)
+func UPowfF32(param float32, numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = float32(math.Pow(float64(out[i]), float64(param)))
@@ -1413,10 +1413,10 @@ func UnaryPowfF32(param float32, numel int, inp, out []float32) {
 	}
 }
 
-// UnaryPowfStridedF32 performs element-wise power for float32 with parameter param (strided memory)
-func UnaryPowfStridedF32(param float32, numel, numDims int, dims, strides []int, inp, out []float32) {
+// UPowfStridedF32 performs element-wise power for float32 with parameter param (strided memory)
+func UPowfStridedF32(param float32, numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryPowfF32(param, numel, inp, out)
+		UPowfF32(param, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1431,8 +1431,8 @@ func UnaryPowfStridedF32(param float32, numel, numDims int, dims, strides []int,
 	}
 }
 
-// UnaryPowfF64 performs element-wise power for float64 with parameter param (contiguous memory)
-func UnaryPowfF64(param float64, numel int, inp, out []float64) {
+// UPowfF64 performs element-wise power for float64 with parameter param (contiguous memory)
+func UPowfF64(param float64, numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			out[i] = math.Pow(out[i], param)
@@ -1444,10 +1444,10 @@ func UnaryPowfF64(param float64, numel int, inp, out []float64) {
 	}
 }
 
-// UnaryPowfStridedF64 performs element-wise power for float64 with parameter param (strided memory)
-func UnaryPowfStridedF64(param float64, numel, numDims int, dims, strides []int, inp, out []float64) {
+// UPowfStridedF64 performs element-wise power for float64 with parameter param (strided memory)
+func UPowfStridedF64(param float64, numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnaryPowfF64(param, numel, inp, out)
+		UPowfF64(param, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1462,8 +1462,8 @@ func UnaryPowfStridedF64(param float64, numel, numDims int, dims, strides []int,
 	}
 }
 
-// UnarySignF32 performs element-wise sign for float32 (contiguous memory)
-func UnarySignF32(numel int, inp, out []float32) {
+// USignF32 performs element-wise sign for float32 (contiguous memory)
+func USignF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1489,10 +1489,10 @@ func UnarySignF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySignStridedF32 performs element-wise sign for float32 (strided memory)
-func UnarySignStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USignStridedF32 performs element-wise sign for float32 (strided memory)
+func USignStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySignF32(numel, inp, out)
+		USignF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1521,8 +1521,8 @@ func UnarySignStridedF32(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnarySignF64 performs element-wise sign for float64 (contiguous memory)
-func UnarySignF64(numel int, inp, out []float64) {
+// USignF64 performs element-wise sign for float64 (contiguous memory)
+func USignF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1548,10 +1548,10 @@ func UnarySignF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySignStridedF64 performs element-wise sign for float64 (strided memory)
-func UnarySignStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USignStridedF64 performs element-wise sign for float64 (strided memory)
+func USignStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySignF64(numel, inp, out)
+		USignF64(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1580,8 +1580,8 @@ func UnarySignStridedF64(numel, numDims int, dims, strides []int, inp, out []flo
 	}
 }
 
-// UnarySigmoidF32 performs element-wise sigmoid for float32 (contiguous memory)
-func UnarySigmoidF32(numel int, inp, out []float32) {
+// USigmoidF32 performs element-wise sigmoid for float32 (contiguous memory)
+func USigmoidF32(numel int, inp, out []float32) {
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -1595,10 +1595,10 @@ func UnarySigmoidF32(numel int, inp, out []float32) {
 	}
 }
 
-// UnarySigmoidStridedF32 performs element-wise sigmoid for float32 (strided memory)
-func UnarySigmoidStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// USigmoidStridedF32 performs element-wise sigmoid for float32 (strided memory)
+func USigmoidStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySigmoidF32(numel, inp, out)
+		USigmoidF32(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1615,8 +1615,8 @@ func UnarySigmoidStridedF32(numel, numDims int, dims, strides []int, inp, out []
 	}
 }
 
-// UnarySigmoidF64 performs element-wise sigmoid for float64 (contiguous memory)
-func UnarySigmoidF64(numel int, inp, out []float64) {
+// USigmoidF64 performs element-wise sigmoid for float64 (contiguous memory)
+func USigmoidF64(numel int, inp, out []float64) {
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -1630,10 +1630,10 @@ func UnarySigmoidF64(numel int, inp, out []float64) {
 	}
 }
 
-// UnarySigmoidStridedF64 performs element-wise sigmoid for float64 (strided memory)
-func UnarySigmoidStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// USigmoidStridedF64 performs element-wise sigmoid for float64 (strided memory)
+func USigmoidStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		UnarySigmoidF64(numel, inp, out)
+		USigmoidF64(numel, inp, out)
 		return
 	}
 	if inp == nil {

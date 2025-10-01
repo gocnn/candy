@@ -784,175 +784,175 @@ const (
 // Keep in sync with the actual kernel function names in *.cu files
 const (
 	// Copy operations
-	UcopyF32    = "ucopy_f32"
-	UcopyF64    = "ucopy_f64"
-	UcopyU8     = "ucopy_u8"
-	UcopyU32    = "ucopy_u32"
-	UcopyI64    = "ucopy_i64"
-	UcopyF16    = "ucopy_f16"     // Available when __CUDA_ARCH__ >= 530
-	UcopyBF16   = "ucopy_bf16"    // Available when __CUDA_ARCH__ >= 800
-	UcopyF8E4M3 = "ucopy_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UCopyF32    = "ucopy_f32"
+	UCopyF64    = "ucopy_f64"
+	UCopyU8     = "ucopy_u8"
+	UCopyU32    = "ucopy_u32"
+	UCopyI64    = "ucopy_i64"
+	UCopyF16    = "ucopy_f16"     // Available when __CUDA_ARCH__ >= 530
+	UCopyBF16   = "ucopy_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UCopyF8E4M3 = "ucopy_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
 
 	// Negation operations
-	UnegF32    = "uneg_f32"
-	UnegF64    = "uneg_f64"
-	UnegF16    = "uneg_f16"     // Available when __CUDA_ARCH__ >= 530
-	UnegF8E4M3 = "uneg_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UnegBF16   = "uneg_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UNegF32    = "uneg_f32"
+	UNegF64    = "uneg_f64"
+	UNegF16    = "uneg_f16"     // Available when __CUDA_ARCH__ >= 530
+	UNegF8E4M3 = "uneg_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UNegBF16   = "uneg_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Reciprocal operations
-	UrecipF32    = "urecip_f32"
-	UrecipF64    = "urecip_f64"
-	UrecipF16    = "urecip_f16"     // Available when __CUDA_ARCH__ >= 530
-	UrecipF8E4M3 = "urecip_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UrecipBF16   = "urecip_bf16"    // Available when __CUDA_ARCH__ >= 800
+	URecipF32    = "urecip_f32"
+	URecipF64    = "urecip_f64"
+	URecipF16    = "urecip_f16"     // Available when __CUDA_ARCH__ >= 530
+	URecipF8E4M3 = "urecip_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	URecipBF16   = "urecip_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Exponential operations
-	UexpF32    = "uexp_f32"
-	UexpF64    = "uexp_f64"
-	UexpF16    = "uexp_f16"     // Available when __CUDA_ARCH__ >= 530
-	UexpF8E4M3 = "uexp_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UexpBF16   = "uexp_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UExpF32    = "uexp_f32"
+	UExpF64    = "uexp_f64"
+	UExpF16    = "uexp_f16"     // Available when __CUDA_ARCH__ >= 530
+	UExpF8E4M3 = "uexp_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UExpBF16   = "uexp_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Logarithm operations
-	UlogF32    = "ulog_f32"
-	UlogF64    = "ulog_f64"
-	UlogF16    = "ulog_f16"     // Available when __CUDA_ARCH__ >= 530
-	UlogF8E4M3 = "ulog_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UlogBF16   = "ulog_bf16"    // Available when __CUDA_ARCH__ >= 800
+	ULogF32    = "ulog_f32"
+	ULogF64    = "ulog_f64"
+	ULogF16    = "ulog_f16"     // Available when __CUDA_ARCH__ >= 530
+	ULogF8E4M3 = "ulog_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	ULogBF16   = "ulog_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Sine operations
-	UsinF32    = "usin_f32"
-	UsinF64    = "usin_f64"
-	UsinF16    = "usin_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsinF8E4M3 = "usin_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsinBF16   = "usin_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USinF32    = "usin_f32"
+	USinF64    = "usin_f64"
+	USinF16    = "usin_f16"     // Available when __CUDA_ARCH__ >= 530
+	USinF8E4M3 = "usin_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USinBF16   = "usin_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Cosine operations
-	UcosF32    = "ucos_f32"
-	UcosF64    = "ucos_f64"
-	UcosF16    = "ucos_f16"     // Available when __CUDA_ARCH__ >= 530
-	UcosF8E4M3 = "ucos_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UcosBF16   = "ucos_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UCosF32    = "ucos_f32"
+	UCosF64    = "ucos_f64"
+	UCosF16    = "ucos_f16"     // Available when __CUDA_ARCH__ >= 530
+	UCosF8E4M3 = "ucos_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UCosBF16   = "ucos_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Tangent hyperbolic operations
-	UtanhF32    = "utanh_f32"
-	UtanhF64    = "utanh_f64"
-	UtanhF16    = "utanh_f16"     // Available when __CUDA_ARCH__ >= 530
-	UtanhF8E4M3 = "utanh_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UtanhBF16   = "utanh_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UTanhF32    = "utanh_f32"
+	UTanhF64    = "utanh_f64"
+	UTanhF16    = "utanh_f16"     // Available when __CUDA_ARCH__ >= 530
+	UTanhF8E4M3 = "utanh_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UTanhBF16   = "utanh_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Error function operations
-	UerfF32    = "uerf_f32"
-	UerfF64    = "uerf_f64"
-	UerfF16    = "uerf_f16"     // Available when __CUDA_ARCH__ >= 530
-	UerfF8E4M3 = "uerf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UerfBF16   = "uerf_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UErfF32    = "uerf_f32"
+	UErfF64    = "uerf_f64"
+	UErfF16    = "uerf_f16"     // Available when __CUDA_ARCH__ >= 530
+	UErfF8E4M3 = "uerf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UErfBF16   = "uerf_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Ceiling operations
-	UceilF32    = "uceil_f32"
-	UceilF64    = "uceil_f64"
-	UceilF16    = "uceil_f16"     // Available when __CUDA_ARCH__ >= 530
-	UceilF8E4M3 = "uceil_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UceilBF16   = "uceil_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UCeilF32    = "uceil_f32"
+	UCeilF64    = "uceil_f64"
+	UCeilF16    = "uceil_f16"     // Available when __CUDA_ARCH__ >= 530
+	UCeilF8E4M3 = "uceil_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UCeilBF16   = "uceil_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Floor operations
-	UfloorF32    = "ufloor_f32"
-	UfloorF64    = "ufloor_f64"
-	UfloorF16    = "ufloor_f16"     // Available when __CUDA_ARCH__ >= 530
-	UfloorF8E4M3 = "ufloor_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UfloorBF16   = "ufloor_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UFloorF32    = "ufloor_f32"
+	UFloorF64    = "ufloor_f64"
+	UFloorF16    = "ufloor_f16"     // Available when __CUDA_ARCH__ >= 530
+	UFloorF8E4M3 = "ufloor_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UFloorBF16   = "ufloor_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Round operations
-	UroundF32    = "uround_f32"
-	UroundF64    = "uround_f64"
-	UroundF16    = "uround_f16"     // Available when __CUDA_ARCH__ >= 530
-	UroundF8E4M3 = "uround_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UroundBF16   = "uround_bf16"    // Available when __CUDA_ARCH__ >= 800
+	URoundF32    = "uround_f32"
+	URoundF64    = "uround_f64"
+	URoundF16    = "uround_f16"     // Available when __CUDA_ARCH__ >= 530
+	URoundF8E4M3 = "uround_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	URoundBF16   = "uround_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Normal CDF operations
-	UnormcdfF32    = "unormcdf_f32"
-	UnormcdfF64    = "unormcdf_f64"
-	UnormcdfF16    = "unormcdf_f16"     // Available when __CUDA_ARCH__ >= 530
-	UnormcdfF8E4M3 = "unormcdf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UnormcdfBF16   = "unormcdf_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UNormcdfF32    = "unormcdf_f32"
+	UNormcdfF64    = "unormcdf_f64"
+	UNormcdfF16    = "unormcdf_f16"     // Available when __CUDA_ARCH__ >= 530
+	UNormcdfF8E4M3 = "unormcdf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UNormcdfBF16   = "unormcdf_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Absolute value operations
-	UabsF32    = "uabs_f32"
-	UabsF64    = "uabs_f64"
-	UabsF16    = "uabs_f16"     // Available when __CUDA_ARCH__ >= 530
-	UabsF8E4M3 = "uabs_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UabsBF16   = "uabs_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UAbsF32    = "uabs_f32"
+	UAbsF64    = "uabs_f64"
+	UAbsF16    = "uabs_f16"     // Available when __CUDA_ARCH__ >= 530
+	UAbsF8E4M3 = "uabs_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UAbsBF16   = "uabs_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Square operations
-	UsqrF32    = "usqr_f32"
-	UsqrF64    = "usqr_f64"
-	UsqrF16    = "usqr_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsqrF8E4M3 = "usqr_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsqrBF16   = "usqr_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USqrF32    = "usqr_f32"
+	USqrF64    = "usqr_f64"
+	USqrF16    = "usqr_f16"     // Available when __CUDA_ARCH__ >= 530
+	USqrF8E4M3 = "usqr_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USqrBF16   = "usqr_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Square root operations
-	UsqrtF32    = "usqrt_f32"
-	UsqrtF64    = "usqrt_f64"
-	UsqrtF16    = "usqrt_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsqrtF8E4M3 = "usqrt_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsqrtBF16   = "usqrt_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USqrtF32    = "usqrt_f32"
+	USqrtF64    = "usqrt_f64"
+	USqrtF16    = "usqrt_f16"     // Available when __CUDA_ARCH__ >= 530
+	USqrtF8E4M3 = "usqrt_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USqrtBF16   = "usqrt_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// GELU operations
-	UgeluF32    = "ugelu_f32"
-	UgeluF64    = "ugelu_f64"
-	UgeluF16    = "ugelu_f16"     // Available when __CUDA_ARCH__ >= 530
-	UgeluF8E4M3 = "ugelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UgeluBF16   = "ugelu_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UGeluF32    = "ugelu_f32"
+	UGeluF64    = "ugelu_f64"
+	UGeluF16    = "ugelu_f16"     // Available when __CUDA_ARCH__ >= 530
+	UGeluF8E4M3 = "ugelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UGeluBF16   = "ugelu_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// GELU (ERF-based) operations
-	UgeluErfF32    = "ugelu_erf_f32"
-	UgeluErfF64    = "ugelu_erf_f64"
-	UgeluErfF16    = "ugelu_erf_f16"     // Available when __CUDA_ARCH__ >= 530
-	UgeluErfF8E4M3 = "ugelu_erf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UgeluErfBF16   = "ugelu_erf_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UGeluErfF32    = "ugelu_erf_f32"
+	UGeluErfF64    = "ugelu_erf_f64"
+	UGeluErfF16    = "ugelu_erf_f16"     // Available when __CUDA_ARCH__ >= 530
+	UGeluErfF8E4M3 = "ugelu_erf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UGeluErfBF16   = "ugelu_erf_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// ReLU operations
-	UreluF32    = "urelu_f32"
-	UreluF64    = "urelu_f64"
-	UreluF16    = "urelu_f16"     // Available when __CUDA_ARCH__ >= 530
-	UreluF8E4M3 = "urelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UreluBF16   = "urelu_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UReluF32    = "urelu_f32"
+	UReluF64    = "urelu_f64"
+	UReluF16    = "urelu_f16"     // Available when __CUDA_ARCH__ >= 530
+	UReluF8E4M3 = "urelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UReluBF16   = "urelu_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// ELU operations
-	UeluF32    = "uelu_f32"
-	UeluF64    = "uelu_f64"
-	UeluF16    = "uelu_f16"     // Available when __CUDA_ARCH__ >= 530
-	UeluF8E4M3 = "uelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UeluBF16   = "uelu_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UEluF32    = "uelu_f32"
+	UEluF64    = "uelu_f64"
+	UEluF16    = "uelu_f16"     // Available when __CUDA_ARCH__ >= 530
+	UEluF8E4M3 = "uelu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UEluBF16   = "uelu_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// SiLU operations
-	UsiluF32    = "usilu_f32"
-	UsiluF64    = "usilu_f64"
-	UsiluF16    = "usilu_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsiluF8E4M3 = "usilu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsiluBF16   = "usilu_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USiluF32    = "usilu_f32"
+	USiluF64    = "usilu_f64"
+	USiluF16    = "usilu_f16"     // Available when __CUDA_ARCH__ >= 530
+	USiluF8E4M3 = "usilu_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USiluBF16   = "usilu_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Power operations
-	UpowfF32    = "upowf_f32"
-	UpowfF64    = "upowf_f64"
-	UpowfF16    = "upowf_f16"     // Available when __CUDA_ARCH__ >= 530
-	UpowfF8E4M3 = "upowf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UpowfBF16   = "upowf_bf16"    // Available when __CUDA_ARCH__ >= 800
+	UPowfF32    = "upowf_f32"
+	UPowfF64    = "upowf_f64"
+	UPowfF16    = "upowf_f16"     // Available when __CUDA_ARCH__ >= 530
+	UPowfF8E4M3 = "upowf_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	UPowfBF16   = "upowf_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Sign operations
-	UsignF32    = "usign_f32"
-	UsignF64    = "usign_f64"
-	UsignF16    = "usign_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsignF8E4M3 = "usign_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsignBF16   = "usign_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USignF32    = "usign_f32"
+	USignF64    = "usign_f64"
+	USignF16    = "usign_f16"     // Available when __CUDA_ARCH__ >= 530
+	USignF8E4M3 = "usign_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USignBF16   = "usign_bf16"    // Available when __CUDA_ARCH__ >= 800
 
 	// Sigmoid operations
-	UsigmoidF32    = "usigmoid_f32"
-	UsigmoidF64    = "usigmoid_f64"
-	UsigmoidF16    = "usigmoid_f16"     // Available when __CUDA_ARCH__ >= 530
-	UsigmoidF8E4M3 = "usigmoid_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
-	UsigmoidBF16   = "usigmoid_bf16"    // Available when __CUDA_ARCH__ >= 800
+	USigmoidF32    = "usigmoid_f32"
+	USigmoidF64    = "usigmoid_f64"
+	USigmoidF16    = "usigmoid_f16"     // Available when __CUDA_ARCH__ >= 530
+	USigmoidF8E4M3 = "usigmoid_f8_e4m3" // Available when __CUDA_ARCH__ >= 890
+	USigmoidBF16   = "usigmoid_bf16"    // Available when __CUDA_ARCH__ >= 800
 )
 
 //go:embed *.ptx
