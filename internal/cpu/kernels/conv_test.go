@@ -1794,6 +1794,272 @@ func TestIm2colF64(t *testing.T) {
 	}
 }
 
+func TestIm2colStridedF32(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn      int
+		hIn, wIn        int
+		hK, wK          int
+		stride, padding int
+		dilation        int
+		src             []float32
+		srcStrides      []int // [batch_stride, cIn_stride, hIn_stride, wIn_stride]
+		want            []float32
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			cIn:        1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			want:       []float32{1, 2, 4, 5, 2, 3, 5, 6, 4, 5, 7, 8, 5, 6, 8, 9},
+		},
+		{
+			name:       "With padding",
+			bSize:      1,
+			cIn:        1,
+			hIn:        2,
+			wIn:        2,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    1,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			want:       []float32{0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0, 3, 1, 2, 3, 4, 2, 0, 4, 0, 0, 3, 0, 0, 3, 4, 0, 0, 4, 0, 0, 0},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			cIn:        2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			want:       []float32{1, 2, 4, 5, 10, 11, 13, 14, 2, 3, 5, 6, 11, 12, 14, 15, 4, 5, 7, 8, 13, 14, 16, 17, 5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "With dilation",
+			bSize:      1,
+			cIn:        1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   2,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			want:       []float32{1, 3, 9, 11, 2, 4, 10, 12, 5, 7, 13, 15, 6, 8, 14, 16},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			cIn:        2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 15, 7, 16, 8, 17, 9, 18},
+			srcStrides: []int{18, 1, 6, 2},
+			want:       []float32{1, 2, 4, 5, 10, 11, 13, 14, 2, 3, 5, 6, 11, 12, 14, 15, 4, 5, 7, 8, 13, 14, 16, 17, 5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			cIn:        1,
+			hIn:        0,
+			wIn:        3,
+			hK:         1,
+			wK:         1,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{},
+			srcStrides: []int{0, 0, 3, 1},
+			want:       []float32{},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			cIn:        1,
+			hIn:        2,
+			wIn:        2,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides: []int{4, 4, 2, 1},
+			want:       []float32{1, 2, 3, 4, 5, 6, 7, 8},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := max(0, (tt.hIn+2*tt.padding-tt.dilation*(tt.hK-1)-1)/tt.stride+1)
+			wOut := max(0, (tt.wIn+2*tt.padding-tt.dilation*(tt.wK-1)-1)/tt.stride+1)
+			colSize := tt.bSize * hOut * wOut * tt.cIn * tt.hK * tt.wK
+			col := make([]float32, colSize)
+			kernels.Im2colStridedF32(tt.bSize, tt.cIn, tt.hIn, tt.wIn, hOut, wOut, tt.hK, tt.wK, tt.stride, tt.padding, tt.dilation, tt.src, col, tt.srcStrides)
+			if !slices.EqualFunc(col, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", col, tt.want)
+			}
+		})
+	}
+}
+
+func TestIm2colStridedF64(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn      int
+		hIn, wIn        int
+		hK, wK          int
+		stride, padding int
+		dilation        int
+		src             []float64
+		srcStrides      []int // [batch_stride, cIn_stride, hIn_stride, wIn_stride]
+		want            []float64
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			cIn:        1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			want:       []float64{1, 2, 4, 5, 2, 3, 5, 6, 4, 5, 7, 8, 5, 6, 8, 9},
+		},
+		{
+			name:       "With padding",
+			bSize:      1,
+			cIn:        1,
+			hIn:        2,
+			wIn:        2,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    1,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			want:       []float64{0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0, 0, 1, 0, 3, 1, 2, 3, 4, 2, 0, 4, 0, 0, 3, 0, 0, 3, 4, 0, 0, 4, 0, 0, 0},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			cIn:        2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			want:       []float64{1, 2, 4, 5, 10, 11, 13, 14, 2, 3, 5, 6, 11, 12, 14, 15, 4, 5, 7, 8, 13, 14, 16, 17, 5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "With dilation",
+			bSize:      1,
+			cIn:        1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   2,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			want:       []float64{1, 3, 9, 11, 2, 4, 10, 12, 5, 7, 13, 15, 6, 8, 14, 16},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			cIn:        2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 15, 7, 16, 8, 17, 9, 18},
+			srcStrides: []int{18, 1, 6, 2},
+			want:       []float64{1, 2, 4, 5, 10, 11, 13, 14, 2, 3, 5, 6, 11, 12, 14, 15, 4, 5, 7, 8, 13, 14, 16, 17, 5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			cIn:        1,
+			hIn:        0,
+			wIn:        3,
+			hK:         1,
+			wK:         1,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{},
+			srcStrides: []int{0, 0, 3, 1},
+			want:       []float64{},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			cIn:        1,
+			hIn:        2,
+			wIn:        2,
+			hK:         2,
+			wK:         2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides: []int{4, 4, 2, 1},
+			want:       []float64{1, 2, 3, 4, 5, 6, 7, 8},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := max(0, (tt.hIn+2*tt.padding-tt.dilation*(tt.hK-1)-1)/tt.stride+1)
+			wOut := max(0, (tt.wIn+2*tt.padding-tt.dilation*(tt.wK-1)-1)/tt.stride+1)
+			colSize := tt.bSize * hOut * wOut * tt.cIn * tt.hK * tt.wK
+			col := make([]float64, colSize)
+			kernels.Im2colStridedF64(tt.bSize, tt.cIn, tt.hIn, tt.wIn, hOut, wOut, tt.hK, tt.wK, tt.stride, tt.padding, tt.dilation, tt.src, col, tt.srcStrides)
+			if !slices.EqualFunc(col, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", col, tt.want)
+			}
+		})
+	}
+}
+
 func TestIm2col1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
@@ -1916,6 +2182,240 @@ func TestIm2col1dF64(t *testing.T) {
 	}
 }
 
+func TestIm2col1dStridedF32(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn, lIn int
+		kSize           int
+		stride, padding int
+		dilation        int
+		src             []float32
+		srcStrides      []int // [batch_stride, cIn_stride, lIn_stride]
+		want            []float32
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			cIn:        1,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5},
+			srcStrides: []int{5, 5, 1},
+			want:       []float32{1, 2, 3, 2, 3, 4, 3, 4, 5},
+		},
+		{
+			name:       "With padding",
+			bSize:      1,
+			cIn:        1,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    1,
+			dilation:   1,
+			src:        []float32{1, 2, 3},
+			srcStrides: []int{3, 3, 1},
+			want:       []float32{0, 1, 1, 2, 2, 3, 3, 0},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			cIn:        2,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			srcStrides: []int{10, 5, 1},
+			want:       []float32{1, 2, 3, 6, 7, 8, 2, 3, 4, 7, 8, 9, 3, 4, 5, 8, 9, 10},
+		},
+		{
+			name:       "With dilation",
+			bSize:      1,
+			cIn:        1,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   2,
+			src:        []float32{1, 2, 3, 4, 5},
+			srcStrides: []int{5, 5, 1},
+			want:       []float32{1, 3, 5},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			cIn:        2,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 4, 2, 5, 3, 6},
+			srcStrides: []int{6, 1, 2},
+			want:       []float32{1, 2, 4, 5, 2, 3, 5, 6},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			cIn:        1,
+			lIn:        0,
+			kSize:      1,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{},
+			srcStrides: []int{0, 0, 1},
+			want:       []float32{},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			cIn:        1,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float32{1, 2, 3, 4, 5, 6},
+			srcStrides: []int{3, 3, 1},
+			want:       []float32{1, 2, 2, 3, 4, 5, 5, 6},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			colSize := tt.bSize * lOut * tt.cIn * tt.kSize
+			col := make([]float32, colSize)
+			kernels.Im2col1dStridedF32(tt.bSize, tt.cIn, tt.lIn, lOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, col, tt.srcStrides)
+			if !slices.EqualFunc(col, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", col, tt.want)
+			}
+		})
+	}
+}
+
+func TestIm2col1dStridedF64(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn, lIn int
+		kSize           int
+		stride, padding int
+		dilation        int
+		src             []float64
+		srcStrides      []int // [batch_stride, cIn_stride, lIn_stride]
+		want            []float64
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			cIn:        1,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5},
+			srcStrides: []int{5, 5, 1},
+			want:       []float64{1, 2, 3, 2, 3, 4, 3, 4, 5},
+		},
+		{
+			name:       "With padding",
+			bSize:      1,
+			cIn:        1,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    1,
+			dilation:   1,
+			src:        []float64{1, 2, 3},
+			srcStrides: []int{3, 3, 1},
+			want:       []float64{0, 1, 1, 2, 2, 3, 3, 0},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			cIn:        2,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			srcStrides: []int{10, 5, 1},
+			want:       []float64{1, 2, 3, 6, 7, 8, 2, 3, 4, 7, 8, 9, 3, 4, 5, 8, 9, 10},
+		},
+		{
+			name:       "With dilation",
+			bSize:      1,
+			cIn:        1,
+			lIn:        5,
+			kSize:      3,
+			stride:     1,
+			padding:    0,
+			dilation:   2,
+			src:        []float64{1, 2, 3, 4, 5},
+			srcStrides: []int{5, 5, 1},
+			want:       []float64{1, 3, 5},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			cIn:        2,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 4, 2, 5, 3, 6},
+			srcStrides: []int{6, 1, 2},
+			want:       []float64{1, 2, 4, 5, 2, 3, 5, 6},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			cIn:        1,
+			lIn:        0,
+			kSize:      1,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{},
+			srcStrides: []int{0, 0, 1},
+			want:       []float64{},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			cIn:        1,
+			lIn:        3,
+			kSize:      2,
+			stride:     1,
+			padding:    0,
+			dilation:   1,
+			src:        []float64{1, 2, 3, 4, 5, 6},
+			srcStrides: []int{3, 3, 1},
+			want:       []float64{1, 2, 2, 3, 4, 5, 5, 6},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			colSize := tt.bSize * lOut * tt.cIn * tt.kSize
+			col := make([]float64, colSize)
+			kernels.Im2col1dStridedF64(tt.bSize, tt.cIn, tt.lIn, lOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, col, tt.srcStrides)
+			if !slices.EqualFunc(col, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", col, tt.want)
+			}
+		})
+	}
+}
+
 func TestCol2im1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
@@ -2029,6 +2529,246 @@ func TestCol2im1dF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			im := make([]float64, tt.bSize*tt.cIn*tt.lIn)
 			kernels.Col2im1dF64(tt.bSize, tt.cIn, tt.lIn, tt.lOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.col, im)
+			if !slices.EqualFunc(im, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", im, tt.want)
+			}
+		})
+	}
+}
+
+func TestCol2im1dStridedF32(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn, lIn int
+		kSize           int
+		stride, padding int
+		dilation        int
+		col             []float32
+		imStrides       []int // [batch_stride, cIn_stride, lIn_stride]
+		want            []float32
+	}{
+		{
+			name:      "Basic contiguous",
+			bSize:     1,
+			cIn:       1,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float32{1, 2, 3, 2, 3, 4, 3, 4, 5},
+			imStrides: []int{5, 5, 1},
+			want:      []float32{1, 4, 9, 8, 5},
+		},
+		{
+			name:      "With padding",
+			bSize:     1,
+			cIn:       1,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   1,
+			dilation:  1,
+			col:       []float32{0, 1, 1, 2, 2, 3, 3, 0},
+			imStrides: []int{3, 3, 1},
+			want:      []float32{2, 4, 6},
+		},
+		{
+			name:      "Multi-channel contiguous",
+			bSize:     1,
+			cIn:       2,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float32{1, 2, 3, 6, 7, 8, 2, 3, 4, 7, 8, 9, 3, 4, 5, 8, 9, 10},
+			imStrides: []int{10, 5, 1},
+			want:      []float32{1, 4, 9, 8, 5, 6, 14, 24, 18, 10},
+		},
+		{
+			name:      "With dilation",
+			bSize:     1,
+			cIn:       1,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  2,
+			col:       []float32{1, 3, 5},
+			imStrides: []int{5, 5, 1},
+			want:      []float32{1, 0, 3, 0, 5},
+		},
+		{
+			name:      "Non-contiguous im",
+			bSize:     1,
+			cIn:       2,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float32{1, 2, 4, 5, 2, 3, 5, 6},
+			imStrides: []int{6, 1, 2},
+			want:      []float32{1, 4, 4, 10, 3, 6},
+		},
+		{
+			name:      "Empty input",
+			bSize:     1,
+			cIn:       1,
+			lIn:       0,
+			kSize:     1,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float32{},
+			imStrides: []int{0, 0, 1},
+			want:      []float32{},
+		},
+		{
+			name:      "Batch size 2 contiguous",
+			bSize:     2,
+			cIn:       1,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float32{1, 2, 2, 3, 4, 5, 5, 6},
+			imStrides: []int{3, 3, 1},
+			want:      []float32{1, 4, 3, 4, 10, 6},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			var imSize int
+			if tt.lIn > 0 && len(tt.imStrides) == 3 {
+				imSize = (tt.bSize-1)*tt.imStrides[0] + (tt.cIn-1)*tt.imStrides[1] + (tt.lIn-1)*tt.imStrides[2] + 1
+			}
+			im := make([]float32, imSize)
+			kernels.Col2im1dStridedF32(tt.bSize, tt.cIn, tt.lIn, lOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.col, im, tt.imStrides)
+			if !slices.EqualFunc(im, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", im, tt.want)
+			}
+		})
+	}
+}
+
+func TestCol2im1dStridedF64(t *testing.T) {
+	tests := []struct {
+		name            string
+		bSize, cIn, lIn int
+		kSize           int
+		stride, padding int
+		dilation        int
+		col             []float64
+		imStrides       []int // [batch_stride, cIn_stride, lIn_stride]
+		want            []float64
+	}{
+		{
+			name:      "Basic contiguous",
+			bSize:     1,
+			cIn:       1,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float64{1, 2, 3, 2, 3, 4, 3, 4, 5},
+			imStrides: []int{5, 5, 1},
+			want:      []float64{1, 4, 9, 8, 5},
+		},
+		{
+			name:      "With padding",
+			bSize:     1,
+			cIn:       1,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   1,
+			dilation:  1,
+			col:       []float64{0, 1, 1, 2, 2, 3, 3, 0},
+			imStrides: []int{3, 3, 1},
+			want:      []float64{2, 4, 6},
+		},
+		{
+			name:      "Multi-channel contiguous",
+			bSize:     1,
+			cIn:       2,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float64{1, 2, 3, 6, 7, 8, 2, 3, 4, 7, 8, 9, 3, 4, 5, 8, 9, 10},
+			imStrides: []int{10, 5, 1},
+			want:      []float64{1, 4, 9, 8, 5, 6, 14, 24, 18, 10},
+		},
+		{
+			name:      "With dilation",
+			bSize:     1,
+			cIn:       1,
+			lIn:       5,
+			kSize:     3,
+			stride:    1,
+			padding:   0,
+			dilation:  2,
+			col:       []float64{1, 3, 5},
+			imStrides: []int{5, 5, 1},
+			want:      []float64{1, 0, 3, 0, 5},
+		},
+		{
+			name:      "Non-contiguous im",
+			bSize:     1,
+			cIn:       2,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float64{1, 2, 4, 5, 2, 3, 5, 6},
+			imStrides: []int{6, 1, 2},
+			want:      []float64{1, 4, 4, 10, 3, 6},
+		},
+		{
+			name:      "Empty input",
+			bSize:     1,
+			cIn:       1,
+			lIn:       0,
+			kSize:     1,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float64{},
+			imStrides: []int{0, 0, 1},
+			want:      []float64{},
+		},
+		{
+			name:      "Batch size 2 contiguous",
+			bSize:     2,
+			cIn:       1,
+			lIn:       3,
+			kSize:     2,
+			stride:    1,
+			padding:   0,
+			dilation:  1,
+			col:       []float64{1, 2, 2, 3, 4, 5, 5, 6},
+			imStrides: []int{3, 3, 1},
+			want:      []float64{1, 4, 3, 4, 10, 6},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			var imSize int
+			if tt.lIn > 0 && len(tt.imStrides) == 3 {
+				imSize = (tt.bSize-1)*tt.imStrides[0] + (tt.cIn-1)*tt.imStrides[1] + (tt.lIn-1)*tt.imStrides[2] + 1
+			}
+			im := make([]float64, imSize)
+			kernels.Col2im1dStridedF64(tt.bSize, tt.cIn, tt.lIn, lOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.col, im, tt.imStrides)
 			if !slices.EqualFunc(im, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", im, tt.want)
 			}
