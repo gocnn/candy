@@ -50,7 +50,58 @@ func NaiveConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation 
 	}
 }
 
+// NaiveConv1dStridedF32 performs 1D convolution for float32 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float32(0)
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += src[srcIdx] * kernel[kernelIdx]
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConv1dStridedF64 performs 1D convolution for float64 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float64(0)
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += src[srcIdx] * kernel[kernelIdx]
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
 // Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
+//
+// GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
+// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
 	colSize := bSize * lOut * cIn * kSize
@@ -62,6 +113,9 @@ func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation
 }
 
 // Im2colConv1dF64 performs 1D convolution for float64 using im2col + gemm with direct BLAS Gemm call
+//
+// GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
+// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
 	colSize := bSize * lOut * cIn * kSize
@@ -127,6 +181,9 @@ func NaiveConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dil
 }
 
 // Im2colConv2dF32 performs 2D convolution for float32 using im2col + gemm with direct BLAS Gemm call
+//
+// GEMM Configuration: col:(b*hOut*wOut, cIn*hK*wK) × kernel^T:(cIn*hK*wK, cOut) = dst:(b*hOut*wOut, cOut)
+// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float32) {
 	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
 	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
@@ -139,6 +196,9 @@ func Im2colConv2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, di
 }
 
 // Im2colConv2dF64 performs 2D convolution for float64 using im2col + gemm with direct BLAS Gemm call
+//
+// GEMM Configuration: col:(b*hOut*wOut, cIn*hK*wK) × kernel^T:(cIn*hK*wK, cOut) = dst:(b*hOut*wOut, cOut)
+// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float64) {
 	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
 	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
@@ -371,6 +431,9 @@ func MaxPool2dF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []f
 }
 
 // UpsampleNearest2dF32 performs 2D nearest neighbor upsampling for float32
+//
+// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
+// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
 func UpsampleNearest2dF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float32) {
 	for b := range bSize {
 		for ch := range c {
@@ -392,6 +455,9 @@ func UpsampleNearest2dF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 }
 
 // UpsampleNearest2dF64 performs 2D nearest neighbor upsampling for float64
+//
+// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
+// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
 func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float64) {
 	for b := range bSize {
 		for ch := range c {
@@ -413,6 +479,12 @@ func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 }
 
 // Im2colF32 extracts columns for 2D convolution (im2col) for float32
+//
+// Memory Layout: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance
+// PyTorch Layout: (batch, cIn, hK, wK, hOut, wOut) - standard unfold output
+//
+// Note: Layout difference does not affect algorithm correctness but impacts
+// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float32) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -436,6 +508,12 @@ func Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, di
 }
 
 // Im2colF64 extracts columns for 2D convolution (im2col) for float64
+//
+// Memory Layout: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance
+// PyTorch Layout: (batch, cIn, hK, wK, hOut, wOut) - standard unfold output
+//
+// Note: Layout difference does not affect algorithm correctness but impacts
+// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float64) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -459,6 +537,12 @@ func Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, di
 }
 
 // Im2col1dF32 extracts columns for 1D convolution (im2col) for float32
+//
+// Memory Layout: (batch, lOut, cIn, kSize) - optimized for GEMM performance
+// PyTorch Layout: (batch, cIn, kSize, lOut) - standard unfold output
+//
+// Note: Layout difference does not affect algorithm correctness but impacts
+// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2col1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float32) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -477,6 +561,12 @@ func Im2col1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 }
 
 // Im2col1dF64 extracts columns for 1D convolution (im2col) for float64
+//
+// Memory Layout: (batch, lOut, cIn, kSize) - optimized for GEMM performance
+// PyTorch Layout: (batch, cIn, kSize, lOut) - standard unfold output
+//
+// Note: Layout difference does not affect algorithm correctness but impacts
+// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2col1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float64) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -495,6 +585,12 @@ func Im2col1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 }
 
 // Col2im1dF32 performs standard 1D col2im for float32 (e.g., for conv backward data)
+//
+// Input Layout: (batch, lOut, cIn, kSize) - matches Im2col1d output
+// Output Layout: (batch, cIn, lIn) - standard tensor format
+//
+// Note: This is the inverse operation of Im2col1d with proper accumulation
+// for overlapping regions during the reconstruction process.
 func Col2im1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float32) {
 	// Clear im to zero first
 	for i := range im {
@@ -516,6 +612,12 @@ func Col2im1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 }
 
 // Col2im1dF64 performs standard 1D col2im for float64 (e.g., for conv backward data)
+//
+// Input Layout: (batch, lOut, cIn, kSize) - matches Im2col1d output
+// Output Layout: (batch, cIn, lIn) - standard tensor format
+//
+// Note: This is the inverse operation of Im2col1d with proper accumulation
+// for overlapping regions during the reconstruction process.
 func Col2im1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float64) {
 	// Clear im to zero first
 	for i := range im {

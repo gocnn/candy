@@ -192,6 +192,256 @@ func TestNaiveConv1dF64(t *testing.T) {
 	}
 }
 
+func TestNaiveConv1dStridedF32(t *testing.T) {
+	tests := []struct {
+		name                                  string
+		bSize, cIn, lIn, cOut, kSize          int
+		stride, padding, dilation             int
+		src, kernel                           []float32
+		srcStrides, kernelStrides, dstStrides []int
+		want                                  []float32
+	}{
+		{
+			name:          "Basic strided convolution - contiguous",
+			bSize:         1,
+			cIn:           1,
+			lIn:           5,
+			cOut:          1,
+			kSize:         3,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float32{1, 2, 3, 4, 5},
+			kernel:        []float32{1, 0, -1},
+			srcStrides:    []int{5, 5, 1},        // contiguous: [b_stride = cIn*lIn, c_stride = lIn, l_stride = 1]
+			kernelStrides: []int{3, 3, 1},        // contiguous: [co_stride = cIn*kSize, ci_stride = kSize, k_stride = 1]
+			dstStrides:    []int{3, 3, 1},        // contiguous: [b_stride = cOut*lOut=3, co_stride = lOut=3, l_stride = 1]
+			want:          []float32{-2, -2, -2}, // Verified with PyTorch: torch.nn.Conv1d(1,1,3)(torch.tensor([[[1,2,3,4,5]]]).float()) -> [[[-2,-2,-2]]]
+		},
+		{
+			name:          "Transposed input tensor (non-contiguous src)",
+			bSize:         1,
+			cIn:           2,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float32{1, 4, 2, 5, 3, 6}, // Underlying storage: accesses as ch0:[1,2,3], ch1:[4,5,6] via strides
+			kernel:        []float32{1, -1, 0.5, -0.5}, // contiguous: ch0:[1,-1], ch1:[0.5,-0.5]
+			srcStrides:    []int{6, 1, 2},              // Non-contiguous: b=6 (unused), ci=1 (transposed channels), li=2 (every other element per channel)
+			kernelStrides: []int{4, 2, 1},              // contiguous
+			dstStrides:    []int{2, 2, 1},              // contiguous, lOut=2
+			want:          []float32{-1.5, -1.5},       // Verified with PyTorch: using torch.as_strided for src strides, Conv1d(2,1,2)(input) -> [[[-1.5, -1.5]]]
+		},
+		{
+			name:          "Strided kernel (non-contiguous kernel)",
+			bSize:         1,
+			cIn:           1,
+			lIn:           4,
+			cOut:          2,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float32{1, 2, 3, 4},          // contiguous
+			kernel:        []float32{1, 2, -1, 0},         // Underlying storage: co=0: k=[1,-1] (idx 0,2); co=1: k=[2,0] (idx 1,3)
+			srcStrides:    []int{4, 4, 1},                 // contiguous
+			kernelStrides: []int{1, 4, 2},                 // Non-contiguous: co_stride=1 (interleaved cos), ci=4 (unused since cIn=1), k_stride=2 (skip every other)
+			dstStrides:    []int{6, 3, 1},                 // contiguous, lOut=3, total 6
+			want:          []float32{-1, -1, -1, 2, 4, 6}, // Verified with PyTorch: as_strided for kernel, Conv1d(1,2,2)(input) -> co0:[-1,-1,-1], co1:[2,4,6]
+		},
+		{
+			name:          "With padding and strides",
+			bSize:         1,
+			cIn:           1,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       1,
+			dilation:      1,
+			src:           []float32{1, 2, 3},
+			kernel:        []float32{1, -1},
+			srcStrides:    []int{3, 3, 1},           // contiguous
+			kernelStrides: []int{2, 2, 1},           // contiguous
+			dstStrides:    []int{4, 4, 1},           // contiguous, lOut=3
+			want:          []float32{-1, -1, -1, 3}, // Verified with PyTorch: Conv1d(1,1,2,padding=1)([[1,2,3]]) -> [[-1,-1,-1]] (lo0: only src[0]*(-1); lo1:1*1+2*(-1); lo2:2*1+3*(-1))
+		},
+		{
+			name:          "Broadcast-like source (zero batch stride)",
+			bSize:         2,
+			cIn:           1,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float32{1, 2, 3}, // Shared across batches via stride[0]=0
+			kernel:        []float32{1, -1},
+			srcStrides:    []int{0, 3, 1},            // batch_stride=0 (broadcast), others contiguous
+			kernelStrides: []int{2, 2, 1},            // contiguous
+			dstStrides:    []int{2, 2, 1},            // contiguous, lOut=2, total 4 per batch but shared computation
+			want:          []float32{-1, -1, -1, -1}, // Verified with PyTorch: as_strided with batch_stride=0, Conv1d -> both batches [-1,-1]
+		},
+		{
+			name:          "Empty input",
+			bSize:         1,
+			cIn:           1,
+			lIn:           0,
+			cOut:          1,
+			kSize:         1,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float32{},
+			kernel:        []float32{1},
+			srcStrides:    []int{0, 0, 1},
+			kernelStrides: []int{1, 1, 1},
+			dstStrides:    []int{0, 0, 1},
+			want:          []float32{}, // lOut=0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			dst := make([]float32, tt.bSize*tt.cOut*lOut) // Note: actual storage size based on contiguous, but function handles strides
+			kernels.NaiveConv1dStridedF32(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst, tt.srcStrides, tt.kernelStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestNaiveConv1dStridedF64(t *testing.T) {
+	tests := []struct {
+		name                                  string
+		bSize, cIn, lIn, cOut, kSize          int
+		stride, padding, dilation             int
+		src, kernel                           []float64
+		srcStrides, kernelStrides, dstStrides []int
+		want                                  []float64
+	}{
+		{
+			name:          "Basic strided convolution - contiguous",
+			bSize:         1,
+			cIn:           1,
+			lIn:           5,
+			cOut:          1,
+			kSize:         3,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float64{1, 2, 3, 4, 5},
+			kernel:        []float64{1, 0, -1},
+			srcStrides:    []int{5, 5, 1},        // contiguous: [b_stride = cIn*lIn, c_stride = lIn, l_stride = 1]
+			kernelStrides: []int{3, 3, 1},        // contiguous: [co_stride = cIn*kSize, ci_stride = kSize, k_stride = 1]
+			dstStrides:    []int{3, 3, 1},        // contiguous: [b_stride = cOut*lOut=3, co_stride = lOut=3, l_stride = 1]
+			want:          []float64{-2, -2, -2}, // Verified with PyTorch: torch.nn.Conv1d(1,1,3)(torch.tensor([[[1,2,3,4,5]]]).float()) -> [[[-2,-2,-2]]]
+		},
+		{
+			name:          "Transposed input tensor (non-contiguous src)",
+			bSize:         1,
+			cIn:           2,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float64{1, 4, 2, 5, 3, 6}, // Underlying storage: accesses as ch0:[1,2,3], ch1:[4,5,6] via strides
+			kernel:        []float64{1, -1, 0.5, -0.5}, // contiguous: ch0:[1,-1], ch1:[0.5,-0.5]
+			srcStrides:    []int{6, 1, 2},              // Non-contiguous: b=6 (unused), ci=1 (transposed channels), li=2 (every other element per channel)
+			kernelStrides: []int{4, 2, 1},              // contiguous
+			dstStrides:    []int{2, 2, 1},              // contiguous, lOut=2
+			want:          []float64{-1.5, -1.5},       // Verified with PyTorch: using torch.as_strided for src strides, Conv1d(2,1,2)(input) -> [[[-1.5, -1.5]]]
+		},
+		{
+			name:          "Strided kernel (non-contiguous kernel)",
+			bSize:         1,
+			cIn:           1,
+			lIn:           4,
+			cOut:          2,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float64{1, 2, 3, 4},          // contiguous
+			kernel:        []float64{1, 2, -1, 0},         // Underlying storage: co=0: k=[1,-1] (idx 0,2); co=1: k=[2,0] (idx 1,3)
+			srcStrides:    []int{4, 4, 1},                 // contiguous
+			kernelStrides: []int{1, 4, 2},                 // Non-contiguous: co_stride=1 (interleaved cos), ci=4 (unused since cIn=1), k_stride=2 (skip every other)
+			dstStrides:    []int{6, 3, 1},                 // contiguous, lOut=3, total 6
+			want:          []float64{-1, -1, -1, 2, 4, 6}, // Verified with PyTorch: as_strided for kernel, Conv1d(1,2,2)(input) -> co0:[-1,-1,-1], co1:[2,4,6]
+		},
+		{
+			name:          "With padding and strides",
+			bSize:         1,
+			cIn:           1,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       1,
+			dilation:      1,
+			src:           []float64{1, 2, 3},
+			kernel:        []float64{1, -1},
+			srcStrides:    []int{3, 3, 1},           // contiguous
+			kernelStrides: []int{2, 2, 1},           // contiguous
+			dstStrides:    []int{4, 4, 1},           // contiguous, lOut=3
+			want:          []float64{-1, -1, -1, 3}, // Verified with PyTorch: Conv1d(1,1,2,padding=1)([[1,2,3]]) -> [[-1,-1,-1]] (lo0: only src[0]*(-1); lo1:1*1+2*(-1); lo2:2*1+3*(-1))
+		},
+		{
+			name:          "Broadcast-like source (zero batch stride)",
+			bSize:         2,
+			cIn:           1,
+			lIn:           3,
+			cOut:          1,
+			kSize:         2,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float64{1, 2, 3}, // Shared across batches via stride[0]=0
+			kernel:        []float64{1, -1},
+			srcStrides:    []int{0, 3, 1},            // batch_stride=0 (broadcast), others contiguous
+			kernelStrides: []int{2, 2, 1},            // contiguous
+			dstStrides:    []int{2, 2, 1},            // contiguous, lOut=2, total 4 per batch but shared computation
+			want:          []float64{-1, -1, -1, -1}, // Verified with PyTorch: as_strided with batch_stride=0, Conv1d -> both batches [-1,-1]
+		},
+		{
+			name:          "Empty input",
+			bSize:         1,
+			cIn:           1,
+			lIn:           0,
+			cOut:          1,
+			kSize:         1,
+			stride:        1,
+			padding:       0,
+			dilation:      1,
+			src:           []float64{},
+			kernel:        []float64{1},
+			srcStrides:    []int{0, 0, 1},
+			kernelStrides: []int{1, 1, 1},
+			dstStrides:    []int{0, 0, 1},
+			want:          []float64{}, // lOut=0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			dst := make([]float64, tt.bSize*tt.cOut*lOut) // Note: actual storage size based on contiguous, but function handles strides
+			kernels.NaiveConv1dStridedF64(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst, tt.srcStrides, tt.kernelStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
 func TestIm2colConv1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
