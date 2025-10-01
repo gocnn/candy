@@ -536,6 +536,62 @@ func Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, di
 	}
 }
 
+// Im2colStridedF32 extracts columns for 2D convolution (im2col) for float32 with support for non-contiguous src
+//
+// Memory Layout for col: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance, assumed contiguous
+// srcStrides: [batch_stride, cIn_stride, hIn_stride, wIn_stride]
+func Im2colStridedF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float32, srcStrides []int) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							colIdx := b*hOut*wOut*cIn*hK*wK + ho*wOut*cIn*hK*wK + wo*cIn*hK*wK + ci*hK*wK + hk*wK + wk
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[colIdx] = 0
+							} else {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								col[colIdx] = src[srcIdx]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colStridedF64 extracts columns for 2D convolution (im2col) for float64 with support for non-contiguous src
+//
+// Memory Layout for col: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance, assumed contiguous
+// srcStrides: [batch_stride, cIn_stride, hIn_stride, wIn_stride]
+func Im2colStridedF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float64, srcStrides []int) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							colIdx := b*hOut*wOut*cIn*hK*wK + ho*wOut*cIn*hK*wK + wo*cIn*hK*wK + ci*hK*wK + hk*wK + wk
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[colIdx] = 0
+							} else {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								col[colIdx] = src[srcIdx]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // Im2col1dF32 extracts columns for 1D convolution (im2col) for float32
 //
 // Memory Layout: (batch, lOut, cIn, kSize) - optimized for GEMM performance
@@ -577,6 +633,52 @@ func Im2col1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = 0
 					} else {
 						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = src[b*cIn*lIn+ci*lIn+li]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2col1dStridedF32 extracts columns for 1D convolution (im2col) for float32 with support for non-contiguous src
+//
+// Memory Layout for col: (batch, lOut, cIn, kSize) - optimized for GEMM performance, assumed contiguous
+// srcStrides: [batch_stride, cIn_stride, lIn_stride]
+func Im2col1dStridedF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float32, srcStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+					if li < 0 || li >= lIn {
+						col[colIdx] = 0
+					} else {
+						srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+						col[colIdx] = src[srcIdx]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2col1dStridedF64 extracts columns for 1D convolution (im2col) for float64 with support for non-contiguous src
+//
+// Memory Layout for col: (batch, lOut, cIn, kSize) - optimized for GEMM performance, assumed contiguous
+// srcStrides: [batch_stride, cIn_stride, lIn_stride]
+func Im2col1dStridedF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float64, srcStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+					if li < 0 || li >= lIn {
+						col[colIdx] = 0
+					} else {
+						srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+						col[colIdx] = src[srcIdx]
 					}
 				}
 			}
@@ -631,6 +733,76 @@ func Col2im1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 					li := lo*stride + k*dilation - padding
 					if li >= 0 && li < lIn {
 						im[b*cIn*lIn+ci*lIn+li] += col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dStridedF32 performs standard 1D col2im for float32 (e.g., for conv backward data) with support for non-contiguous im
+//
+// Input Layout: col:(batch, lOut, cIn, kSize) - assumed contiguous, matches Im2col1dStrided output
+// Output Layout: im:(batch, cIn, lIn) - supports non-contiguous via imStrides
+// imStrides: [batch_stride, cIn_stride, lIn_stride]
+//
+// Note: This is the inverse operation of Im2col1dStrided with proper accumulation
+// for overlapping regions during the reconstruction process. Clears im to zero first.
+func Col2im1dStridedF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float32, imStrides []int) {
+	// Clear im to zero first (works even if im is non-contiguous view, as it's the underlying slice)
+	for b := range bSize {
+		for ci := range cIn {
+			for li := range lIn {
+				imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+				im[imIdx] = 0
+			}
+		}
+	}
+
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+						imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+						im[imIdx] += col[colIdx]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dStridedF64 performs standard 1D col2im for float64 (e.g., for conv backward data) with support for non-contiguous im
+//
+// Input Layout: col:(batch, lOut, cIn, kSize) - assumed contiguous, matches Im2col1dStrided output
+// Output Layout: im:(batch, cIn, lIn) - supports non-contiguous via imStrides
+// imStrides: [batch_stride, cIn_stride, lIn_stride]
+//
+// Note: This is the inverse operation of Im2col1dStrided with proper accumulation
+// for overlapping regions during the reconstruction process. Clears im to zero first.
+func Col2im1dStridedF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float64, imStrides []int) {
+	// Clear im to zero first (works even if im is non-contiguous view, as it's the underlying slice)
+	for b := range bSize {
+		for ci := range cIn {
+			for li := range lIn {
+				imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+				im[imIdx] = 0
+			}
+		}
+	}
+
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+						imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+						im[imIdx] += col[colIdx]
 					}
 				}
 			}
