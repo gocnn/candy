@@ -289,6 +289,60 @@ func NaiveConvTranspose2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, pad
 	}
 }
 
+// NaiveConvTranspose1dStridedF32 performs 1D transpose convolution for float32 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := 0; b < bSize; b++ {
+		for co := 0; co < cOut; co++ {
+			for lo := 0; lo < lOut; lo++ {
+				sum := float32(0)
+				for ci := 0; ci < cIn; ci++ {
+					for k := 0; k < kSize; k++ {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedF64 performs 1D transpose convolution for float64 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := 0; b < bSize; b++ {
+		for co := 0; co < cOut; co++ {
+			for lo := 0; lo < lOut; lo++ {
+				sum := float64(0)
+				for ci := 0; ci < cIn; ci++ {
+					for k := 0; k < kSize; k++ {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
 // NaiveConvTranspose2dF64 performs 2D transpose convolution for float64 using direct loop
 func NaiveConvTranspose2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []float64) {
 	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
