@@ -320,6 +320,74 @@ func NaiveConvTranspose2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, pad
 	}
 }
 
+// NaiveConvTranspose2dStridedF32 performs 2D transpose convolution for float32 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose2dStridedF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					sum := float32(0)
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+										kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+										sum += src[srcIdx] * kernel[kernelIdx]
+									}
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dStridedF64 performs 2D transpose convolution for float64 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose2dStridedF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					sum := float64(0)
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+										kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+										sum += src[srcIdx] * kernel[kernelIdx]
+									}
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum
+				}
+			}
+		}
+	}
+}
+
 // AvgPool2dF32 performs 2D average pooling for float32
 func AvgPool2dF32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []float32) {
 	hOut := (hIn-hK)/hStride + 1
@@ -368,6 +436,64 @@ func AvgPool2dF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []f
 						}
 					}
 					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = sum / float64(count)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dStridedF32 performs 2D average pooling for float32 with support for non-contiguous memory
+func AvgPool2dStridedF32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []float32, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					sum := float32(0)
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								sum += src[srcIdx]
+								count++
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum / float32(count)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dStridedF64 performs 2D average pooling for float64 with support for non-contiguous memory
+func AvgPool2dStridedF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []float64, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					sum := float64(0)
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								sum += src[srcIdx]
+								count++
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum / float64(count)
 				}
 			}
 		}
@@ -430,6 +556,66 @@ func MaxPool2dF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []f
 	}
 }
 
+// MaxPool2dStridedF32 performs 2D max pooling for float32 with support for non-contiguous memory
+func MaxPool2dStridedF32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []float32, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					maxVal := float32(math.Inf(-1))
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								val := src[srcIdx]
+								if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dStridedF64 performs 2D max pooling for float64 with support for non-contiguous memory
+func MaxPool2dStridedF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []float64, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					maxVal := float64(math.Inf(-1))
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								val := src[srcIdx]
+								if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = maxVal
+				}
+			}
+		}
+	}
+}
+
 // UpsampleNearest2dF32 performs 2D nearest neighbor upsampling for float32
 //
 // Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
@@ -472,6 +658,62 @@ func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 						wi = wIn - 1
 					}
 					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dStridedF32 performs 2D nearest neighbor upsampling for float32 with support for non-contiguous memory
+//
+// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
+// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
+// srcStrides: [batch_stride, channel_stride, hIn_stride, wIn_stride]
+// dstStrides: [batch_stride, channel_stride, hOut_stride, wOut_stride]
+func UpsampleNearest2dStridedF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float32, srcStrides, dstStrides []int) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = src[srcIdx]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dStridedF64 performs 2D nearest neighbor upsampling for float64 with support for non-contiguous memory
+//
+// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
+// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
+// srcStrides: [batch_stride, channel_stride, hIn_stride, wIn_stride]
+// dstStrides: [batch_stride, channel_stride, hOut_stride, wOut_stride]
+func UpsampleNearest2dStridedF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float64, srcStrides, dstStrides []int) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = src[srcIdx]
 				}
 			}
 		}

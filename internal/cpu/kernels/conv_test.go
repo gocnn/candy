@@ -1286,6 +1286,464 @@ func TestNaiveConvTranspose2dF64(t *testing.T) {
 	}
 }
 
+func TestNaiveConvTranspose2dStridedF32(t *testing.T) {
+	tests := []struct {
+		name                                  string
+		bSize, cIn, hIn, wIn, cOut, hK, wK    int
+		stride, padding, outPadding, dilation int
+		src, kernel                           []float32
+		srcStrides, kernelStrides, dstStrides []int
+		want                                  []float32
+	}{
+		{
+			name:          "Basic contiguous",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float32{1, 2, 3, 4},
+		},
+		{
+			name:          "With stride=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        2,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float32{1, 2, 3, 4},
+		},
+		{
+			name:          "With outPadding=1 stride=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        2,
+			padding:       0,
+			outPadding:    1,
+			dilation:      1,
+			src:           []float32{1},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float32{1, 2, 0, 3, 4, 0, 0, 0, 0},
+		},
+		{
+			name:          "With dilation=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      2,
+			src:           []float32{1},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float32{1, 0, 2, 0, 0, 0, 3, 0, 4},
+		},
+		{
+			name:          "Multi-channel contiguous",
+			bSize:         1,
+			cIn:           2,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1, 2},
+			kernel:        []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides:    []int{2, 1, 1, 1},
+			kernelStrides: []int{4, 8, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float32{11, 14, 17, 20},
+		},
+		{
+			name:          "Non-contiguous src",
+			bSize:         1,
+			cIn:           1,
+			hIn:           2,
+			wIn:           2,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1, 3, 2, 4},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{4, 4, 1, 2},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float32{1, 4, 4, 6, 20, 16, 9, 24, 16},
+		},
+		{
+			name:          "Non-contiguous kernel",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1},
+			kernel:        []float32{1, 3, 2, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 1, 2},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float32{1, 2, 3, 4},
+		},
+		{
+			name:          "Non-contiguous dst",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 1, 2},
+			want:          []float32{1, 3, 2, 4},
+		},
+		{
+			name:          "Batch size 2 contiguous",
+			bSize:         2,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{1, 2},
+			kernel:        []float32{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float32{1, 2, 3, 4, 2, 4, 6, 8},
+		},
+		{
+			name:          "Empty input",
+			bSize:         1,
+			cIn:           1,
+			hIn:           0,
+			wIn:           0,
+			cOut:          1,
+			hK:            1,
+			wK:            1,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float32{},
+			kernel:        []float32{1},
+			srcStrides:    []int{0, 0, 0, 0},
+			kernelStrides: []int{1, 1, 1, 1},
+			dstStrides:    []int{0, 0, 0, 0},
+			want:          []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-1)*tt.stride + tt.dilation*(tt.hK-1) + tt.outPadding - 2*tt.padding + 1
+			wOut := (tt.wIn-1)*tt.stride + tt.dilation*(tt.wK-1) + tt.outPadding - 2*tt.padding + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.cOut-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float32, dstSize)
+			kernels.NaiveConvTranspose2dStridedF32(tt.bSize, tt.cIn, tt.hIn, tt.wIn, tt.cOut, tt.hK, tt.wK, tt.stride, tt.padding, tt.outPadding, tt.dilation, tt.src, tt.kernel, dst, tt.srcStrides, tt.kernelStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestNaiveConvTranspose2dStridedF64(t *testing.T) {
+	tests := []struct {
+		name                                  string
+		bSize, cIn, hIn, wIn, cOut, hK, wK    int
+		stride, padding, outPadding, dilation int
+		src, kernel                           []float64
+		srcStrides, kernelStrides, dstStrides []int
+		want                                  []float64
+	}{
+		{
+			name:          "Basic contiguous",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float64{1, 2, 3, 4},
+		},
+		{
+			name:          "With stride=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        2,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float64{1, 2, 3, 4},
+		},
+		{
+			name:          "With outPadding=1 stride=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        2,
+			padding:       0,
+			outPadding:    1,
+			dilation:      1,
+			src:           []float64{1},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float64{1, 2, 0, 3, 4, 0, 0, 0, 0},
+		},
+		{
+			name:          "With dilation=2",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      2,
+			src:           []float64{1},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float64{1, 0, 2, 0, 0, 0, 3, 0, 4},
+		},
+		{
+			name:          "Multi-channel contiguous",
+			bSize:         1,
+			cIn:           2,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1, 2},
+			kernel:        []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides:    []int{2, 1, 1, 1},
+			kernelStrides: []int{4, 8, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float64{11, 14, 17, 20},
+		},
+		{
+			name:          "Non-contiguous src",
+			bSize:         1,
+			cIn:           1,
+			hIn:           2,
+			wIn:           2,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1, 3, 2, 4},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{4, 4, 1, 2},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{9, 9, 3, 1},
+			want:          []float64{1, 4, 4, 6, 20, 16, 9, 24, 16},
+		},
+		{
+			name:          "Non-contiguous kernel",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1},
+			kernel:        []float64{1, 3, 2, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 1, 2},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float64{1, 2, 3, 4},
+		},
+		{
+			name:          "Non-contiguous dst",
+			bSize:         1,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 1, 2},
+			want:          []float64{1, 3, 2, 4},
+		},
+		{
+			name:          "Batch size 2 contiguous",
+			bSize:         2,
+			cIn:           1,
+			hIn:           1,
+			wIn:           1,
+			cOut:          1,
+			hK:            2,
+			wK:            2,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{1, 2},
+			kernel:        []float64{1, 2, 3, 4},
+			srcStrides:    []int{1, 1, 1, 1},
+			kernelStrides: []int{4, 4, 2, 1},
+			dstStrides:    []int{4, 4, 2, 1},
+			want:          []float64{1, 2, 3, 4, 2, 4, 6, 8},
+		},
+		{
+			name:          "Empty input",
+			bSize:         1,
+			cIn:           1,
+			hIn:           0,
+			wIn:           0,
+			cOut:          1,
+			hK:            1,
+			wK:            1,
+			stride:        1,
+			padding:       0,
+			outPadding:    0,
+			dilation:      1,
+			src:           []float64{},
+			kernel:        []float64{1},
+			srcStrides:    []int{0, 0, 0, 0},
+			kernelStrides: []int{1, 1, 1, 1},
+			dstStrides:    []int{0, 0, 0, 0},
+			want:          []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-1)*tt.stride + tt.dilation*(tt.hK-1) + tt.outPadding - 2*tt.padding + 1
+			wOut := (tt.wIn-1)*tt.stride + tt.dilation*(tt.wK-1) + tt.outPadding - 2*tt.padding + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.cOut-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float64, dstSize)
+			kernels.NaiveConvTranspose2dStridedF64(tt.bSize, tt.cIn, tt.hIn, tt.wIn, tt.cOut, tt.hK, tt.wK, tt.stride, tt.padding, tt.outPadding, tt.dilation, tt.src, tt.kernel, dst, tt.srcStrides, tt.kernelStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
 func TestAvgPool2dF32(t *testing.T) {
 	tests := []struct {
 		name                       string
@@ -1403,6 +1861,274 @@ func TestAvgPool2dF64(t *testing.T) {
 			wOut := max(0, (tt.wIn-tt.wK)/tt.wStride+1)
 			dst := make([]float64, tt.bSize*tt.c*hOut*wOut)
 			kernels.AvgPool2dF64(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hK, tt.wK, tt.hStride, tt.wStride, tt.src, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestAvgPool2dStridedF32(t *testing.T) {
+	tests := []struct {
+		name                     string
+		bSize, c, hIn, wIn       int
+		hK, wK, hStride, wStride int
+		src                      []float32
+		srcStrides, dstStrides   []int
+		want                     []float32
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{3, 4, 6, 7},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			dstStrides: []int{8, 4, 2, 1},
+			want:       []float32{3, 4, 6, 7, 12, 13, 15, 16},
+		},
+		{
+			name:       "Non-contiguous src (transposed logical)",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 4, 7, 2, 5, 8, 3, 6, 9},
+			srcStrides: []int{9, 9, 1, 3},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{3, 4, 6, 7},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 1, 2},
+			want:       []float32{3, 6, 4, 7},
+		},
+		{
+			name:       "Different strides",
+			bSize:      1,
+			c:          1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			hStride:    2,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			dstStrides: []int{6, 6, 3, 1},
+			want:       []float32{3.5, 4.5, 5.5, 11.5, 12.5, 13.5},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{3, 4, 6, 7, 12, 13, 15, 16},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hK:         1,
+			wK:         1,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-tt.hK)/tt.hStride + 1
+			wOut := (tt.wIn-tt.wK)/tt.wStride + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float32, dstSize)
+			kernels.AvgPool2dStridedF32(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hK, tt.wK, tt.hStride, tt.wStride, tt.src, dst, tt.srcStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestAvgPool2dStridedF64(t *testing.T) {
+	tests := []struct {
+		name                     string
+		bSize, c, hIn, wIn       int
+		hK, wK, hStride, wStride int
+		src                      []float64
+		srcStrides, dstStrides   []int
+		want                     []float64
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{3, 4, 6, 7},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			dstStrides: []int{8, 4, 2, 1},
+			want:       []float64{3, 4, 6, 7, 12, 13, 15, 16},
+		},
+		{
+			name:       "Non-contiguous src (transposed logical)",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 4, 7, 2, 5, 8, 3, 6, 9},
+			srcStrides: []int{9, 9, 1, 3},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{3, 4, 6, 7},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 1, 2},
+			want:       []float64{3, 6, 4, 7},
+		},
+		{
+			name:       "Different strides",
+			bSize:      1,
+			c:          1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			hStride:    2,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			dstStrides: []int{6, 6, 3, 1},
+			want:       []float64{3.5, 4.5, 5.5, 11.5, 12.5, 13.5},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{3, 4, 6, 7, 12, 13, 15, 16},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hK:         1,
+			wK:         1,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-tt.hK)/tt.hStride + 1
+			wOut := (tt.wIn-tt.wK)/tt.wStride + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float64, dstSize)
+			kernels.AvgPool2dStridedF64(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hK, tt.wK, tt.hStride, tt.wStride, tt.src, dst, tt.srcStrides, tt.dstStrides)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1534,6 +2260,274 @@ func TestMaxPool2dF64(t *testing.T) {
 	}
 }
 
+func TestMaxPool2dStridedF32(t *testing.T) {
+	tests := []struct {
+		name                     string
+		bSize, c, hIn, wIn       int
+		hK, wK, hStride, wStride int
+		src                      []float32
+		srcStrides, dstStrides   []int
+		want                     []float32
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{5, 6, 8, 9},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			dstStrides: []int{8, 4, 2, 1},
+			want:       []float32{5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Non-contiguous src (transposed logical)",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 4, 7, 2, 5, 8, 3, 6, 9},
+			srcStrides: []int{9, 9, 1, 3},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{5, 6, 8, 9},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 1, 2},
+			want:       []float32{5, 8, 6, 9},
+		},
+		{
+			name:       "Different strides",
+			bSize:      1,
+			c:          1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			hStride:    2,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			dstStrides: []int{6, 6, 3, 1},
+			want:       []float32{6, 7, 8, 14, 15, 16},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float32{5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hK:         1,
+			wK:         1,
+			hStride:    1,
+			wStride:    1,
+			src:        []float32{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-tt.hK)/tt.hStride + 1
+			wOut := (tt.wIn-tt.wK)/tt.wStride + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float32, dstSize)
+			kernels.MaxPool2dStridedF32(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hK, tt.wK, tt.hStride, tt.wStride, tt.src, dst, tt.srcStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestMaxPool2dStridedF64(t *testing.T) {
+	tests := []struct {
+		name                     string
+		bSize, c, hIn, wIn       int
+		hK, wK, hStride, wStride int
+		src                      []float64
+		srcStrides, dstStrides   []int
+		want                     []float64
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{5, 6, 8, 9},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{18, 9, 3, 1},
+			dstStrides: []int{8, 4, 2, 1},
+			want:       []float64{5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Non-contiguous src (transposed logical)",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 4, 7, 2, 5, 8, 3, 6, 9},
+			srcStrides: []int{9, 9, 1, 3},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{5, 6, 8, 9},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 1, 2},
+			want:       []float64{5, 8, 6, 9},
+		},
+		{
+			name:       "Different strides",
+			bSize:      1,
+			c:          1,
+			hIn:        4,
+			wIn:        4,
+			hK:         2,
+			wK:         2,
+			hStride:    2,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			srcStrides: []int{16, 16, 4, 1},
+			dstStrides: []int{6, 6, 3, 1},
+			want:       []float64{6, 7, 8, 14, 15, 16},
+		},
+		{
+			name:       "Batch size 2 contiguous",
+			bSize:      2,
+			c:          1,
+			hIn:        3,
+			wIn:        3,
+			hK:         2,
+			wK:         2,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+			srcStrides: []int{9, 9, 3, 1},
+			dstStrides: []int{4, 4, 2, 1},
+			want:       []float64{5, 6, 8, 9, 14, 15, 17, 18},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hK:         1,
+			wK:         1,
+			hStride:    1,
+			wStride:    1,
+			src:        []float64{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hOut := (tt.hIn-tt.hK)/tt.hStride + 1
+			wOut := (tt.wIn-tt.wK)/tt.wStride + 1
+			var dstSize int
+			if hOut > 0 && wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (hOut-1)*tt.dstStrides[2] + (wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float64, dstSize)
+			kernels.MaxPool2dStridedF64(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hK, tt.wK, tt.hStride, tt.wStride, tt.src, dst, tt.srcStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
 func TestUpsampleNearest2dF32(t *testing.T) {
 	tests := []struct {
 		name                           string
@@ -1647,6 +2641,272 @@ func TestUpsampleNearest2dF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.bSize*tt.c*tt.hOut*tt.wOut)
 			kernels.UpsampleNearest2dF64(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hOut, tt.wOut, tt.hScale, tt.wScale, tt.src, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestUpsampleNearest2dStridedF32(t *testing.T) {
+	tests := []struct {
+		name                   string
+		bSize, c, hIn, wIn     int
+		hOut, wOut             int
+		hScale, wScale         float64
+		src                    []float32
+		srcStrides, dstStrides []int
+		want                   []float32
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float32{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{9, 9, 3, 1},
+			want:       []float32{1, 2, 2, 3, 4, 4, 3, 4, 4},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides: []int{8, 4, 2, 1},
+			dstStrides: []int{18, 9, 3, 1},
+			want:       []float32{1, 2, 2, 3, 4, 4, 3, 4, 4, 5, 6, 6, 7, 8, 8, 7, 8, 8},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			c:          2,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float32{1, 3, 2, 4, 5, 7, 6, 8},
+			srcStrides: []int{8, 4, 1, 2},
+			dstStrides: []int{18, 9, 3, 1},
+			want:       []float32{1, 2, 2, 3, 4, 4, 3, 4, 4, 5, 6, 6, 7, 8, 8, 7, 8, 8},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float32{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{9, 9, 1, 3},
+			want:       []float32{1, 3, 3, 2, 4, 4, 2, 4, 4},
+		},
+		{
+			name:       "Broadcast src batch",
+			bSize:      2,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float32{1, 2, 3, 4},
+			srcStrides: []int{0, 4, 2, 1},
+			dstStrides: []int{9, 9, 3, 1},
+			want:       []float32{1, 2, 2, 3, 4, 4, 3, 4, 4, 1, 2, 2, 3, 4, 4, 3, 4, 4},
+		},
+		{
+			name:       "2x scale contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       4,
+			wOut:       4,
+			hScale:     2.0,
+			wScale:     2.0,
+			src:        []float32{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{16, 16, 4, 1},
+			want:       []float32{1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hOut:       0,
+			wOut:       0,
+			hScale:     1.0,
+			wScale:     1.0,
+			src:        []float32{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var dstSize int
+			if tt.hOut > 0 && tt.wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (tt.hOut-1)*tt.dstStrides[2] + (tt.wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float32, dstSize)
+			kernels.UpsampleNearest2dStridedF32(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hOut, tt.wOut, tt.hScale, tt.wScale, tt.src, dst, tt.srcStrides, tt.dstStrides)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestUpsampleNearest2dStridedF64(t *testing.T) {
+	tests := []struct {
+		name                   string
+		bSize, c, hIn, wIn     int
+		hOut, wOut             int
+		hScale, wScale         float64
+		src                    []float64
+		srcStrides, dstStrides []int
+		want                   []float64
+	}{
+		{
+			name:       "Basic contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float64{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{9, 9, 3, 1},
+			want:       []float64{1, 2, 2, 3, 4, 4, 3, 4, 4},
+		},
+		{
+			name:       "Multi-channel contiguous",
+			bSize:      1,
+			c:          2,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			srcStrides: []int{8, 4, 2, 1},
+			dstStrides: []int{18, 9, 3, 1},
+			want:       []float64{1, 2, 2, 3, 4, 4, 3, 4, 4, 5, 6, 6, 7, 8, 8, 7, 8, 8},
+		},
+		{
+			name:       "Non-contiguous src",
+			bSize:      1,
+			c:          2,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float64{1, 3, 2, 4, 5, 7, 6, 8},
+			srcStrides: []int{8, 4, 1, 2},
+			dstStrides: []int{18, 9, 3, 1},
+			want:       []float64{1, 2, 2, 3, 4, 4, 3, 4, 4, 5, 6, 6, 7, 8, 8, 7, 8, 8},
+		},
+		{
+			name:       "Non-contiguous dst",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float64{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{9, 9, 1, 3},
+			want:       []float64{1, 3, 3, 2, 4, 4, 2, 4, 4},
+		},
+		{
+			name:       "Broadcast src batch",
+			bSize:      2,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       3,
+			wOut:       3,
+			hScale:     1.5,
+			wScale:     1.5,
+			src:        []float64{1, 2, 3, 4},
+			srcStrides: []int{0, 4, 2, 1},
+			dstStrides: []int{9, 9, 3, 1},
+			want:       []float64{1, 2, 2, 3, 4, 4, 3, 4, 4, 1, 2, 2, 3, 4, 4, 3, 4, 4},
+		},
+		{
+			name:       "2x scale contiguous",
+			bSize:      1,
+			c:          1,
+			hIn:        2,
+			wIn:        2,
+			hOut:       4,
+			wOut:       4,
+			hScale:     2.0,
+			wScale:     2.0,
+			src:        []float64{1, 2, 3, 4},
+			srcStrides: []int{4, 4, 2, 1},
+			dstStrides: []int{16, 16, 4, 1},
+			want:       []float64{1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4},
+		},
+		{
+			name:       "Empty input",
+			bSize:      1,
+			c:          1,
+			hIn:        0,
+			wIn:        0,
+			hOut:       0,
+			wOut:       0,
+			hScale:     1.0,
+			wScale:     1.0,
+			src:        []float64{},
+			srcStrides: []int{0, 0, 0, 0},
+			dstStrides: []int{0, 0, 0, 0},
+			want:       []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var dstSize int
+			if tt.hOut > 0 && tt.wOut > 0 && len(tt.dstStrides) == 4 {
+				maxOffset := (tt.bSize-1)*tt.dstStrides[0] + (tt.c-1)*tt.dstStrides[1] + (tt.hOut-1)*tt.dstStrides[2] + (tt.wOut-1)*tt.dstStrides[3]
+				dstSize = maxOffset + 1
+			}
+			dst := make([]float64, dstSize)
+			kernels.UpsampleNearest2dStridedF64(tt.bSize, tt.c, tt.hIn, tt.wIn, tt.hOut, tt.wOut, tt.hScale, tt.wScale, tt.src, dst, tt.srcStrides, tt.dstStrides)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
