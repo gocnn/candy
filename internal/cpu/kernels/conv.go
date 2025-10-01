@@ -376,8 +376,8 @@ func UpsampleNearest2dF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 		for ch := range c {
 			for ho := range hOut {
 				for wo := range wOut {
-					hi := int(math.Floor(float64(ho) * hScale))
-					wi := int(math.Floor(float64(wo) * wScale))
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
 					if hi >= hIn {
 						hi = hIn - 1
 					}
@@ -397,8 +397,8 @@ func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 		for ch := range c {
 			for ho := range hOut {
 				for wo := range wOut {
-					hi := int(math.Floor(float64(ho) * hScale))
-					wi := int(math.Floor(float64(wo) * wScale))
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
 					if hi >= hIn {
 						hi = hIn - 1
 					}
