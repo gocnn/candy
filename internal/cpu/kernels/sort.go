@@ -4,6 +4,9 @@ import "sort"
 
 // AsortAscF32 performs ascending argsort along the last dimension for float32 (contiguous memory)
 func AsortAscF32(ncols int, src, dst []float32) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
 	rows := len(src) / ncols
 	indices := make([]uint32, len(src))
 	for i := range src {
@@ -55,6 +58,9 @@ func AsortAscStridedF32(ncols, numDims int, dims, strides []int, src, dst []floa
 
 // AsortAscF64 performs ascending argsort along the last dimension for float64 (contiguous memory)
 func AsortAscF64(ncols int, src, dst []float64) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
 	rows := len(src) / ncols
 	indices := make([]uint32, len(src))
 	for i := range src {
@@ -106,6 +112,9 @@ func AsortAscStridedF64(ncols, numDims int, dims, strides []int, src, dst []floa
 
 // AsortDescF32 performs descending argsort along the last dimension for float32 (contiguous memory)
 func AsortDescF32(ncols int, src, dst []float32) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
 	rows := len(src) / ncols
 	indices := make([]uint32, len(src))
 	for i := range src {
@@ -157,6 +166,9 @@ func AsortDescStridedF32(ncols, numDims int, dims, strides []int, src, dst []flo
 
 // AsortDescF64 performs descending argsort along the last dimension for float64 (contiguous memory)
 func AsortDescF64(ncols int, src, dst []float64) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
 	rows := len(src) / ncols
 	indices := make([]uint32, len(src))
 	for i := range src {
