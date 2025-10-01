@@ -2,965 +2,748 @@ package kernels
 
 import "math"
 
-// Sum reduction operations
-func SumF32(numel int, inp, out []float32) {
-	var sum float32
-	for i := range numel {
-		sum += inp[i]
+// FastSumF32 computes the sum over the last dimension for float32
+func FastSumF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		sum := float32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[j]
+		}
+		dst[i] = sum
 	}
-	out[0] = sum
 }
 
-func SumF64(numel int, inp, out []float64) {
-	var sum float64
-	for i := range numel {
-		sum += inp[i]
+// FastSumF64 computes the sum over the last dimension for float64
+func FastSumF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		sum := float64(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[j]
+		}
+		dst[i] = sum
 	}
-	out[0] = sum
 }
 
-func SumStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// FastSumStridedF32 computes the sum over the last dimension for float32 with strided memory
+func FastSumStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		SumF32(numel, inp, out)
+		FastSumF32(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	var sum float32
-	for i := range numel {
-		sum += inp[GetStridedIndex(i, numDims, dims, strides)]
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		sum := float32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[GetStridedIndex(j, numDims, dims, strides)]
+		}
+		dst[i] = sum
 	}
-	out[0] = sum
 }
 
-func SumStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// FastSumStridedF64 computes the sum over the last dimension for float64 with strided memory
+func FastSumStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		SumF64(numel, inp, out)
+		FastSumF64(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	var sum float64
-	for i := range numel {
-		sum += inp[GetStridedIndex(i, numDims, dims, strides)]
-	}
-	out[0] = sum
-}
-
-// ArgMin reduction operations
-func ArgMinF32(numel int, inp []float32, out []int64) {
-	if numel == 0 {
-		return
-	}
-	min := inp[0]
-	minIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if inp[i] < min {
-			min = inp[i]
-			minIdx = int64(i)
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		sum := float64(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[GetStridedIndex(j, numDims, dims, strides)]
 		}
+		dst[i] = sum
 	}
-	out[0] = minIdx
 }
 
-func ArgMinF64(numel int, inp []float64, out []int64) {
-	if numel == 0 {
-		return
-	}
-	min := inp[0]
-	minIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if inp[i] < min {
-			min = inp[i]
-			minIdx = int64(i)
+// FastMinF32 computes the minimum over the last dimension for float32
+func FastMinF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float32(math.MaxFloat32)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] < minVal {
+				minVal = src[j]
+			}
 		}
+		dst[i] = minVal
 	}
-	out[0] = minIdx
 }
 
-func ArgMinStridedF32(numel, numDims int, dims, strides []int, inp []float32, out []int64) {
+// FastMinF64 computes the minimum over the last dimension for float64
+func FastMinF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float64(math.MaxFloat64)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] < minVal {
+				minVal = src[j]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// FastMinStridedF32 computes the minimum over the last dimension for float32 with strided memory
+func FastMinStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		ArgMinF32(numel, inp, out)
+		FastMinF32(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	min := inp[GetStridedIndex(0, numDims, dims, strides)]
-	minIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val < min {
-			min = val
-			minIdx = int64(i)
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float32(math.MaxFloat32)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val < minVal {
+				minVal = val
+			}
 		}
+		dst[i] = minVal
 	}
-	out[0] = minIdx
 }
 
-func ArgMinStridedF64(numel, numDims int, dims, strides []int, inp []float64, out []int64) {
+// FastMinStridedF64 computes the minimum over the last dimension for float64 with strided memory
+func FastMinStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		ArgMinF64(numel, inp, out)
+		FastMinF64(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	min := inp[GetStridedIndex(0, numDims, dims, strides)]
-	minIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val < min {
-			min = val
-			minIdx = int64(i)
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float64(math.MaxFloat64)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val < minVal {
+				minVal = val
+			}
 		}
+		dst[i] = minVal
 	}
-	out[0] = minIdx
 }
 
-// ArgMax reduction operations
-func ArgMaxF32(numel int, inp []float32, out []int64) {
-	if numel == 0 {
-		return
-	}
-	max := inp[0]
-	maxIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if inp[i] > max {
-			max = inp[i]
-			maxIdx = int64(i)
+// FastMaxF32 computes the maximum over the last dimension for float32
+func FastMaxF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float32(-math.MaxFloat32)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] > maxVal {
+				maxVal = src[j]
+			}
 		}
+		dst[i] = maxVal
 	}
-	out[0] = maxIdx
 }
 
-func ArgMaxF64(numel int, inp []float64, out []int64) {
-	if numel == 0 {
-		return
-	}
-	max := inp[0]
-	maxIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if inp[i] > max {
-			max = inp[i]
-			maxIdx = int64(i)
+// FastMaxF64 computes the maximum over the last dimension for float64
+func FastMaxF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float64(-math.MaxFloat64)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] > maxVal {
+				maxVal = src[j]
+			}
 		}
+		dst[i] = maxVal
 	}
-	out[0] = maxIdx
 }
 
-func ArgMaxStridedF32(numel, numDims int, dims, strides []int, inp []float32, out []int64) {
+// FastMaxStridedF32 computes the maximum over the last dimension for float32 with strided memory
+func FastMaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		ArgMaxF32(numel, inp, out)
+		FastMaxF32(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	max := inp[GetStridedIndex(0, numDims, dims, strides)]
-	maxIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > max {
-			max = val
-			maxIdx = int64(i)
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float32(-math.MaxFloat32)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val > maxVal {
+				maxVal = val
+			}
 		}
+		dst[i] = maxVal
 	}
-	out[0] = maxIdx
 }
 
-func ArgMaxStridedF64(numel, numDims int, dims, strides []int, inp []float64, out []int64) {
+// FastMaxStridedF64 computes the maximum over the last dimension for float64 with strided memory
+func FastMaxStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		ArgMaxF64(numel, inp, out)
+		FastMaxF64(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	max := inp[GetStridedIndex(0, numDims, dims, strides)]
-	maxIdx := int64(0)
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > max {
-			max = val
-			maxIdx = int64(i)
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float64(-math.MaxFloat64)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val > maxVal {
+				maxVal = val
+			}
 		}
-	}
-	out[0] = maxIdx
-}
-
-// Softmax operations
-func SoftmaxF32(numel int, inp, out []float32) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
-		}
-	}
-	var sum float32
-	for i := range numel {
-		out[i] = float32(math.Exp(float64(inp[i] - maxVal)))
-		sum += out[i]
-	}
-	for i := range numel {
-		out[i] /= sum
+		dst[i] = maxVal
 	}
 }
 
-func SoftmaxF64(numel int, inp, out []float64) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
+// FastArgminF32 computes the index of the minimum over the last dimension for float32
+func FastArgminF32(numel, elToSumPerBlock, numDims int, dims []int, src []float32, dst []uint32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float32(math.MaxFloat32)
+		minIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] < minVal {
+				minVal = src[j]
+				minIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float64
-	for i := range numel {
-		out[i] = math.Exp(inp[i] - maxVal)
-		sum += out[i]
-	}
-	for i := range numel {
-		out[i] /= sum
+		dst[i] = minIdx
 	}
 }
 
-func SoftmaxStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// FastArgminF64 computes the index of the minimum over the last dimension for float64
+func FastArgminF64(numel, elToSumPerBlock, numDims int, dims []int, src []float64, dst []uint32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float64(math.MaxFloat64)
+		minIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] < minVal {
+				minVal = src[j]
+				minIdx = uint32(j % dims[numDims-1])
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// FastArgminStridedF32 computes the index of the minimum over the last dimension for float32 with strided memory
+func FastArgminStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float32, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		SoftmaxF32(numel, inp, out)
+		FastArgminF32(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float32(math.MaxFloat32)
+		minIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float32
-	for i := range numel {
-		out[i] = float32(math.Exp(float64(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)))
-		sum += out[i]
-	}
-	for i := range numel {
-		out[i] /= sum
+		dst[i] = minIdx
 	}
 }
 
-func SoftmaxStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// FastArgminStridedF64 computes the index of the minimum over the last dimension for float64 with strided memory
+func FastArgminStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float64, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		SoftmaxF64(numel, inp, out)
+		FastArgminF64(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		minVal := float64(math.MaxFloat64)
+		minIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float64
-	for i := range numel {
-		out[i] = math.Exp(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)
-		sum += out[i]
-	}
-	for i := range numel {
-		out[i] /= sum
+		dst[i] = minIdx
 	}
 }
 
-// LogSoftmax operations
-func LogSoftmaxF32(numel int, inp, out []float32) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
+// FastArgmaxF32 computes the index of the maximum over the last dimension for float32
+func FastArgmaxF32(numel, elToSumPerBlock, numDims int, dims []int, src []float32, dst []uint32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float32(-math.MaxFloat32)
+		maxIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] > maxVal {
+				maxVal = src[j]
+				maxIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Exp(float64(inp[i] - maxVal)))
-	}
-	logSum := maxVal + float32(math.Log(float64(sum)))
-	for i := range numel {
-		out[i] = inp[i] - logSum
+		dst[i] = maxIdx
 	}
 }
 
-func LogSoftmaxF64(numel int, inp, out []float64) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
+// FastArgmaxF64 computes the index of the maximum over the last dimension for float64
+func FastArgmaxF64(numel, elToSumPerBlock, numDims int, dims []int, src []float64, dst []uint32) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float64(-math.MaxFloat64)
+		maxIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			if src[j] > maxVal {
+				maxVal = src[j]
+				maxIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float64
-	for i := range numel {
-		sum += math.Exp(inp[i] - maxVal)
-	}
-	logSum := maxVal + math.Log(sum)
-	for i := range numel {
-		out[i] = inp[i] - logSum
+		dst[i] = maxIdx
 	}
 }
 
-func LogSoftmaxStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
+// FastArgmaxStridedF32 computes the index of the maximum over the last dimension for float32 with strided memory
+func FastArgmaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float32, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		LogSoftmaxF32(numel, inp, out)
+		FastArgmaxF32(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float32(-math.MaxFloat32)
+		maxIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Exp(float64(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)))
-	}
-	logSum := maxVal + float32(math.Log(float64(sum)))
-	for i := range numel {
-		out[i] = inp[GetStridedIndex(i, numDims, dims, strides)] - logSum
+		dst[i] = maxIdx
 	}
 }
 
-func LogSoftmaxStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
+// FastArgmaxStridedF64 computes the index of the maximum over the last dimension for float64 with strided memory
+func FastArgmaxStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float64, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		LogSoftmaxF64(numel, inp, out)
+		FastArgmaxF64(numel, elToSumPerBlock, numDims, dims, src, dst)
 		return
 	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		maxVal := float64(-math.MaxFloat64)
+		maxIdx := uint32(0)
+		startIdx := i * elToSumPerBlock
+		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		for j := startIdx; j < stopIdx; j++ {
+			val := src[GetStridedIndex(j, numDims, dims, strides)]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j % dims[numDims-1])
+			}
 		}
-	}
-	var sum float64
-	for i := range numel {
-		sum += math.Exp(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)
-	}
-	logSum := maxVal + math.Log(sum)
-	for i := range numel {
-		out[i] = inp[GetStridedIndex(i, numDims, dims, strides)] - logSum
+		dst[i] = maxIdx
 	}
 }
 
-// LayerNorm operations
-func LayerNormF32(numel int, inp, gamma, beta, out []float32, eps float32) {
-	var sum, sumSq float32
+// SumF32 computes the sum over specified dimensions for float32
+func SumF32(numel, numDims, numSumDims int, dims, sumDims []int, src, dst []float32) {
 	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	var2 := sumSq/float32(numel) - mean*mean
-	invStd := float32(1.0 / math.Sqrt(float64(var2+eps)))
-	for i := range numel {
-		out[i] = (inp[i]-mean)*invStd*gamma[i] + beta[i]
-	}
-}
-
-func LayerNormF64(numel int, inp, gamma, beta, out []float64, eps float64) {
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	var2 := sumSq/float64(numel) - mean*mean
-	invStd := 1.0 / math.Sqrt(var2+eps)
-	for i := range numel {
-		out[i] = (inp[i]-mean)*invStd*gamma[i] + beta[i]
-	}
-}
-
-func LayerNormStridedF32(numel, numDims int, dims, strides []int, inp, gamma, beta, out []float32, eps float32) {
-	if IsContiguous(numDims, dims, strides) {
-		LayerNormF32(numel, inp, gamma, beta, out, eps)
-		return
-	}
-	var sum, sumSq float32
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	var2 := sumSq/float32(numel) - mean*mean
-	invStd := float32(1.0 / math.Sqrt(float64(var2+eps)))
-	for i := range numel {
-		out[i] = (inp[GetStridedIndex(i, numDims, dims, strides)]-mean)*invStd*gamma[i] + beta[i]
-	}
-}
-
-func LayerNormStridedF64(numel, numDims int, dims, strides []int, inp, gamma, beta, out []float64, eps float64) {
-	if IsContiguous(numDims, dims, strides) {
-		LayerNormF64(numel, inp, gamma, beta, out, eps)
-		return
-	}
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	var2 := sumSq/float64(numel) - mean*mean
-	invStd := 1.0 / math.Sqrt(var2+eps)
-	for i := range numel {
-		out[i] = (inp[GetStridedIndex(i, numDims, dims, strides)]-mean)*invStd*gamma[i] + beta[i]
-	}
-}
-
-// RMSNorm operations
-func RMSNormF32(numel int, inp, gamma, out []float32, eps float32) {
-	var sumSq float32
-	for i := range numel {
-		x := inp[i]
-		sumSq += x * x
-	}
-	rms := float32(math.Sqrt(float64(sumSq/float32(numel) + eps)))
-	for i := range numel {
-		out[i] = inp[i] / rms * gamma[i]
-	}
-}
-
-func RMSNormF64(numel int, inp, gamma, out []float64, eps float64) {
-	var sumSq float64
-	for i := range numel {
-		x := inp[i]
-		sumSq += x * x
-	}
-	rms := math.Sqrt(sumSq/float64(numel) + eps)
-	for i := range numel {
-		out[i] = inp[i] / rms * gamma[i]
-	}
-}
-
-func RMSNormStridedF32(numel, numDims int, dims, strides []int, inp, gamma, out []float32, eps float32) {
-	if IsContiguous(numDims, dims, strides) {
-		RMSNormF32(numel, inp, gamma, out, eps)
-		return
-	}
-	var sumSq float32
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sumSq += x * x
-	}
-	rms := float32(math.Sqrt(float64(sumSq/float32(numel) + eps)))
-	for i := range numel {
-		out[i] = inp[GetStridedIndex(i, numDims, dims, strides)] / rms * gamma[i]
-	}
-}
-
-func RMSNormStridedF64(numel, numDims int, dims, strides []int, inp, gamma, out []float64, eps float64) {
-	if IsContiguous(numDims, dims, strides) {
-		RMSNormF64(numel, inp, gamma, out, eps)
-		return
-	}
-	var sumSq float64
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sumSq += x * x
-	}
-	rms := math.Sqrt(sumSq/float64(numel) + eps)
-	for i := range numel {
-		out[i] = inp[GetStridedIndex(i, numDims, dims, strides)] / rms * gamma[i]
-	}
-}
-
-// GroupNorm operations
-func GroupNormF32(numel, numGroups int, inp, gamma, beta, out []float32, eps float32) {
-	groupSize := numel / numGroups
-	for g := 0; g < numGroups; g++ {
-		var sum, sumSq float32
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			x := inp[idx]
-			sum += x
-			sumSq += x * x
+		dstIdx := i
+		for nd := range numSumDims {
+			stride := dims[numDims-1]
+			pre := dstIdx / stride
+			post := dstIdx % stride
+			dstIdx = (pre/sumDims[nd])*stride + post
 		}
-		mean := sum / float32(groupSize)
-		var2 := sumSq/float32(groupSize) - mean*mean
-		invStd := float32(1.0 / math.Sqrt(float64(var2+eps)))
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			out[idx] = (inp[idx]-mean)*invStd*gamma[i] + beta[i]
+		dst[dstIdx] += src[i]
+	}
+}
+
+// SumF64 computes the sum over specified dimensions for float64
+func SumF64(numel, numDims, numSumDims int, dims, sumDims []int, src, dst []float64) {
+	for i := range numel {
+		dstIdx := i
+		for nd := range numSumDims {
+			stride := dims[numDims-1]
+			pre := dstIdx / stride
+			post := dstIdx % stride
+			dstIdx = (pre/sumDims[nd])*stride + post
+		}
+		dst[dstIdx] += src[i]
+	}
+}
+
+// SumStridedF32 computes the sum over specified dimensions for float32 with strided memory
+func SumStridedF32(numel, numDims, numSumDims int, dims, strides, sumDims, sumStrides []int, src, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		SumF32(numel, numDims, numSumDims, dims, sumDims, src, dst)
+		return
+	}
+	for i := range numel {
+		dstIdx := i
+		for nd := range numSumDims {
+			stride := sumStrides[nd]
+			pre := dstIdx / stride
+			post := dstIdx % stride
+			dstIdx = (pre/sumDims[nd])*stride + post
+		}
+		dst[dstIdx] += src[GetStridedIndex(i, numDims, dims, strides)]
+	}
+}
+
+// SumStridedF64 computes the sum over specified dimensions for float64 with strided memory
+func SumStridedF64(numel, numDims, numSumDims int, dims, strides, sumDims, sumStrides []int, src, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		SumF64(numel, numDims, numSumDims, dims, sumDims, src, dst)
+		return
+	}
+	for i := range numel {
+		dstIdx := i
+		for nd := range numSumDims {
+			stride := sumStrides[nd]
+			pre := dstIdx / stride
+			post := dstIdx % stride
+			dstIdx = (pre/sumDims[nd])*stride + post
+		}
+		dst[dstIdx] += src[GetStridedIndex(i, numDims, dims, strides)]
+	}
+}
+
+// SoftmaxF32 applies softmax along the last dimension for float32
+func SoftmaxF32(ncols int, src, dst []float32) {
+	rows := len(src) / ncols
+	for row := range rows {
+		maxVal := float32(-math.MaxFloat32)
+		for col := range ncols {
+			i := row*ncols + col
+			if src[i] > maxVal {
+				maxVal = src[i]
+			}
+		}
+		sum := float32(0)
+		for col := range ncols {
+			i := row*ncols + col
+			val := float32(math.Exp(float64(src[i] - maxVal)))
+			dst[i] = val
+			sum += val
+		}
+		invSum := 1 / sum
+		for col := range ncols {
+			dst[row*ncols+col] *= invSum
 		}
 	}
 }
 
-func GroupNormF64(numel, numGroups int, inp, gamma, beta, out []float64, eps float64) {
-	groupSize := numel / numGroups
-	for g := 0; g < numGroups; g++ {
-		var sum, sumSq float64
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			x := inp[idx]
-			sum += x
-			sumSq += x * x
+// SoftmaxF64 applies softmax along the last dimension for float64
+func SoftmaxF64(ncols int, src, dst []float64) {
+	rows := len(src) / ncols
+	for row := range rows {
+		maxVal := float64(-math.MaxFloat64)
+		for col := range ncols {
+			i := row*ncols + col
+			if src[i] > maxVal {
+				maxVal = src[i]
+			}
 		}
-		mean := sum / float64(groupSize)
-		var2 := sumSq/float64(groupSize) - mean*mean
-		invStd := 1.0 / math.Sqrt(var2+eps)
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			out[idx] = (inp[idx]-mean)*invStd*gamma[i] + beta[i]
+		sum := float64(0)
+		for col := range ncols {
+			i := row*ncols + col
+			val := math.Exp(src[i] - maxVal)
+			dst[i] = val
+			sum += val
 		}
-	}
-}
-
-func GroupNormStridedF32(numel, numGroups, numDims int, dims, strides []int, inp, gamma, beta, out []float32, eps float32) {
-	if IsContiguous(numDims, dims, strides) {
-		GroupNormF32(numel, numGroups, inp, gamma, beta, out, eps)
-		return
-	}
-	groupSize := numel / numGroups
-	for g := 0; g < numGroups; g++ {
-		var sum, sumSq float32
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			x := inp[GetStridedIndex(idx, numDims, dims, strides)]
-			sum += x
-			sumSq += x * x
-		}
-		mean := sum / float32(groupSize)
-		var2 := sumSq/float32(groupSize) - mean*mean
-		invStd := float32(1.0 / math.Sqrt(float64(var2+eps)))
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			out[idx] = (inp[GetStridedIndex(idx, numDims, dims, strides)]-mean)*invStd*gamma[i] + beta[i]
+		invSum := 1 / sum
+		for col := range ncols {
+			dst[row*ncols+col] *= invSum
 		}
 	}
 }
 
-func GroupNormStridedF64(numel, numGroups, numDims int, dims, strides []int, inp, gamma, beta, out []float64, eps float64) {
-	if IsContiguous(numDims, dims, strides) {
-		GroupNormF64(numel, numGroups, inp, gamma, beta, out, eps)
-		return
-	}
-	groupSize := numel / numGroups
-	for g := 0; g < numGroups; g++ {
-		var sum, sumSq float64
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			x := inp[GetStridedIndex(idx, numDims, dims, strides)]
-			sum += x
-			sumSq += x * x
+// RmsnormF32 applies RMS normalization for float32
+func RmsnormF32(ncols, blockSize int, eps float32, src, dst, alpha []float32) {
+	rows := len(src) / ncols
+	for row := range rows {
+		sum := float32(0)
+		for col := 0; col < ncols; col += blockSize {
+			if col < ncols {
+				xi := src[row*ncols+col]
+				sum += xi * xi
+			}
 		}
-		mean := sum / float64(groupSize)
-		var2 := sumSq/float64(groupSize) - mean*mean
-		invStd := 1.0 / math.Sqrt(var2+eps)
-		for i := 0; i < groupSize; i++ {
-			idx := g*groupSize + i
-			out[idx] = (inp[GetStridedIndex(idx, numDims, dims, strides)]-mean)*invStd*gamma[i] + beta[i]
-		}
-	}
-}
-
-// Variance reduction operations (population variance)
-func VarF32(numel int, inp, out []float32) {
-	var sum, sumSq float32
-	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	out[0] = sumSq/float32(numel) - mean*mean
-}
-
-func VarF64(numel int, inp, out []float64) {
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	out[0] = sumSq/float64(numel) - mean*mean
-}
-
-func VarStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		VarF32(numel, inp, out)
-		return
-	}
-	var sum, sumSq float32
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	out[0] = sumSq/float32(numel) - mean*mean
-}
-
-func VarStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		VarF64(numel, inp, out)
-		return
-	}
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	out[0] = sumSq/float64(numel) - mean*mean
-}
-
-// Standard deviation operations
-func StdF32(numel int, inp, out []float32) {
-	var sum, sumSq float32
-	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	out[0] = float32(math.Sqrt(float64(sumSq/float32(numel) - mean*mean)))
-}
-
-func StdF64(numel int, inp, out []float64) {
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[i]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	out[0] = math.Sqrt(sumSq/float64(numel) - mean*mean)
-}
-
-func StdStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		StdF32(numel, inp, out)
-		return
-	}
-	var sum, sumSq float32
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float32(numel)
-	out[0] = float32(math.Sqrt(float64(sumSq/float32(numel) - mean*mean)))
-}
-
-func StdStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		StdF64(numel, inp, out)
-		return
-	}
-	var sum, sumSq float64
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sum += x
-		sumSq += x * x
-	}
-	mean := sum / float64(numel)
-	out[0] = math.Sqrt(sumSq/float64(numel) - mean*mean)
-}
-
-// Mean reduction operations
-func MeanF32(numel int, inp, out []float32) {
-	var sum float32
-	for i := range numel {
-		sum += inp[i]
-	}
-	out[0] = sum / float32(numel)
-}
-
-func MeanF64(numel int, inp, out []float64) {
-	var sum float64
-	for i := range numel {
-		sum += inp[i]
-	}
-	out[0] = sum / float64(numel)
-}
-
-func MeanStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		MeanF32(numel, inp, out)
-		return
-	}
-	var sum float32
-	for i := range numel {
-		sum += inp[GetStridedIndex(i, numDims, dims, strides)]
-	}
-	out[0] = sum / float32(numel)
-}
-
-func MeanStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		MeanF64(numel, inp, out)
-		return
-	}
-	var sum float64
-	for i := range numel {
-		sum += inp[GetStridedIndex(i, numDims, dims, strides)]
-	}
-	out[0] = sum / float64(numel)
-}
-
-// L1 norm operations
-func L1NormF32(numel int, inp, out []float32) {
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Abs(float64(inp[i])))
-	}
-	out[0] = sum
-}
-
-func L1NormF64(numel int, inp, out []float64) {
-	var sum float64
-	for i := range numel {
-		sum += math.Abs(inp[i])
-	}
-	out[0] = sum
-}
-
-func L1NormStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		L1NormF32(numel, inp, out)
-		return
-	}
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Abs(float64(inp[GetStridedIndex(i, numDims, dims, strides)])))
-	}
-	out[0] = sum
-}
-
-func L1NormStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		L1NormF64(numel, inp, out)
-		return
-	}
-	var sum float64
-	for i := range numel {
-		sum += math.Abs(inp[GetStridedIndex(i, numDims, dims, strides)])
-	}
-	out[0] = sum
-}
-
-// L2 norm operations
-func L2NormF32(numel int, inp, out []float32) {
-	var sumSq float32
-	for i := range numel {
-		x := inp[i]
-		sumSq += x * x
-	}
-	out[0] = float32(math.Sqrt(float64(sumSq)))
-}
-
-func L2NormF64(numel int, inp, out []float64) {
-	var sumSq float64
-	for i := range numel {
-		x := inp[i]
-		sumSq += x * x
-	}
-	out[0] = math.Sqrt(sumSq)
-}
-
-func L2NormStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		L2NormF32(numel, inp, out)
-		return
-	}
-	var sumSq float32
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sumSq += x * x
-	}
-	out[0] = float32(math.Sqrt(float64(sumSq)))
-}
-
-func L2NormStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		L2NormF64(numel, inp, out)
-		return
-	}
-	var sumSq float64
-	for i := range numel {
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		sumSq += x * x
-	}
-	out[0] = math.Sqrt(sumSq)
-}
-
-// LogSumExp operations
-func LogSumExpF32(numel int, inp, out []float32) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
+		mean := sum / float32(ncols)
+		scale := 1 / float32(math.Sqrt(float64(mean+eps)))
+		if alpha == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = src[row*ncols+col] * scale
+				}
+			}
+		} else {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = src[row*ncols+col] * scale * alpha[col]
+				}
+			}
 		}
 	}
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Exp(float64(inp[i] - maxVal)))
-	}
-	out[0] = maxVal + float32(math.Log(float64(sum)))
 }
 
-func LogSumExpF64(numel int, inp, out []float64) {
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[0]
-	for i := 1; i < numel; i++ {
-		if inp[i] > maxVal {
-			maxVal = inp[i]
+// RmsnormF64 applies RMS normalization for float64
+func RmsnormF64(ncols, blockSize int, eps float64, src, dst, alpha []float64) {
+	rows := len(src) / ncols
+	for row := range rows {
+		sum := float64(0)
+		for col := 0; col < ncols; col += blockSize {
+			if col < ncols {
+				xi := src[row*ncols+col]
+				sum += xi * xi
+			}
+		}
+		mean := sum / float64(ncols)
+		scale := 1 / math.Sqrt(mean+eps)
+		if alpha == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = src[row*ncols+col] * scale
+				}
+			}
+		} else {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = src[row*ncols+col] * scale * alpha[col]
+				}
+			}
 		}
 	}
-	var sum float64
-	for i := range numel {
-		sum += math.Exp(inp[i] - maxVal)
-	}
-	out[0] = maxVal + math.Log(sum)
 }
 
-func LogSumExpStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		LogSumExpF32(numel, inp, out)
-		return
-	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+// LayernormF32 applies layer normalization for float32
+func LayernormF32(ncols, blockSize int, eps float32, src, dst, alpha, beta []float32) {
+	rows := len(src) / ncols
+	for row := range rows {
+		meanVar := [2]float32{0, 0}
+		for col := 0; col < ncols; col += blockSize {
+			if col < ncols {
+				xi := src[row*ncols+col]
+				meanVar[0] += xi
+				meanVar[1] += xi * xi
+			}
+		}
+		mean := meanVar[0] / float32(ncols)
+		varVal := meanVar[1]/float32(ncols) - mean*mean
+		invStd := 1 / float32(math.Sqrt(float64(varVal+eps)))
+		if alpha == nil && beta == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd
+				}
+			}
+		} else if alpha == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd + beta[col]
+				}
+			}
+		} else if beta == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd * alpha[col]
+				}
+			}
+		} else {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd*alpha[col] + beta[col]
+				}
+			}
 		}
 	}
-	var sum float32
-	for i := range numel {
-		sum += float32(math.Exp(float64(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)))
-	}
-	out[0] = maxVal + float32(math.Log(float64(sum)))
 }
 
-func LogSumExpStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		LogSumExpF64(numel, inp, out)
-		return
-	}
-	if numel == 0 {
-		return
-	}
-	maxVal := inp[GetStridedIndex(0, numDims, dims, strides)]
-	for i := 1; i < numel; i++ {
-		if val := inp[GetStridedIndex(i, numDims, dims, strides)]; val > maxVal {
-			maxVal = val
+// LayernormF64 applies layer normalization for float64
+func LayernormF64(ncols, blockSize int, eps float64, src, dst, alpha, beta []float64) {
+	rows := len(src) / ncols
+	for row := range rows {
+		meanVar := [2]float64{0, 0}
+		for col := 0; col < ncols; col += blockSize {
+			if col < ncols {
+				xi := src[row*ncols+col]
+				meanVar[0] += xi
+				meanVar[1] += xi * xi
+			}
+		}
+		mean := meanVar[0] / float64(ncols)
+		varVal := meanVar[1]/float64(ncols) - mean*mean
+		invStd := 1 / math.Sqrt(varVal+eps)
+		if alpha == nil && beta == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd
+				}
+			}
+		} else if alpha == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd + beta[col]
+				}
+			}
+		} else if beta == nil {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd * alpha[col]
+				}
+			}
+		} else {
+			for col := 0; col < ncols; col += blockSize {
+				if col < ncols {
+					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd*alpha[col] + beta[col]
+				}
+			}
 		}
 	}
-	var sum float64
-	for i := range numel {
-		sum += math.Exp(inp[GetStridedIndex(i, numDims, dims, strides)] - maxVal)
-	}
-	out[0] = maxVal + math.Log(sum)
 }
 
-// Welford variance operations (numerically stable)
-func WelfordVarF32(numel int, inp, out []float32) {
-	var mean, m2 float32
-	count := float32(0)
-	for i := range numel {
-		count++
-		x := inp[i]
-		delta := x - mean
-		mean += delta / count
-		delta2 := x - mean
-		m2 += delta * delta2
-	}
-	if count > 1 {
-		out[0] = m2 / (count - 1) // Sample variance
-	} else {
-		out[0] = 0
+// RopeF32 applies rotary position embedding for float32
+func RopeF32(bh, td, d, strideB int, src, cos, sin, dst []float32) {
+	for idx := 0; idx < bh*td/2; idx++ {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		i1 := iBh*td + iT*d + iD
+		i2 := i1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * (td / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		dst[i1] = src[i1]*c - src[i2]*s
+		dst[i2] = src[i1]*s + src[i2]*c
 	}
 }
 
-func WelfordVarF64(numel int, inp, out []float64) {
-	var mean, m2 float64
-	count := float64(0)
-	for i := range numel {
-		count++
-		x := inp[i]
-		delta := x - mean
-		mean += delta / count
-		delta2 := x - mean
-		m2 += delta * delta2
-	}
-	if count > 1 {
-		out[0] = m2 / (count - 1) // Sample variance
-	} else {
-		out[0] = 0
-	}
-}
-
-func WelfordVarStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
-		WelfordVarF32(numel, inp, out)
-		return
-	}
-	var mean, m2 float32
-	count := float32(0)
-	for i := range numel {
-		count++
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		delta := x - mean
-		mean += delta / count
-		delta2 := x - mean
-		m2 += delta * delta2
-	}
-	if count > 1 {
-		out[0] = m2 / (count - 1)
-	} else {
-		out[0] = 0
+// RopeF64 applies rotary position embedding for float64
+func RopeF64(bh, td, d, strideB int, src, cos, sin, dst []float64) {
+	for idx := 0; idx < bh*td/2; idx++ {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		i1 := iBh*td + iT*d + iD
+		i2 := i1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * (td / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		dst[i1] = src[i1]*c - src[i2]*s
+		dst[i2] = src[i1]*s + src[i2]*c
 	}
 }
 
-func WelfordVarStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
-		WelfordVarF64(numel, inp, out)
-		return
+// RopeIF32 applies simplified rotary position embedding for float32
+func RopeIF32(bh, td, strideB int, src, cos, sin, dst []float32) {
+	for idx := 0; idx < bh*td/2; idx++ {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
+		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
 	}
-	var mean, m2 float64
-	count := float64(0)
-	for i := range numel {
-		count++
-		x := inp[GetStridedIndex(i, numDims, dims, strides)]
-		delta := x - mean
-		mean += delta / count
-		delta2 := x - mean
-		m2 += delta * delta2
+}
+
+// RopeIF64 applies simplified rotary position embedding for float64
+func RopeIF64(bh, td, strideB int, src, cos, sin, dst []float64) {
+	for idx := 0; idx < bh*td/2; idx++ {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
+		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
 	}
-	if count > 1 {
-		out[0] = m2 / (count - 1)
-	} else {
-		out[0] = 0
+}
+
+// RopeThdF32 applies rotary position embedding with thread dimensions for float32
+func RopeThdF32(b, t, h, d, strideB int, src, cos, sin, dst []float32) {
+	for idx := 0; idx < b*t*h*d/2; idx++ {
+		iBth := idx / (d / 2)
+		iD := idx - (d/2)*iBth
+		iT := (iBth / h) % t
+		i1 := iBth*d + iD
+		i2 := i1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * ((t * d) / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		dst[i1] = src[i1]*c - src[i2]*s
+		dst[i2] = src[i1]*s + src[i2]*c
+	}
+}
+
+// RopeThdF64 applies rotary position embedding with thread dimensions for float64
+func RopeThdF64(b, t, h, d, strideB int, src, cos, sin, dst []float64) {
+	for idx := 0; idx < b*t*h*d/2; idx++ {
+		iBth := idx / (d / 2)
+		iD := idx - (d/2)*iBth
+		iT := (iBth / h) % t
+		i1 := iBth*d + iD
+		i2 := i1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * ((t * d) / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		dst[i1] = src[i1]*c - src[i2]*s
+		dst[i2] = src[i1]*s + src[i2]*c
 	}
 }
