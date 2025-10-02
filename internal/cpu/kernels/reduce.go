@@ -833,9 +833,86 @@ func LayerNormStridedF64(numel int, numDims int, dims, strides []int, eps float6
 	}
 }
 
-// RopeF32 applies rotary position embedding for float32
-func RopeF32(bh, td, d, strideB int, src, cos, sin, dst []float32) {
-	for idx := 0; idx < bh*td/2; idx++ {
+// RopeIF32 performs rotary position embedding (rope_i variant) for float32 (contiguous memory)
+func RopeIF32(bh int, td int, strideB int, src, cos, sin, dst []float32) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
+		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+	}
+}
+
+// RopeIF64 performs rotary position embedding (rope_i variant) for float64 (contiguous memory)
+func RopeIF64(bh int, td int, strideB int, src, cos, sin, dst []float64) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
+		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+	}
+}
+
+// RopeIStridedF32 performs strided rotary position embedding (rope_i variant) for float32
+func RopeIStridedF32(numDims int, dims, strides []int, bh int, td int, strideB int, src, cos, sin, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeIF32(bh, td, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		strided2Idx := GetStridedIndex(2*idx, numDims, dims, strides)
+		strided2IdxPlus1 := GetStridedIndex(2*idx+1, numDims, dims, strides)
+		dst[strided2Idx] = src[strided2Idx]*c - src[strided2IdxPlus1]*s
+		dst[strided2IdxPlus1] = src[strided2Idx]*s + src[strided2IdxPlus1]*c
+	}
+}
+
+// RopeIStridedF64 performs strided rotary position embedding (rope_i variant) for float64
+func RopeIStridedF64(numDims int, dims, strides []int, bh int, td int, strideB int, src, cos, sin, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeIF64(bh, td, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		strided2Idx := GetStridedIndex(2*idx, numDims, dims, strides)
+		strided2IdxPlus1 := GetStridedIndex(2*idx+1, numDims, dims, strides)
+		dst[strided2Idx] = src[strided2Idx]*c - src[strided2IdxPlus1]*s
+		dst[strided2IdxPlus1] = src[strided2Idx]*s + src[strided2IdxPlus1]*c
+	}
+}
+
+// RopeF32 performs rotary position embedding (rope variant) for float32 (contiguous memory)
+func RopeF32(bh int, td int, d int, strideB int, src, cos, sin, dst []float32) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
 		iBh := idx / (td / 2)
 		iTd := idx - (td/2)*iBh
 		iT := iTd / (d / 2)
@@ -854,9 +931,10 @@ func RopeF32(bh, td, d, strideB int, src, cos, sin, dst []float32) {
 	}
 }
 
-// RopeF64 applies rotary position embedding for float64
-func RopeF64(bh, td, d, strideB int, src, cos, sin, dst []float64) {
-	for idx := 0; idx < bh*td/2; idx++ {
+// RopeF64 performs rotary position embedding (rope variant) for float64 (contiguous memory)
+func RopeF64(bh int, td int, d int, strideB int, src, cos, sin, dst []float64) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
 		iBh := idx / (td / 2)
 		iTd := idx - (td/2)*iBh
 		iT := iTd / (d / 2)
@@ -875,39 +953,66 @@ func RopeF64(bh, td, d, strideB int, src, cos, sin, dst []float64) {
 	}
 }
 
-// RopeIF32 applies simplified rotary position embedding for float32
-func RopeIF32(bh, td, strideB int, src, cos, sin, dst []float32) {
-	for idx := 0; idx < bh*td/2; idx++ {
-		ropeIdx := idx % (td / 2)
+// RopeStridedF32 performs strided rotary position embedding (rope variant) for float32
+func RopeStridedF32(numDims int, dims, strides []int, bh int, td int, d int, strideB int, src, cos, sin, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeF32(bh, td, d, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		logicalI1 := iBh*td + iT*d + iD
+		logicalI2 := logicalI1 + d/2
+		iCs := iT*(d/2) + iD
 		if strideB > 0 {
 			bIdx := (2 * idx) / strideB
-			ropeIdx += bIdx * (td / 2)
+			iCs += bIdx * (td / 2)
 		}
-		c := cos[ropeIdx]
-		s := sin[ropeIdx]
-		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
-		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+		c := cos[iCs]
+		s := sin[iCs]
+		stridedI1 := GetStridedIndex(logicalI1, numDims, dims, strides)
+		stridedI2 := GetStridedIndex(logicalI2, numDims, dims, strides)
+		dst[stridedI1] = src[stridedI1]*c - src[stridedI2]*s
+		dst[stridedI2] = src[stridedI1]*s + src[stridedI2]*c
 	}
 }
 
-// RopeIF64 applies simplified rotary position embedding for float64
-func RopeIF64(bh, td, strideB int, src, cos, sin, dst []float64) {
-	for idx := 0; idx < bh*td/2; idx++ {
-		ropeIdx := idx % (td / 2)
+// RopeStridedF64 performs strided rotary position embedding (rope variant) for float64
+func RopeStridedF64(numDims int, dims, strides []int, bh int, td int, d int, strideB int, src, cos, sin, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeF64(bh, td, d, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		logicalI1 := iBh*td + iT*d + iD
+		logicalI2 := logicalI1 + d/2
+		iCs := iT*(d/2) + iD
 		if strideB > 0 {
 			bIdx := (2 * idx) / strideB
-			ropeIdx += bIdx * (td / 2)
+			iCs += bIdx * (td / 2)
 		}
-		c := cos[ropeIdx]
-		s := sin[ropeIdx]
-		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
-		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+		c := cos[iCs]
+		s := sin[iCs]
+		stridedI1 := GetStridedIndex(logicalI1, numDims, dims, strides)
+		stridedI2 := GetStridedIndex(logicalI2, numDims, dims, strides)
+		dst[stridedI1] = src[stridedI1]*c - src[stridedI2]*s
+		dst[stridedI2] = src[stridedI1]*s + src[stridedI2]*c
 	}
 }
 
-// RopeThdF32 applies rotary position embedding with thread dimensions for float32
-func RopeThdF32(b, t, h, d, strideB int, src, cos, sin, dst []float32) {
-	for idx := 0; idx < b*t*h*d/2; idx++ {
+// RopeThdF32 performs rotary position embedding (rope_thd variant) for float32 (contiguous memory)
+func RopeThdF32(b int, t int, h int, d int, strideB int, src, cos, sin, dst []float32) {
+	numPairs := b * t * h * d / 2
+	for idx := range numPairs {
 		iBth := idx / (d / 2)
 		iD := idx - (d/2)*iBth
 		iT := (iBth / h) % t
@@ -925,9 +1030,10 @@ func RopeThdF32(b, t, h, d, strideB int, src, cos, sin, dst []float32) {
 	}
 }
 
-// RopeThdF64 applies rotary position embedding with thread dimensions for float64
-func RopeThdF64(b, t, h, d, strideB int, src, cos, sin, dst []float64) {
-	for idx := 0; idx < b*t*h*d/2; idx++ {
+// RopeThdF64 performs rotary position embedding (rope_thd variant) for float64 (contiguous memory)
+func RopeThdF64(b int, t int, h int, d int, strideB int, src, cos, sin, dst []float64) {
+	numPairs := b * t * h * d / 2
+	for idx := range numPairs {
 		iBth := idx / (d / 2)
 		iD := idx - (d/2)*iBth
 		iT := (iBth / h) % t
@@ -942,5 +1048,59 @@ func RopeThdF64(b, t, h, d, strideB int, src, cos, sin, dst []float64) {
 		s := sin[iCs]
 		dst[i1] = src[i1]*c - src[i2]*s
 		dst[i2] = src[i1]*s + src[i2]*c
+	}
+}
+
+// RopeThdStridedF32 performs strided rotary position embedding (rope_thd variant) for float32
+func RopeThdStridedF32(numDims int, dims, strides []int, b int, t int, h int, d int, strideB int, src, cos, sin, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeThdF32(b, t, h, d, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := b * t * h * d / 2
+	for idx := range numPairs {
+		iBth := idx / (d / 2)
+		iD := idx - (d/2)*iBth
+		iT := (iBth / h) % t
+		logicalI1 := iBth*d + iD
+		logicalI2 := logicalI1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * ((t * d) / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		stridedI1 := GetStridedIndex(logicalI1, numDims, dims, strides)
+		stridedI2 := GetStridedIndex(logicalI2, numDims, dims, strides)
+		dst[stridedI1] = src[stridedI1]*c - src[stridedI2]*s
+		dst[stridedI2] = src[stridedI1]*s + src[stridedI2]*c
+	}
+}
+
+// RopeThdStridedF64 performs strided rotary position embedding (rope_thd variant) for float64
+func RopeThdStridedF64(numDims int, dims, strides []int, b int, t int, h int, d int, strideB int, src, cos, sin, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeThdF64(b, t, h, d, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := b * t * h * d / 2
+	for idx := range numPairs {
+		iBth := idx / (d / 2)
+		iD := idx - (d/2)*iBth
+		iT := (iBth / h) % t
+		logicalI1 := iBth*d + iD
+		logicalI2 := logicalI1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * ((t * d) / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		stridedI1 := GetStridedIndex(logicalI1, numDims, dims, strides)
+		stridedI2 := GetStridedIndex(logicalI2, numDims, dims, strides)
+		dst[stridedI1] = src[stridedI1]*c - src[stridedI2]*s
+		dst[stridedI2] = src[stridedI1]*s + src[stridedI2]*c
 	}
 }
