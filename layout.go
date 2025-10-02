@@ -69,14 +69,24 @@ func (l Layout) Clone() Layout {
 	}
 }
 
+// Rank returns the number of dimensions (rank) of the layout.
+func (l Layout) Rank() int {
+	return l.shape.Rank()
+}
+
 // Dims returns the dimensions of the shape.
 func (l Layout) Dims() []int {
-	return l.shape.dims
+	return l.shape.Dims()
 }
 
 // Dim returns the size of the specified dimension, supporting negative indices.
 func (l Layout) Dim(dim int) int {
 	return l.shape.Dim(dim)
+}
+
+// ElemCount returns the total number of elements in the layout.
+func (l Layout) ElemCount() int {
+	return l.shape.ElemCount()
 }
 
 // ContiguousOffsets returns the start and end offsets if the layout is contiguous,

@@ -2,43 +2,41 @@ package spark
 
 // // BackendStorage defines operations for tensor storage management.
 type BackendStorage[T D] interface {
-	// 	// Device returns the associated device.
-	// 	Device() BackendDevice[T]
 
-	// 	// DType returns the data type of the storage.
-	// 	DType() DType
+	// TryClone creates a deep copy of the storage with the given layout.
+	TryClone(*Layout) (BackendStorage[T], error)
 
-	// 	// TryClone creates a deep copy of the storage with the given layout.
-	// 	TryClone(layout *Layout) (BackendStorage[T], error)
+	// DType returns the data type of the storage.
+	DType() DType
 
-	// 	// ToCpuStorage converts the storage to CPU-based storage.
-	// 	ToCpuStorage() (CpuStorage, error)
+	// Device returns the associated device.
+	Device() BackendDevice[T]
 
-	// 	// Affine applies an affine transformation (scale * x + bias) to the storage.
-	// 	Affine(layout *Layout, scale, bias float64) (BackendStorage[T], error)
+	// Affine applies an affine transformation (scale * x + bias) to the storage.
+	Affine(*Layout, T, T) (BackendStorage[T], error)
 
-	// 	// Powf raises each element to the given power.
-	// 	Powf(layout *Layout, power float64) (BackendStorage[T], error)
+	// Powf raises each element to the given power.
+	Powf(*Layout, T) (BackendStorage[T], error)
 
-	// 	// Elu applies the ELU activation function with the given alpha.
-	// 	Elu(layout *Layout, alpha float64) (BackendStorage[T], error)
+	// Elu applies the ELU activation function with the given alpha.
+	Elu(*Layout, T) (BackendStorage[T], error)
 
-	// 	// ReduceOp applies a reduction operation (e.g., sum, max) along specified dimensions.
-	// 	ReduceOp(op ReduceOp, layout *Layout, dims []int) (BackendStorage[T], error)
+	// ReduceOp applies a reduction operation (e.g., sum, max) along specified dimensions.
+	ReduceOp(ReduceOp, *Layout, []int) (BackendStorage[T], error)
 
-	// 	// Cmp performs a comparison operation between this and another storage.
-	// 	Cmp(op CmpOp, rhs BackendStorage[T], lhsLayout, rhsLayout *Layout) (BackendStorage[T], error)
+	// Cmp performs a comparison operation between this and another storage.
+	Cmp(CmpOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
 
-	// 	// ToDType converts the storage to the specified data type.
-	// 	ToDType(layout *Layout, dtype DType) (BackendStorage[T], error)
+	// ToDType converts the storage to the specified data type.
+	ToDType(*Layout, DType) (BackendStorage[T], error)
 
-	// 	// UnaryImpl applies a unary operation to the storage.
-	// 	UnaryImpl(op UnaryOpT, layout *Layout) (BackendStorage[T], error)
+	// UnaryImpl applies a unary operation to the storage.
+	UnaryImpl(UnaryOp, *Layout) (BackendStorage[T], error)
 
-	// 	// BinaryImpl applies a binary operation between this and another storage.
-	// 	BinaryImpl(op BinaryOpT, rhs BackendStorage[T], lhsLayout, rhsLayout *Layout) (BackendStorage[T], error)
+	// BinaryImpl applies a binary operation between this and another storage.
+	BinaryImpl(BinaryOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
 
-	// 	// WhereCond applies a conditional operation: if cond then true_value else false_value.
+	// WhereCond applies a conditional operation: if cond then true_value else false_value.
 	// 	WhereCond(condLayout *Layout, trueValue BackendStorage[T], trueLayout *Layout, falseValue BackendStorage[T], falseLayout *Layout) (BackendStorage[T], error)
 
 	// 	// Conv1D performs a 1D convolution with the given kernel and parameters.
