@@ -1,6 +1,9 @@
 package kernels
 
-import "math"
+import (
+	"math"
+	"slices"
+)
 
 // FastSumF32 computes the sum over the last dimension for float32
 func FastSumF32(numel, numDims int, dims []int, src, dst []float32) {
@@ -378,67 +381,89 @@ func FastArgmaxStridedF64(numel, numDims int, dims, strides []int, src []float64
 	}
 }
 
-// SumF32 computes the sum over specified dimensions for float32
-func SumF32(numel, numDims, numSumDims int, dims, sumDims []int, src, dst []float32) {
+// SumF32 performs sum reduction over specified dimension indices for float32
+func SumF32(numel int, numDims int, dims []int, sumDims []int, inp, out []float32) {
 	for i := range numel {
-		dstIdx := i
-		for nd := range numSumDims {
-			stride := dims[numDims-1]
-			pre := dstIdx / stride
-			post := dstIdx % stride
-			dstIdx = (pre/sumDims[nd])*stride + post
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
 		}
-		dst[dstIdx] += src[i]
+		out[dstIndex] += inp[i]
 	}
 }
 
-// SumF64 computes the sum over specified dimensions for float64
-func SumF64(numel, numDims, numSumDims int, dims, sumDims []int, src, dst []float64) {
+// SumF64 performs sum reduction over specified dimension indices for float64
+func SumF64(numel int, numDims int, dims []int, sumDims []int, inp, out []float64) {
 	for i := range numel {
-		dstIdx := i
-		for nd := range numSumDims {
-			stride := dims[numDims-1]
-			pre := dstIdx / stride
-			post := dstIdx % stride
-			dstIdx = (pre/sumDims[nd])*stride + post
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
 		}
-		dst[dstIdx] += src[i]
+		out[dstIndex] += inp[i]
 	}
 }
 
-// SumStridedF32 computes the sum over specified dimensions for float32 with strided memory
-func SumStridedF32(numel, numDims, numSumDims int, dims, strides, sumDims, sumStrides []int, src, dst []float32) {
+// SumStridedF32 performs strided sum reduction over specified dimension indices for float32
+func SumStridedF32(numel int, numDims int, dims, strides []int, sumDims []int, inp, out []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		SumF32(numel, numDims, numSumDims, dims, sumDims, src, dst)
+		SumF32(numel, numDims, dims, sumDims, inp, out)
 		return
 	}
 	for i := range numel {
-		dstIdx := i
-		for nd := range numSumDims {
-			stride := sumStrides[nd]
-			pre := dstIdx / stride
-			post := dstIdx % stride
-			dstIdx = (pre/sumDims[nd])*stride + post
+		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
 		}
-		dst[dstIdx] += src[GetStridedIndex(i, numDims, dims, strides)]
+		out[dstIndex] += inp[stridedI]
 	}
 }
 
-// SumStridedF64 computes the sum over specified dimensions for float64 with strided memory
-func SumStridedF64(numel, numDims, numSumDims int, dims, strides, sumDims, sumStrides []int, src, dst []float64) {
+// SumStridedF64 performs strided sum reduction over specified dimension indices for float64
+func SumStridedF64(numel int, numDims int, dims, strides []int, sumDims []int, inp, out []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		SumF64(numel, numDims, numSumDims, dims, sumDims, src, dst)
+		SumF64(numel, numDims, dims, sumDims, inp, out)
 		return
 	}
 	for i := range numel {
-		dstIdx := i
-		for nd := range numSumDims {
-			stride := sumStrides[nd]
-			pre := dstIdx / stride
-			post := dstIdx % stride
-			dstIdx = (pre/sumDims[nd])*stride + post
+		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
 		}
-		dst[dstIdx] += src[GetStridedIndex(i, numDims, dims, strides)]
+		out[dstIndex] += inp[stridedI]
 	}
 }
 
@@ -492,145 +517,245 @@ func SoftmaxF64(ncols int, src, dst []float64) {
 	}
 }
 
-// RmsnormF32 applies RMS normalization for float32
-func RmsnormF32(ncols, blockSize int, eps float32, src, dst, alpha []float32) {
-	rows := len(src) / ncols
+// RmsNormF32 performs RMS normalization along the last dimension for float32 (contiguous memory)
+func RmsNormF32(numel int, numDims int, dims []int, eps float32, alpha, x, dst []float32) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
 	for row := range rows {
-		sum := float32(0)
-		for col := 0; col < ncols; col += blockSize {
-			if col < ncols {
-				xi := src[row*ncols+col]
-				sum += xi * xi
-			}
+		var sum float32
+		for col := range ncols {
+			idx := row*ncols + col
+			xi := x[idx]
+			sum += xi * xi
 		}
 		mean := sum / float32(ncols)
 		scale := 1 / float32(math.Sqrt(float64(mean+eps)))
-		if alpha == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = src[row*ncols+col] * scale
-				}
-			}
-		} else {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = src[row*ncols+col] * scale * alpha[col]
-				}
+		for col := range ncols {
+			idx := row*ncols + col
+			if alpha != nil {
+				dst[idx] = scale * x[idx] * alpha[col]
+			} else {
+				dst[idx] = scale * x[idx]
 			}
 		}
 	}
 }
 
-// RmsnormF64 applies RMS normalization for float64
-func RmsnormF64(ncols, blockSize int, eps float64, src, dst, alpha []float64) {
-	rows := len(src) / ncols
+// RmsNormF64 performs RMS normalization along the last dimension for float64 (contiguous memory)
+func RmsNormF64(numel int, numDims int, dims []int, eps float64, alpha, x, dst []float64) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
 	for row := range rows {
-		sum := float64(0)
-		for col := 0; col < ncols; col += blockSize {
-			if col < ncols {
-				xi := src[row*ncols+col]
-				sum += xi * xi
-			}
+		var sum float64
+		for col := range ncols {
+			idx := row*ncols + col
+			xi := x[idx]
+			sum += xi * xi
 		}
 		mean := sum / float64(ncols)
 		scale := 1 / math.Sqrt(mean+eps)
-		if alpha == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = src[row*ncols+col] * scale
-				}
-			}
-		} else {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = src[row*ncols+col] * scale * alpha[col]
-				}
+		for col := range ncols {
+			idx := row*ncols + col
+			if alpha != nil {
+				dst[idx] = scale * x[idx] * alpha[col]
+			} else {
+				dst[idx] = scale * x[idx]
 			}
 		}
 	}
 }
 
-// LayernormF32 applies layer normalization for float32
-func LayernormF32(ncols, blockSize int, eps float32, src, dst, alpha, beta []float32) {
-	rows := len(src) / ncols
+// RmsNormStridedF32 performs strided RMS normalization along the last dimension for float32
+func RmsNormStridedF32(numel int, numDims int, dims, strides []int, eps float32, alpha, x, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		RmsNormF32(numel, numDims, dims, eps, alpha, x, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
 	for row := range rows {
-		meanVar := [2]float32{0, 0}
-		for col := 0; col < ncols; col += blockSize {
-			if col < ncols {
-				xi := src[row*ncols+col]
-				meanVar[0] += xi
-				meanVar[1] += xi * xi
-			}
+		var sum float32
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			xi := x[stridedI]
+			sum += xi * xi
 		}
-		mean := meanVar[0] / float32(ncols)
-		varVal := meanVar[1]/float32(ncols) - mean*mean
-		invStd := 1 / float32(math.Sqrt(float64(varVal+eps)))
-		if alpha == nil && beta == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd
-				}
-			}
-		} else if alpha == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd + beta[col]
-				}
-			}
-		} else if beta == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd * alpha[col]
-				}
-			}
-		} else {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd*alpha[col] + beta[col]
-				}
+		mean := sum / float32(ncols)
+		scale := 1 / float32(math.Sqrt(float64(mean+eps)))
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			if alpha != nil {
+				dst[stridedI] = scale * x[stridedI] * alpha[col]
+			} else {
+				dst[stridedI] = scale * x[stridedI]
 			}
 		}
 	}
 }
 
-// LayernormF64 applies layer normalization for float64
-func LayernormF64(ncols, blockSize int, eps float64, src, dst, alpha, beta []float64) {
-	rows := len(src) / ncols
+// RmsNormStridedF64 performs strided RMS normalization along the last dimension for float64
+func RmsNormStridedF64(numel int, numDims int, dims, strides []int, eps float64, alpha, x, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		RmsNormF64(numel, numDims, dims, eps, alpha, x, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
 	for row := range rows {
-		meanVar := [2]float64{0, 0}
-		for col := 0; col < ncols; col += blockSize {
-			if col < ncols {
-				xi := src[row*ncols+col]
-				meanVar[0] += xi
-				meanVar[1] += xi * xi
+		var sum float64
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			xi := x[stridedI]
+			sum += xi * xi
+		}
+		mean := sum / float64(ncols)
+		scale := 1 / math.Sqrt(mean+eps)
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			if alpha != nil {
+				dst[stridedI] = scale * x[stridedI] * alpha[col]
+			} else {
+				dst[stridedI] = scale * x[stridedI]
 			}
 		}
-		mean := meanVar[0] / float64(ncols)
-		varVal := meanVar[1]/float64(ncols) - mean*mean
-		invStd := 1 / math.Sqrt(varVal+eps)
-		if alpha == nil && beta == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd
-				}
+	}
+}
+
+// LayerNormF32 performs Layer normalization along the last dimension for float32 (contiguous memory)
+func LayerNormF32(numel int, numDims int, dims []int, eps float32, alpha, beta, x, dst []float32) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		var sum, sumSq float32
+		for col := range ncols {
+			idx := row*ncols + col
+			xi := x[idx]
+			sum += xi
+			sumSq += xi * xi
+		}
+		mean := sum / float32(ncols)
+		variance := sumSq/float32(ncols) - mean*mean
+		scale := 1 / float32(math.Sqrt(float64(variance+eps)))
+		for col := range ncols {
+			idx := row*ncols + col
+			lhs := (x[idx] - mean) * scale
+			if alpha != nil && beta != nil {
+				dst[idx] = lhs*alpha[col] + beta[col]
+			} else if alpha != nil {
+				dst[idx] = lhs * alpha[col]
+			} else if beta != nil {
+				dst[idx] = lhs + beta[col]
+			} else {
+				dst[idx] = lhs
 			}
-		} else if alpha == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd + beta[col]
-				}
+		}
+	}
+}
+
+// LayerNormF64 performs Layer normalization along the last dimension for float64 (contiguous memory)
+func LayerNormF64(numel int, numDims int, dims []int, eps float64, alpha, beta, x, dst []float64) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		var sum, sumSq float64
+		for col := range ncols {
+			idx := row*ncols + col
+			xi := x[idx]
+			sum += xi
+			sumSq += xi * xi
+		}
+		mean := sum / float64(ncols)
+		variance := sumSq/float64(ncols) - mean*mean
+		scale := 1 / math.Sqrt(variance+eps)
+		for col := range ncols {
+			idx := row*ncols + col
+			lhs := (x[idx] - mean) * scale
+			if alpha != nil && beta != nil {
+				dst[idx] = lhs*alpha[col] + beta[col]
+			} else if alpha != nil {
+				dst[idx] = lhs * alpha[col]
+			} else if beta != nil {
+				dst[idx] = lhs + beta[col]
+			} else {
+				dst[idx] = lhs
 			}
-		} else if beta == nil {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col] - mean) * invStd * alpha[col]
-				}
+		}
+	}
+}
+
+// LayerNormStridedF32 performs strided Layer normalization along the last dimension for float32
+func LayerNormStridedF32(numel int, numDims int, dims, strides []int, eps float32, alpha, beta, x, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		LayerNormF32(numel, numDims, dims, eps, alpha, beta, x, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		var sum, sumSq float32
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			xi := x[stridedI]
+			sum += xi
+			sumSq += xi * xi
+		}
+		mean := sum / float32(ncols)
+		variance := sumSq/float32(ncols) - mean*mean
+		scale := 1 / float32(math.Sqrt(float64(variance+eps)))
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			lhs := (x[stridedI] - mean) * scale
+			if alpha != nil && beta != nil {
+				dst[stridedI] = lhs*alpha[col] + beta[col]
+			} else if alpha != nil {
+				dst[stridedI] = lhs * alpha[col]
+			} else if beta != nil {
+				dst[stridedI] = lhs + beta[col]
+			} else {
+				dst[stridedI] = lhs
 			}
-		} else {
-			for col := 0; col < ncols; col += blockSize {
-				if col < ncols {
-					dst[row*ncols+col] = (src[row*ncols+col]-mean)*invStd*alpha[col] + beta[col]
-				}
+		}
+	}
+}
+
+// LayerNormStridedF64 performs strided Layer normalization along the last dimension for float64
+func LayerNormStridedF64(numel int, numDims int, dims, strides []int, eps float64, alpha, beta, x, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		LayerNormF64(numel, numDims, dims, eps, alpha, beta, x, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		var sum, sumSq float64
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			xi := x[stridedI]
+			sum += xi
+			sumSq += xi * xi
+		}
+		mean := sum / float64(ncols)
+		variance := sumSq/float64(ncols) - mean*mean
+		scale := 1 / math.Sqrt(variance+eps)
+		for col := range ncols {
+			i := row*ncols + col
+			stridedI := GetStridedIndex(i, numDims, dims, strides)
+			lhs := (x[stridedI] - mean) * scale
+			if alpha != nil && beta != nil {
+				dst[stridedI] = lhs*alpha[col] + beta[col]
+			} else if alpha != nil {
+				dst[stridedI] = lhs * alpha[col]
+			} else if beta != nil {
+				dst[stridedI] = lhs + beta[col]
+			} else {
+				dst[stridedI] = lhs
 			}
 		}
 	}
