@@ -2504,6 +2504,274 @@ func TestLayerNormStridedF64(t *testing.T) {
 	}
 }
 
+func TestRopeIF32(t *testing.T) {
+	tests := []struct {
+		name    string
+		bh      int
+		td      int
+		strideB int
+		src     []float32
+		cos     []float32
+		sin     []float32
+		want    []float32
+	}{
+		{
+			name:    "bh=1 td=4 strideB=0",
+			bh:      1,
+			td:      4,
+			strideB: 0,
+			src:     []float32{1, 3, 2, 4},
+			cos:     []float32{1, 0},
+			sin:     []float32{0, 1},
+			want:    []float32{1, 3, -4, 2},
+		},
+		{
+			name:    "bh=2 td=4 strideB=4",
+			bh:      2,
+			td:      4,
+			strideB: 4,
+			src:     []float32{1, 3, 2, 4, 5, 7, 6, 8},
+			cos:     []float32{1, 0, 0.5, 0.5},
+			sin:     []float32{0, 1, 0.5, 0.5},
+			want:    []float32{1, 3, -4, 2, -1, 6, -1, 7},
+		},
+		{
+			name:    "Empty",
+			bh:      0,
+			td:      0,
+			strideB: 0,
+			src:     []float32{},
+			cos:     []float32{},
+			sin:     []float32{},
+			want:    []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float32, len(tt.src))
+			copy(dst, tt.src)
+			kernels.RopeIF32(tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestRopeIF64(t *testing.T) {
+	tests := []struct {
+		name    string
+		bh      int
+		td      int
+		strideB int
+		src     []float64
+		cos     []float64
+		sin     []float64
+		want    []float64
+	}{
+		{
+			name:    "bh=1 td=4 strideB=0",
+			bh:      1,
+			td:      4,
+			strideB: 0,
+			src:     []float64{1, 3, 2, 4},
+			cos:     []float64{1, 0},
+			sin:     []float64{0, 1},
+			want:    []float64{1, 3, -4, 2},
+		},
+		{
+			name:    "bh=2 td=4 strideB=4",
+			bh:      2,
+			td:      4,
+			strideB: 4,
+			src:     []float64{1, 3, 2, 4, 5, 7, 6, 8},
+			cos:     []float64{1, 0, 0.5, 0.5},
+			sin:     []float64{0, 1, 0.5, 0.5},
+			want:    []float64{1, 3, -4, 2, -1, 6, -1, 7},
+		},
+		{
+			name:    "Empty",
+			bh:      0,
+			td:      0,
+			strideB: 0,
+			src:     []float64{},
+			cos:     []float64{},
+			sin:     []float64{},
+			want:    []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float64, len(tt.src))
+			copy(dst, tt.src)
+			kernels.RopeIF64(tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestRopeIStridedF32(t *testing.T) {
+	tests := []struct {
+		name    string
+		numDims int
+		dims    []int
+		strides []int
+		bh      int
+		td      int
+		strideB int
+		src     []float32
+		cos     []float32
+		sin     []float32
+		want    []float32
+	}{
+		{
+			name:    "Contiguous fallback bh=2 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{2, 4},
+			strides: []int{4, 1},
+			bh:      2,
+			td:      4,
+			strideB: 0,
+			src:     []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-0.9, 1.7, -1.4, 4.8, -1.7, 6.5, -2.2, 10.4},
+		},
+		{
+			name:    "Strided bh=2 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{4, 2},
+			strides: []int{1, 4},
+			bh:      2,
+			td:      4,
+			strideB: 0,
+			src:     []float32{1, 3, 5, 7, 2, 4, 6, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-0.9, -1.4, -1.7, -2.2, 1.7, 4.8, 6.5, 10.4},
+		},
+		{
+			name:    "bh=1 td=2 strideB=0 negative",
+			numDims: 2,
+			dims:    []int{1, 2},
+			strides: []int{2, 1},
+			bh:      1,
+			td:      2,
+			strideB: 0,
+			src:     []float32{-1, -2},
+			cos:     []float32{0.9},
+			sin:     []float32{0.1},
+			want:    []float32{-0.7, -1.9},
+		},
+		{
+			name:    "Empty bh=0 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{0, 4},
+			strides: []int{4, 1},
+			bh:      0,
+			td:      4,
+			strideB: 0,
+			src:     []float32{},
+			cos:     []float32{},
+			sin:     []float32{},
+			want:    []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float32, len(tt.src))
+			kernels.RopeIStridedF32(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestRopeIStridedF64(t *testing.T) {
+	tests := []struct {
+		name    string
+		numDims int
+		dims    []int
+		strides []int
+		bh      int
+		td      int
+		strideB int
+		src     []float64
+		cos     []float64
+		sin     []float64
+		want    []float64
+	}{
+		{
+			name:    "Contiguous fallback bh=2 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{2, 4},
+			strides: []int{4, 1},
+			bh:      2,
+			td:      4,
+			strideB: 0,
+			src:     []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-0.9, 1.7, -1.4, 4.8, -1.7, 6.5, -2.2, 10.4},
+		},
+		{
+			name:    "Strided bh=2 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{4, 2},
+			strides: []int{1, 4},
+			bh:      2,
+			td:      4,
+			strideB: 0,
+			src:     []float64{1, 3, 5, 7, 2, 4, 6, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-0.9, -1.4, -1.7, -2.2, 1.7, 4.8, 6.5, 10.4},
+		},
+		{
+			name:    "bh=1 td=2 strideB=0 negative",
+			numDims: 2,
+			dims:    []int{1, 2},
+			strides: []int{2, 1},
+			bh:      1,
+			td:      2,
+			strideB: 0,
+			src:     []float64{-1, -2},
+			cos:     []float64{0.9},
+			sin:     []float64{0.1},
+			want:    []float64{-0.7, -1.9},
+		},
+		{
+			name:    "Empty bh=0 td=4 strideB=0",
+			numDims: 2,
+			dims:    []int{0, 4},
+			strides: []int{4, 1},
+			bh:      0,
+			td:      4,
+			strideB: 0,
+			src:     []float64{},
+			cos:     []float64{},
+			sin:     []float64{},
+			want:    []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float64, len(tt.src))
+			kernels.RopeIStridedF64(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
 func TestRopeF32(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -2622,11 +2890,15 @@ func TestRopeF64(t *testing.T) {
 	}
 }
 
-func TestRopeIF32(t *testing.T) {
+func TestRopeStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
+		numDims int
+		dims    []int
+		strides []int
 		bh      int
 		td      int
+		d       int
 		strideB int
 		src     []float32
 		cos     []float32
@@ -2634,29 +2906,41 @@ func TestRopeIF32(t *testing.T) {
 		want    []float32
 	}{
 		{
-			name:    "bh=1 td=4 strideB=0",
-			bh:      1,
-			td:      4,
-			strideB: 0,
-			src:     []float32{1, 3, 2, 4},
-			cos:     []float32{1, 0},
-			sin:     []float32{0, 1},
-			want:    []float32{1, 3, -4, 2},
-		},
-		{
-			name:    "bh=2 td=4 strideB=4",
+			name:    "Contiguous fallback bh=2 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{2, 4},
+			strides: []int{4, 1},
 			bh:      2,
 			td:      4,
-			strideB: 4,
-			src:     []float32{1, 3, 2, 4, 5, 7, 6, 8},
-			cos:     []float32{1, 0, 0.5, 0.5},
-			sin:     []float32{0, 1, 0.5, 0.5},
-			want:    []float32{1, 3, -4, 2, -1, 6, -1, 7},
+			d:       2,
+			strideB: 0,
+			src:     []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-0.9, 1.7, -1.4, 4.8, -1.7, 6.5, -2.2, 10.4},
 		},
 		{
-			name:    "Empty",
+			name:    "Strided bh=2 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{4, 2},
+			strides: []int{1, 4},
+			bh:      2,
+			td:      4,
+			d:       2,
+			strideB: 0,
+			src:     []float32{1, 5, 2, 6, 3, 7, 4, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-1.6, -2.6, -1.8, -2.8, 2.2, 8.2, 3.4, 9.6},
+		},
+		{
+			name:    "Empty bh=0 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{0, 4},
+			strides: []int{4, 1},
 			bh:      0,
-			td:      0,
+			td:      4,
+			d:       2,
 			strideB: 0,
 			src:     []float32{},
 			cos:     []float32{},
@@ -2668,8 +2952,7 @@ func TestRopeIF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.src))
-			copy(dst, tt.src)
-			kernels.RopeIF32(tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeStridedF32(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2677,11 +2960,15 @@ func TestRopeIF32(t *testing.T) {
 	}
 }
 
-func TestRopeIF64(t *testing.T) {
+func TestRopeStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
+		numDims int
+		dims    []int
+		strides []int
 		bh      int
 		td      int
+		d       int
 		strideB int
 		src     []float64
 		cos     []float64
@@ -2689,29 +2976,41 @@ func TestRopeIF64(t *testing.T) {
 		want    []float64
 	}{
 		{
-			name:    "bh=1 td=4 strideB=0",
-			bh:      1,
-			td:      4,
-			strideB: 0,
-			src:     []float64{1, 3, 2, 4},
-			cos:     []float64{1, 0},
-			sin:     []float64{0, 1},
-			want:    []float64{1, 3, -4, 2},
-		},
-		{
-			name:    "bh=2 td=4 strideB=4",
+			name:    "Contiguous fallback bh=2 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{2, 4},
+			strides: []int{4, 1},
 			bh:      2,
 			td:      4,
-			strideB: 4,
-			src:     []float64{1, 3, 2, 4, 5, 7, 6, 8},
-			cos:     []float64{1, 0, 0.5, 0.5},
-			sin:     []float64{0, 1, 0.5, 0.5},
-			want:    []float64{1, 3, -4, 2, -1, 6, -1, 7},
+			d:       2,
+			strideB: 0,
+			src:     []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-0.9, 1.7, -1.4, 4.8, -1.7, 6.5, -2.2, 10.4},
 		},
 		{
-			name:    "Empty",
+			name:    "Strided bh=2 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{4, 2},
+			strides: []int{1, 4},
+			bh:      2,
+			td:      4,
+			d:       2,
+			strideB: 0,
+			src:     []float64{1, 5, 2, 6, 3, 7, 4, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-1.6, -2.6, -1.8, -2.8, 2.2, 8.2, 3.4, 9.6},
+		},
+		{
+			name:    "Empty bh=0 td=4 d=2 strideB=0",
+			numDims: 2,
+			dims:    []int{0, 4},
+			strides: []int{4, 1},
 			bh:      0,
-			td:      0,
+			td:      4,
+			d:       2,
 			strideB: 0,
 			src:     []float64{},
 			cos:     []float64{},
@@ -2723,8 +3022,7 @@ func TestRopeIF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.src))
-			copy(dst, tt.src)
-			kernels.RopeIF64(tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeStridedF64(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2851,6 +3149,154 @@ func TestRopeThdF64(t *testing.T) {
 			dst := make([]float64, len(tt.src))
 			copy(dst, tt.src)
 			kernels.RopeThdF64(tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestRopeThdStridedF32(t *testing.T) {
+	tests := []struct {
+		name    string
+		numDims int
+		dims    []int
+		strides []int
+		b       int
+		t       int
+		h       int
+		d       int
+		strideB int
+		src     []float32
+		cos     []float32
+		sin     []float32
+		want    []float32
+	}{
+		{
+			name:    "Contiguous fallback b=1 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{1, 2, 2, 2},
+			strides: []int{8, 4, 2, 1},
+			b:       1,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-0.9, 1.7, -1.3, 4.1, -1.8, 7.6, -2.2, 10.4},
+		},
+		{
+			name:    "Strided b=1 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{2, 2, 2, 1},
+			strides: []int{4, 2, 1, 8},
+			b:       1,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float32{1, 3, 5, 7, 2, 4, 6, 8},
+			cos:     []float32{0.5, 0.6},
+			sin:     []float32{0.7, 0.8},
+			want:    []float32{-1.6, 2.2, -2.4, 7, -2, 4, -2.8, 9.6},
+		},
+		{
+			name:    "Empty b=0 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{0, 2, 2, 2},
+			strides: []int{8, 4, 2, 1},
+			b:       0,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float32{},
+			cos:     []float32{},
+			sin:     []float32{},
+			want:    []float32{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float32, len(tt.src))
+			kernels.RopeThdStridedF32(tt.numDims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestRopeThdStridedF64(t *testing.T) {
+	tests := []struct {
+		name    string
+		numDims int
+		dims    []int
+		strides []int
+		b       int
+		t       int
+		h       int
+		d       int
+		strideB int
+		src     []float64
+		cos     []float64
+		sin     []float64
+		want    []float64
+	}{
+		{
+			name:    "Contiguous fallback b=1 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{1, 2, 2, 2},
+			strides: []int{8, 4, 2, 1},
+			b:       1,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-0.9, 1.7, -1.3, 4.1, -1.8, 7.6, -2.2, 10.4},
+		},
+		{
+			name:    "Strided b=1 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{2, 2, 2, 1},
+			strides: []int{4, 2, 1, 8},
+			b:       1,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float64{1, 3, 5, 7, 2, 4, 6, 8},
+			cos:     []float64{0.5, 0.6},
+			sin:     []float64{0.7, 0.8},
+			want:    []float64{-1.6, 2.2, -2.4, 7, -2, 4, -2.8, 9.6},
+		},
+		{
+			name:    "Empty b=0 t=2 h=2 d=2 strideB=0",
+			numDims: 4,
+			dims:    []int{0, 2, 2, 2},
+			strides: []int{8, 4, 2, 1},
+			b:       0,
+			t:       2,
+			h:       2,
+			d:       2,
+			strideB: 0,
+			src:     []float64{},
+			cos:     []float64{},
+			sin:     []float64{},
+			want:    []float64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dst := make([]float64, len(tt.src))
+			kernels.RopeThdStridedF64(tt.numDims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
