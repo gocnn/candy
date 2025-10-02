@@ -467,52 +467,124 @@ func SumStridedF64(numel int, numDims int, dims, strides []int, sumDims []int, i
 	}
 }
 
-// SoftmaxF32 applies softmax along the last dimension for float32
-func SoftmaxF32(ncols int, src, dst []float32) {
-	rows := len(src) / ncols
-	for row := range rows {
+// SoftmaxF32 performs softmax along the last dimension for float32 (contiguous memory)
+func SoftmaxF32(numel int, numDims int, dims []int, src, dst []float32) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := 0; row < rows; row++ {
 		maxVal := float32(-math.MaxFloat32)
-		for col := range ncols {
+		for col := 0; col < ncols; col++ {
 			i := row*ncols + col
 			if src[i] > maxVal {
 				maxVal = src[i]
 			}
 		}
 		sum := float32(0)
-		for col := range ncols {
+		for col := 0; col < ncols; col++ {
 			i := row*ncols + col
 			val := float32(math.Exp(float64(src[i] - maxVal)))
 			dst[i] = val
 			sum += val
 		}
 		invSum := 1 / sum
-		for col := range ncols {
-			dst[row*ncols+col] *= invSum
+		for col := 0; col < ncols; col++ {
+			i := row*ncols + col
+			dst[i] *= invSum
 		}
 	}
 }
 
-// SoftmaxF64 applies softmax along the last dimension for float64
-func SoftmaxF64(ncols int, src, dst []float64) {
-	rows := len(src) / ncols
-	for row := range rows {
-		maxVal := float64(-math.MaxFloat64)
-		for col := range ncols {
+// SoftmaxF64 performs softmax along the last dimension for float64 (contiguous memory)
+func SoftmaxF64(numel int, numDims int, dims []int, src, dst []float64) {
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := 0; row < rows; row++ {
+		maxVal := -math.MaxFloat64
+		for col := 0; col < ncols; col++ {
 			i := row*ncols + col
 			if src[i] > maxVal {
 				maxVal = src[i]
 			}
 		}
-		sum := float64(0)
-		for col := range ncols {
+		sum := 0.0
+		for col := 0; col < ncols; col++ {
 			i := row*ncols + col
 			val := math.Exp(src[i] - maxVal)
 			dst[i] = val
 			sum += val
 		}
 		invSum := 1 / sum
+		for col := 0; col < ncols; col++ {
+			i := row*ncols + col
+			dst[i] *= invSum
+		}
+	}
+}
+
+// SoftmaxStridedF32 performs strided softmax along the last dimension for float32
+func SoftmaxStridedF32(numel int, numDims int, dims, strides []int, src, dst []float32) {
+	if IsContiguous(numDims, dims, strides) {
+		SoftmaxF32(numel, numDims, dims, src, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		maxVal := float32(-math.MaxFloat32)
 		for col := range ncols {
-			dst[row*ncols+col] *= invSum
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			if src[stridedI] > maxVal {
+				maxVal = src[stridedI]
+			}
+		}
+		sum := float32(0)
+		for col := range ncols {
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			val := float32(math.Exp(float64(src[stridedI] - maxVal)))
+			dst[stridedI] = val
+			sum += val
+		}
+		invSum := 1 / sum
+		for col := range ncols {
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			dst[stridedI] *= invSum
+		}
+	}
+}
+
+// SoftmaxStridedF64 performs strided softmax along the last dimension for float64
+func SoftmaxStridedF64(numel int, numDims int, dims, strides []int, src, dst []float64) {
+	if IsContiguous(numDims, dims, strides) {
+		SoftmaxF64(numel, numDims, dims, src, dst)
+		return
+	}
+	ncols := dims[numDims-1]
+	rows := numel / ncols
+	for row := range rows {
+		maxVal := -math.MaxFloat64
+		for col := range ncols {
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			if src[stridedI] > maxVal {
+				maxVal = src[stridedI]
+			}
+		}
+		sum := 0.0
+		for col := range ncols {
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			val := math.Exp(src[stridedI] - maxVal)
+			dst[stridedI] = val
+			sum += val
+		}
+		invSum := 1 / sum
+		for col := range ncols {
+			logicalI := row*ncols + col
+			stridedI := GetStridedIndex(logicalI, numDims, dims, strides)
+			dst[stridedI] *= invSum
 		}
 	}
 }
