@@ -3,12 +3,12 @@ package kernels
 import "math"
 
 // FastSumF32 computes the sum over the last dimension for float32
-func FastSumF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+func FastSumF32(numel, numDims int, dims []int, src, dst []float32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		sum := float32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			sum += src[j]
 		}
@@ -17,12 +17,12 @@ func FastSumF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastSumF64 computes the sum over the last dimension for float64
-func FastSumF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+func FastSumF64(numel, numDims int, dims []int, src, dst []float64) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		sum := float64(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			sum += src[j]
 		}
@@ -31,16 +31,16 @@ func FastSumF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastSumStridedF32 computes the sum over the last dimension for float32 with strided memory
-func FastSumStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
+func FastSumStridedF32(numel, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastSumF32(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastSumF32(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		sum := float32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			sum += src[GetStridedIndex(j, numDims, dims, strides)]
 		}
@@ -49,16 +49,16 @@ func FastSumStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastSumStridedF64 computes the sum over the last dimension for float64 with strided memory
-func FastSumStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
+func FastSumStridedF64(numel, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		FastSumF64(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastSumF64(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		sum := float64(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			sum += src[GetStridedIndex(j, numDims, dims, strides)]
 		}
@@ -67,12 +67,12 @@ func FastSumStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastMinF32 computes the minimum over the last dimension for float32
-func FastMinF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+func FastMinF32(numel, numDims int, dims []int, src, dst []float32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float32(math.MaxFloat32)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
@@ -83,12 +83,12 @@ func FastMinF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastMinF64 computes the minimum over the last dimension for float64
-func FastMinF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+func FastMinF64(numel, numDims int, dims []int, src, dst []float64) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float64(math.MaxFloat64)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
@@ -99,16 +99,16 @@ func FastMinF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastMinStridedF32 computes the minimum over the last dimension for float32 with strided memory
-func FastMinStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
+func FastMinStridedF32(numel, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastMinF32(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastMinF32(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float32(math.MaxFloat32)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val < minVal {
@@ -120,16 +120,16 @@ func FastMinStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastMinStridedF64 computes the minimum over the last dimension for float64 with strided memory
-func FastMinStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
+func FastMinStridedF64(numel, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		FastMinF64(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastMinF64(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float64(math.MaxFloat64)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val < minVal {
@@ -141,12 +141,12 @@ func FastMinStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastMaxF32 computes the maximum over the last dimension for float32
-func FastMaxF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float32) {
+func FastMaxF32(numel, numDims int, dims []int, src, dst []float32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float32(-math.MaxFloat32)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
@@ -157,12 +157,12 @@ func FastMaxF32(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastMaxF64 computes the maximum over the last dimension for float64
-func FastMaxF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []float64) {
+func FastMaxF64(numel, numDims int, dims []int, src, dst []float64) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float64(-math.MaxFloat64)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
@@ -173,16 +173,16 @@ func FastMaxF64(numel, elToSumPerBlock, numDims int, dims []int, src, dst []floa
 }
 
 // FastMaxStridedF32 computes the maximum over the last dimension for float32 with strided memory
-func FastMaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float32) {
+func FastMaxStridedF32(numel, numDims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastMaxF32(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastMaxF32(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float32(-math.MaxFloat32)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val > maxVal {
@@ -194,16 +194,16 @@ func FastMaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastMaxStridedF64 computes the maximum over the last dimension for float64 with strided memory
-func FastMaxStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src, dst []float64) {
+func FastMaxStridedF64(numel, numDims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(numDims, dims, strides) {
-		FastMaxF64(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastMaxF64(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float64(-math.MaxFloat64)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val > maxVal {
@@ -215,13 +215,13 @@ func FastMaxStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int,
 }
 
 // FastArgminF32 computes the index of the minimum over the last dimension for float32
-func FastArgminF32(numel, elToSumPerBlock, numDims int, dims []int, src []float32, dst []uint32) {
+func FastArgminF32(numel, numDims int, dims []int, src []float32, dst []uint32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float32(math.MaxFloat32)
 		minIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
@@ -233,13 +233,13 @@ func FastArgminF32(numel, elToSumPerBlock, numDims int, dims []int, src []float3
 }
 
 // FastArgminF64 computes the index of the minimum over the last dimension for float64
-func FastArgminF64(numel, elToSumPerBlock, numDims int, dims []int, src []float64, dst []uint32) {
+func FastArgminF64(numel, numDims int, dims []int, src []float64, dst []uint32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float64(math.MaxFloat64)
 		minIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
@@ -251,17 +251,17 @@ func FastArgminF64(numel, elToSumPerBlock, numDims int, dims []int, src []float6
 }
 
 // FastArgminStridedF32 computes the index of the minimum over the last dimension for float32 with strided memory
-func FastArgminStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float32, dst []uint32) {
+func FastArgminStridedF32(numel, numDims int, dims, strides []int, src []float32, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastArgminF32(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastArgminF32(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float32(math.MaxFloat32)
 		minIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val < minVal {
@@ -274,17 +274,17 @@ func FastArgminStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []i
 }
 
 // FastArgminStridedF64 computes the index of the minimum over the last dimension for float64 with strided memory
-func FastArgminStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float64, dst []uint32) {
+func FastArgminStridedF64(numel, numDims int, dims, strides []int, src []float64, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastArgminF64(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastArgminF64(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		minVal := float64(math.MaxFloat64)
 		minIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val < minVal {
@@ -297,13 +297,13 @@ func FastArgminStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []i
 }
 
 // FastArgmaxF32 computes the index of the maximum over the last dimension for float32
-func FastArgmaxF32(numel, elToSumPerBlock, numDims int, dims []int, src []float32, dst []uint32) {
+func FastArgmaxF32(numel, numDims int, dims []int, src []float32, dst []uint32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float32(-math.MaxFloat32)
 		maxIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
@@ -315,13 +315,13 @@ func FastArgmaxF32(numel, elToSumPerBlock, numDims int, dims []int, src []float3
 }
 
 // FastArgmaxF64 computes the index of the maximum over the last dimension for float64
-func FastArgmaxF64(numel, elToSumPerBlock, numDims int, dims []int, src []float64, dst []uint32) {
+func FastArgmaxF64(numel, numDims int, dims []int, src []float64, dst []uint32) {
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float64(-math.MaxFloat64)
 		maxIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
@@ -333,17 +333,17 @@ func FastArgmaxF64(numel, elToSumPerBlock, numDims int, dims []int, src []float6
 }
 
 // FastArgmaxStridedF32 computes the index of the maximum over the last dimension for float32 with strided memory
-func FastArgmaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float32, dst []uint32) {
+func FastArgmaxStridedF32(numel, numDims int, dims, strides []int, src []float32, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastArgmaxF32(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastArgmaxF32(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float32(-math.MaxFloat32)
 		maxIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val > maxVal {
@@ -356,17 +356,17 @@ func FastArgmaxStridedF32(numel, elToSumPerBlock, numDims int, dims, strides []i
 }
 
 // FastArgmaxStridedF64 computes the index of the maximum over the last dimension for float64 with strided memory
-func FastArgmaxStridedF64(numel, elToSumPerBlock, numDims int, dims, strides []int, src []float64, dst []uint32) {
+func FastArgmaxStridedF64(numel, numDims int, dims, strides []int, src []float64, dst []uint32) {
 	if IsContiguous(numDims, dims, strides) {
-		FastArgmaxF64(numel, elToSumPerBlock, numDims, dims, src, dst)
+		FastArgmaxF64(numel, numDims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[numDims-1]
 	for i := range dstSize {
 		maxVal := float64(-math.MaxFloat64)
 		maxIdx := uint32(0)
-		startIdx := i * elToSumPerBlock
-		stopIdx := min(startIdx+elToSumPerBlock, numel)
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, numDims, dims, strides)]
 			if val > maxVal {
