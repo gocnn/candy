@@ -5,6 +5,20 @@ import (
 	"slices"
 )
 
+// FastSum computes the sum over the last dimension for type T
+func FastSum[T D](numel, numDims int, dims []int, src, dst []T) {
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		var sum T
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[j]
+		}
+		dst[i] = sum
+	}
+}
+
 // FastSumF32 computes the sum over the last dimension for float32
 func FastSumF32(numel, numDims int, dims []int, src, dst []float32) {
 	dstSize := numel / dims[numDims-1]
@@ -28,6 +42,24 @@ func FastSumF64(numel, numDims int, dims []int, src, dst []float64) {
 		stopIdx := min(startIdx+dims[numDims-1], numel)
 		for j := startIdx; j < stopIdx; j++ {
 			sum += src[j]
+		}
+		dst[i] = sum
+	}
+}
+
+// FastSumStrided computes the sum over the last dimension for type T with strided memory
+func FastSumStrided[T D](numel, numDims int, dims, strides []int, src, dst []T) {
+	if IsContiguous(numDims, dims, strides) {
+		FastSum(numel, numDims, dims, src, dst)
+		return
+	}
+	dstSize := numel / dims[numDims-1]
+	for i := range dstSize {
+		var sum T
+		startIdx := i * dims[numDims-1]
+		stopIdx := min(startIdx+dims[numDims-1], numel)
+		for j := startIdx; j < stopIdx; j++ {
+			sum += src[GetStridedIndex(j, numDims, dims, strides)]
 		}
 		dst[i] = sum
 	}
@@ -381,6 +413,25 @@ func FastArgmaxStridedF64(numel, numDims int, dims, strides []int, src []float64
 	}
 }
 
+// Sum performs sum reduction over specified dimension indices for type T
+func Sum[T D](numel, numDims int, dims, sumDims []int, inp, out []T) {
+	for i := range numel {
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
+		}
+		out[dstIndex] += inp[i]
+	}
+}
+
 // SumF32 performs sum reduction over specified dimension indices for float32
 func SumF32(numel int, numDims int, dims []int, sumDims []int, inp, out []float32) {
 	for i := range numel {
@@ -416,6 +467,30 @@ func SumF64(numel int, numDims int, dims []int, sumDims []int, inp, out []float6
 			}
 		}
 		out[dstIndex] += inp[i]
+	}
+}
+
+// SumStrided performs strided sum reduction over specified dimension indices for type T
+func SumStrided[T D](numel, numDims int, dims, strides, sumDims []int, inp, out []T) {
+	if IsContiguous(numDims, dims, strides) {
+		Sum[T](numel, numDims, dims, sumDims, inp, out)
+		return
+	}
+	for i := range numel {
+		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		dstIndex := 0
+		currentStride := 1
+		coords := i
+		for d := numDims - 1; d >= 0; d-- {
+			coord := coords % dims[d]
+			coords /= dims[d]
+			isSum := slices.Contains(sumDims, d)
+			if !isSum {
+				dstIndex += coord * currentStride
+				currentStride *= dims[d]
+			}
+		}
+		out[dstIndex] += inp[stridedI]
 	}
 }
 
@@ -833,6 +908,22 @@ func LayerNormStridedF64(numel int, numDims int, dims, strides []int, eps float6
 	}
 }
 
+// RopeI performs rotary position embedding (rope_i variant) for type T (contiguous memory)
+func RopeI[T D](bh, td, strideB int, src, cos, sin, dst []T) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
+		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+	}
+}
+
 // RopeIF32 performs rotary position embedding (rope_i variant) for float32 (contiguous memory)
 func RopeIF32(bh int, td int, strideB int, src, cos, sin, dst []float32) {
 	numPairs := bh * td / 2
@@ -862,6 +953,28 @@ func RopeIF64(bh int, td int, strideB int, src, cos, sin, dst []float64) {
 		s := sin[ropeIdx]
 		dst[2*idx] = src[2*idx]*c - src[2*idx+1]*s
 		dst[2*idx+1] = src[2*idx]*s + src[2*idx+1]*c
+	}
+}
+
+// RopeIStrided performs strided rotary position embedding (rope_i variant) for type T
+func RopeIStrided[T D](numDims int, dims, strides []int, bh, td, strideB int, src, cos, sin, dst []T) {
+	if IsContiguous(numDims, dims, strides) {
+		RopeI[T](bh, td, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		ropeIdx := idx % (td / 2)
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			ropeIdx += bIdx * (td / 2)
+		}
+		c := cos[ropeIdx]
+		s := sin[ropeIdx]
+		strided2Idx := GetStridedIndex(2*idx, numDims, dims, strides)
+		strided2IdxPlus1 := GetStridedIndex(2*idx+1, numDims, dims, strides)
+		dst[strided2Idx] = src[strided2Idx]*c - src[strided2IdxPlus1]*s
+		dst[strided2IdxPlus1] = src[strided2Idx]*s + src[strided2IdxPlus1]*c
 	}
 }
 
@@ -909,6 +1022,28 @@ func RopeIStridedF64(numDims int, dims, strides []int, bh int, td int, strideB i
 	}
 }
 
+// Rope performs rotary position embedding (rope variant) for type T (contiguous memory)
+func Rope[T D](bh, td, d, strideB int, src, cos, sin, dst []T) {
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		i1 := iBh*td + iT*d + iD
+		i2 := i1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * (td / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		dst[i1] = src[i1]*c - src[i2]*s
+		dst[i2] = src[i1]*s + src[i2]*c
+	}
+}
+
 // RopeF32 performs rotary position embedding (rope variant) for float32 (contiguous memory)
 func RopeF32(bh int, td int, d int, strideB int, src, cos, sin, dst []float32) {
 	numPairs := bh * td / 2
@@ -950,6 +1085,34 @@ func RopeF64(bh int, td int, d int, strideB int, src, cos, sin, dst []float64) {
 		s := sin[iCs]
 		dst[i1] = src[i1]*c - src[i2]*s
 		dst[i2] = src[i1]*s + src[i2]*c
+	}
+}
+
+// RopeStrided performs strided rotary position embedding (rope variant) for type T
+func RopeStrided[T D](numDims int, dims, strides []int, bh, td, d, strideB int, src, cos, sin, dst []T) {
+	if IsContiguous(numDims, dims, strides) {
+		Rope[T](bh, td, d, strideB, src, cos, sin, dst)
+		return
+	}
+	numPairs := bh * td / 2
+	for idx := range numPairs {
+		iBh := idx / (td / 2)
+		iTd := idx - (td/2)*iBh
+		iT := iTd / (d / 2)
+		iD := iTd - (d/2)*iT
+		logicalI1 := iBh*td + iT*d + iD
+		logicalI2 := logicalI1 + d/2
+		iCs := iT*(d/2) + iD
+		if strideB > 0 {
+			bIdx := (2 * idx) / strideB
+			iCs += bIdx * (td / 2)
+		}
+		c := cos[iCs]
+		s := sin[iCs]
+		stridedI1 := GetStridedIndex(logicalI1, numDims, dims, strides)
+		stridedI2 := GetStridedIndex(logicalI2, numDims, dims, strides)
+		dst[stridedI1] = src[stridedI1]*c - src[stridedI2]*s
+		dst[stridedI2] = src[stridedI1]*s + src[stridedI2]*c
 	}
 }
 

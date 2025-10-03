@@ -37,3 +37,17 @@ func (d DType) String() string {
 		return "unknown"
 	}
 }
+
+// DTypeOf returns the DType corresponding to the given type parameter
+func DTypeOf[T D]() DType {
+	var zero T
+	switch any(zero).(type) {
+	case float32:
+		return F32
+	case float64:
+		return F64
+	default:
+		// This should never happen due to type constraint
+		panic("unsupported type for DTypeOf")
+	}
+}

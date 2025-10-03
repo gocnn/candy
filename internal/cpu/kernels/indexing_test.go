@@ -20,7 +20,6 @@ func TestIndexSelectI64F32(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []int64{1, 3, 0},
 			src:   []float32{10, 20, 30, 40, 50},
@@ -28,7 +27,6 @@ func TestIndexSelectI64F32(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []int64{2, 2},
 			src:   []float32{1, 2, 3},
@@ -36,7 +34,6 @@ func TestIndexSelectI64F32(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []int64{},
 			src:   []float32{},
@@ -47,7 +44,7 @@ func TestIndexSelectI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectI64F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectI64F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -66,7 +63,6 @@ func TestIndexSelectI64F64(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []int64{1, 3, 0},
 			src:   []float64{10, 20, 30, 40, 50},
@@ -74,7 +70,6 @@ func TestIndexSelectI64F64(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []int64{2, 2},
 			src:   []float64{1, 2, 3},
@@ -82,7 +77,6 @@ func TestIndexSelectI64F64(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []int64{},
 			src:   []float64{},
@@ -93,7 +87,7 @@ func TestIndexSelectI64F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectI64F64(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectI64F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -112,7 +106,6 @@ func TestIndexSelectU32F32(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []uint32{1, 3, 0},
 			src:   []float32{10, 20, 30, 40, 50},
@@ -120,7 +113,6 @@ func TestIndexSelectU32F32(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []uint32{2, 2},
 			src:   []float32{1, 2, 3},
@@ -128,7 +120,6 @@ func TestIndexSelectU32F32(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []uint32{},
 			src:   []float32{},
@@ -139,7 +130,7 @@ func TestIndexSelectU32F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectU32F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectU32F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -158,7 +149,6 @@ func TestIndexSelectU32F64(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []uint32{1, 3, 0},
 			src:   []float64{10, 20, 30, 40, 50},
@@ -166,7 +156,6 @@ func TestIndexSelectU32F64(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []uint32{2, 2},
 			src:   []float64{1, 2, 3},
@@ -174,7 +163,6 @@ func TestIndexSelectU32F64(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []uint32{},
 			src:   []float64{},
@@ -185,7 +173,7 @@ func TestIndexSelectU32F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectU32F64(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectU32F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -204,7 +192,6 @@ func TestIndexSelectU8F32(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []uint8{1, 3, 0},
 			src:   []float32{10, 20, 30, 40, 50},
@@ -212,7 +199,6 @@ func TestIndexSelectU8F32(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []uint8{2, 2},
 			src:   []float32{1, 2, 3},
@@ -220,7 +206,6 @@ func TestIndexSelectU8F32(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []uint8{},
 			src:   []float32{},
@@ -231,7 +216,7 @@ func TestIndexSelectU8F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectU8F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectU8F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -250,7 +235,6 @@ func TestIndexSelectU8F64(t *testing.T) {
 	}{
 		{
 			name:  "Basic select",
-			dim:   0,
 			numel: 3,
 			ids:   []uint8{1, 3, 0},
 			src:   []float64{10, 20, 30, 40, 50},
@@ -258,7 +242,6 @@ func TestIndexSelectU8F64(t *testing.T) {
 		},
 		{
 			name:  "All same index",
-			dim:   0,
 			numel: 2,
 			ids:   []uint8{2, 2},
 			src:   []float64{1, 2, 3},
@@ -266,7 +249,6 @@ func TestIndexSelectU8F64(t *testing.T) {
 		},
 		{
 			name:  "Empty",
-			dim:   0,
 			numel: 0,
 			ids:   []uint8{},
 			src:   []float64{},
@@ -277,7 +259,7 @@ func TestIndexSelectU8F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectU8F64(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexSelectU8F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -339,7 +321,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedI64F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -401,7 +383,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedI64F64(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedI64F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -463,7 +445,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedU32F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU32F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -525,7 +507,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedU32F64(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU32F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -587,7 +569,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedU8F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU8F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -649,7 +631,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedU8F64(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU8F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -703,7 +685,7 @@ func TestGatherI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.GatherI64F32(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherI64F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -757,7 +739,7 @@ func TestGatherI64F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.GatherI64F64(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherI64F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -811,7 +793,7 @@ func TestGatherU32F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.GatherU32F32(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherU32F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -865,7 +847,7 @@ func TestGatherU32F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.GatherU32F64(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherU32F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -919,7 +901,7 @@ func TestGatherU8F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.GatherU8F32(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherU8F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -973,7 +955,7 @@ func TestGatherU8F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.GatherU8F64(tt.numel, tt.numDims, tt.dim, tt.dims, tt.ids, tt.src, dst)
+			kernels.GatherU8F64(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1039,7 +1021,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.GatherStridedI64F32(tt.numel, tt.numDims, tt.dim, tt.dims, tt.stridesSrc, tt.stridesDst, tt.stridesIds, tt.ids, tt.src, dst)
+			kernels.GatherStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.stridesIds, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1092,7 +1074,7 @@ func TestIndexAddI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.IndexAddI64F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.IndexAddI64F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1161,7 +1143,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.IndexAddStridedI64F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexAddStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1214,7 +1196,7 @@ func TestScatterI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterI64F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.ScatterI64F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1283,7 +1265,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterStridedI64F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.ScatterStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1336,7 +1318,7 @@ func TestScatterAddI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterAddI64F32(tt.dim, tt.numel, tt.ids, tt.src, dst)
+			kernels.ScatterAddI64F32(tt.numel, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1405,7 +1387,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterAddStridedI64F32(tt.dim, tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.ScatterAddStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}

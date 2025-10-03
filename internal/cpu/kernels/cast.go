@@ -37,43 +37,6 @@ func CastF32I64(numel int, x []float32, y []int64) {
 	}
 }
 
-// Cast operations for float64 input
-
-// CastF64F32 converts float64 to float32
-func CastF64F32(numel int, x []float64, y []float32) {
-	for i := range numel {
-		y[i] = float32(x[i])
-	}
-}
-
-// CastF64F64 converts float64 to float64
-func CastF64F64(numel int, x []float64, y []float64) {
-	for i := range numel {
-		y[i] = x[i]
-	}
-}
-
-// CastF64U8 converts float64 to uint8
-func CastF64U8(numel int, x []float64, y []uint8) {
-	for i := range numel {
-		y[i] = uint8(x[i])
-	}
-}
-
-// CastF64U32 converts float64 to uint32
-func CastF64U32(numel int, x []float64, y []uint32) {
-	for i := range numel {
-		y[i] = uint32(x[i])
-	}
-}
-
-// CastF64I64 converts float64 to int64
-func CastF64I64(numel int, x []float64, y []int64) {
-	for i := range numel {
-		y[i] = int64(x[i])
-	}
-}
-
 // Strided cast operations for float32 input
 
 // CastStridedF32F32 converts float32 to float32 with strided memory
@@ -128,6 +91,43 @@ func CastStridedF32I64(numel, numDims int, dims, stridesX, stridesY []int, x []f
 	}
 	for i := range numel {
 		y[GetStridedIndex(i, numDims, dims, stridesY)] = int64(x[GetStridedIndex(i, numDims, dims, stridesX)])
+	}
+}
+
+// Cast operations for float64 input
+
+// CastF64F32 converts float64 to float32
+func CastF64F32(numel int, x []float64, y []float32) {
+	for i := range numel {
+		y[i] = float32(x[i])
+	}
+}
+
+// CastF64F64 converts float64 to float64
+func CastF64F64(numel int, x []float64, y []float64) {
+	for i := range numel {
+		y[i] = x[i]
+	}
+}
+
+// CastF64U8 converts float64 to uint8
+func CastF64U8(numel int, x []float64, y []uint8) {
+	for i := range numel {
+		y[i] = uint8(x[i])
+	}
+}
+
+// CastF64U32 converts float64 to uint32
+func CastF64U32(numel int, x []float64, y []uint32) {
+	for i := range numel {
+		y[i] = uint32(x[i])
+	}
+}
+
+// CastF64I64 converts float64 to int64
+func CastF64I64(numel int, x []float64, y []int64) {
+	for i := range numel {
+		y[i] = int64(x[i])
 	}
 }
 

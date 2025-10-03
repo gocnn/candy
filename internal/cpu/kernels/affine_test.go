@@ -1,7 +1,7 @@
 package kernels_test
 
 import (
-	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/gocnn/spark/internal/cpu/kernels"
@@ -23,7 +23,7 @@ func TestAffineF32(t *testing.T) {
 
 	for _, tt := range tests {
 		kernels.AffineF32(tt.numel, tt.a, tt.b, tt.x, tt.y)
-		if !reflect.DeepEqual(tt.y, tt.want) {
+		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
 	}
@@ -45,7 +45,7 @@ func TestAffineF64(t *testing.T) {
 
 	for _, tt := range tests {
 		kernels.AffineF64(tt.numel, tt.a, tt.b, tt.x, tt.y)
-		if !reflect.DeepEqual(tt.y, tt.want) {
+		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
 	}
@@ -76,7 +76,7 @@ func TestAffineStridedF32(t *testing.T) {
 
 	for _, tt := range tests {
 		kernels.AffineStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
-		if !reflect.DeepEqual(tt.y, tt.want) {
+		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
 	}
@@ -107,7 +107,7 @@ func TestAffineStridedF64(t *testing.T) {
 
 	for _, tt := range tests {
 		kernels.AffineStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
-		if !reflect.DeepEqual(tt.y, tt.want) {
+		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
 	}

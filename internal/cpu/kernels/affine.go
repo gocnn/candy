@@ -1,5 +1,12 @@
 package kernels
 
+// Affine performs y = a*x + b operation for any supported numeric type
+func Affine[T D](numel int, a, b T, x, y []T) {
+	for i := range numel {
+		y[i] = a*x[i] + b
+	}
+}
+
 // AffineF32 performs y = a*x + b operation for float32
 func AffineF32(numel int, a, b float32, x, y []float32) {
 	for i := range numel {
@@ -11,6 +18,17 @@ func AffineF32(numel int, a, b float32, x, y []float32) {
 func AffineF64(numel int, a, b float64, x, y []float64) {
 	for i := range numel {
 		y[i] = a*x[i] + b
+	}
+}
+
+// AffineStrided performs strided affine operation for any supported numeric type
+func AffineStrided[T D](numel int, numDims int, dims, strides []int, a, b T, x, y []T) {
+	if IsContiguous(numDims, dims, strides) {
+		Affine(numel, a, b, x, y)
+		return
+	}
+	for i := range numel {
+		y[i] = a*x[GetStridedIndex(i, numDims, dims, strides)] + b
 	}
 }
 

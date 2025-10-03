@@ -1,5 +1,16 @@
 package kernels
 
+import "github.com/gocnn/spark"
+
+type D interface {
+	spark.D
+	~float32 | ~float64
+}
+
+type I interface {
+	~int | ~int32 | ~int64 | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}
+
 // Helper functions (should be moved to kernels.go)
 func IsContiguous(numDims int, dims, strides []int) bool {
 	if numDims == 0 {

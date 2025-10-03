@@ -1,5 +1,16 @@
 package kernels
 
+// Where selects elements from t or f based on indices of type I for data of type T
+func Where[U I, T D](numel int, ids []U, t, f, dst []T) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
 // WhereI64F32 selects elements from t or f based on int64 indices for float32
 func WhereI64F32(numel int, ids []int64, t, f, dst []float32) {
 	for i := range numel {
@@ -62,6 +73,21 @@ func WhereU8F64(numel int, ids []uint8, t, f, dst []float64) {
 			dst[i] = t[i]
 		} else {
 			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereStrided selects elements from t or f based on indices of type I for data of type T with strided memory
+func WhereStrided[U I, T D](numel, numDims int, dims, strides, stridesT, stridesF []int, ids []U, t, f, dst []T) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+		Where[U, T](numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
 		}
 	}
 }

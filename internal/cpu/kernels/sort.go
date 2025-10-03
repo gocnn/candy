@@ -2,6 +2,33 @@ package kernels
 
 import "sort"
 
+// AsortAsc performs ascending argsort along the last dimension for type T (contiguous memory)
+func AsortAsc[T D](ncols int, src, dst []T) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		rowSrc := src[start:end]
+		// Sort indices based on src values in ascending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		// Copy sorted indices to dst
+		for col := range ncols {
+			dst[start+col] = T(rowIndices[col])
+		}
+	}
+	return indices
+}
+
 // AsortAscF32 performs ascending argsort along the last dimension for float32 (contiguous memory)
 func AsortAscF32(ncols int, src, dst []float32) []uint32 {
 	if ncols == 0 || len(src) == 0 {
@@ -22,8 +49,62 @@ func AsortAscF32(ncols int, src, dst []float32) []uint32 {
 			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
 		})
 		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
+		for col := range ncols {
 			dst[start+col] = float32(rowIndices[col])
+		}
+	}
+	return indices
+}
+
+// AsortAscF64 performs ascending argsort along the last dimension for float64 (contiguous memory)
+func AsortAscF64(ncols int, src, dst []float64) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		rowSrc := src[start:end]
+		// Sort indices based on src values in ascending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		// Copy sorted indices to dst
+		for col := range ncols {
+			dst[start+col] = float64(rowIndices[col])
+		}
+	}
+	return indices
+}
+
+// AsortAscStrided performs ascending argsort along the last dimension for type T (strided memory)
+func AsortAscStrided[T D](ncols, numDims int, dims, strides []int, src, dst []T) []uint32 {
+	if IsContiguous(numDims, dims, strides) {
+		return AsortAsc[T](ncols, src, dst)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		// Sort indices based on src values in ascending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		// Copy sorted indices to dst
+		for col := 0; col < ncols; col++ {
+			dst[GetStridedIndex(start+col, numDims, dims, strides)] = T(rowIndices[col])
 		}
 	}
 	return indices
@@ -56,33 +137,6 @@ func AsortAscStridedF32(ncols, numDims int, dims, strides []int, src, dst []floa
 	return indices
 }
 
-// AsortAscF64 performs ascending argsort along the last dimension for float64 (contiguous memory)
-func AsortAscF64(ncols int, src, dst []float64) []uint32 {
-	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
-	}
-	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
-		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		rowSrc := src[start:end]
-		// Sort indices based on src values in ascending order
-		sort.Slice(rowIndices, func(i, j int) bool {
-			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
-		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[start+col] = float64(rowIndices[col])
-		}
-	}
-	return indices
-}
-
 // AsortAscStridedF64 performs ascending argsort along the last dimension for float64 (strided memory)
 func AsortAscStridedF64(ncols, numDims int, dims, strides []int, src, dst []float64) []uint32 {
 	if IsContiguous(numDims, dims, strides) {
@@ -110,6 +164,33 @@ func AsortAscStridedF64(ncols, numDims int, dims, strides []int, src, dst []floa
 	return indices
 }
 
+// AsortDesc performs descending argsort along the last dimension for type T (contiguous memory)
+func AsortDesc[T D](ncols int, src, dst []T) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		rowSrc := src[start:end]
+		// Sort indices based on src values in descending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		// Copy sorted indices to dst
+		for col := range ncols {
+			dst[start+col] = T(rowIndices[col])
+		}
+	}
+	return indices
+}
+
 // AsortDescF32 performs descending argsort along the last dimension for float32 (contiguous memory)
 func AsortDescF32(ncols int, src, dst []float32) []uint32 {
 	if ncols == 0 || len(src) == 0 {
@@ -130,8 +211,62 @@ func AsortDescF32(ncols int, src, dst []float32) []uint32 {
 			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
 		})
 		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
+		for col := range ncols {
 			dst[start+col] = float32(rowIndices[col])
+		}
+	}
+	return indices
+}
+
+// AsortDescF64 performs descending argsort along the last dimension for float64 (contiguous memory)
+func AsortDescF64(ncols int, src, dst []float64) []uint32 {
+	if ncols == 0 || len(src) == 0 {
+		return make([]uint32, 0)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		rowSrc := src[start:end]
+		// Sort indices based on src values in descending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		// Copy sorted indices to dst
+		for col := range ncols {
+			dst[start+col] = float64(rowIndices[col])
+		}
+	}
+	return indices
+}
+
+// AsortDescStrided performs descending argsort along the last dimension for type T (strided memory)
+func AsortDescStrided[T D](ncols, numDims int, dims, strides []int, src, dst []T) []uint32 {
+	if IsContiguous(numDims, dims, strides) {
+		return AsortDesc[T](ncols, src, dst)
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, len(src))
+	for i := range src {
+		indices[i] = uint32(i % ncols)
+	}
+	for row := 0; row < rows; row++ {
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[start:end]
+		// Sort indices based on src values in descending order
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		// Copy sorted indices to dst
+		for col := 0; col < ncols; col++ {
+			dst[GetStridedIndex(start+col, numDims, dims, strides)] = T(rowIndices[col])
 		}
 	}
 	return indices
@@ -164,33 +299,6 @@ func AsortDescStridedF32(ncols, numDims int, dims, strides []int, src, dst []flo
 	return indices
 }
 
-// AsortDescF64 performs descending argsort along the last dimension for float64 (contiguous memory)
-func AsortDescF64(ncols int, src, dst []float64) []uint32 {
-	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
-	}
-	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
-		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		rowSrc := src[start:end]
-		// Sort indices based on src values in descending order
-		sort.Slice(rowIndices, func(i, j int) bool {
-			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
-		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[start+col] = float64(rowIndices[col])
-		}
-	}
-	return indices
-}
-
 // AsortDescStridedF64 performs descending argsort along the last dimension for float64 (strided memory)
 func AsortDescStridedF64(ncols, numDims int, dims, strides []int, src, dst []float64) []uint32 {
 	if IsContiguous(numDims, dims, strides) {
@@ -211,7 +319,7 @@ func AsortDescStridedF64(ncols, numDims int, dims, strides []int, src, dst []flo
 				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
 		})
 		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
+		for col := range ncols {
 			dst[GetStridedIndex(start+col, numDims, dims, strides)] = float64(rowIndices[col])
 		}
 	}
