@@ -1,327 +1,677 @@
 package kernels
 
-import "sort"
+import (
+	"sort"
+)
 
-// AsortAsc performs ascending argsort along the last dimension for type T (contiguous memory)
-func AsortAsc[T D](ncols int, src, dst []T) []uint32 {
+// AsortAsc performs ascending argsort along the last dimension for type T (contiguous memory) with indices of type U
+func AsortAsc[U I, T D](ncols int, src []T, dst []U) {
 	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]U, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = U(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in ascending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = T(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortAscF32 performs ascending argsort along the last dimension for float32 (contiguous memory)
-func AsortAscF32(ncols int, src, dst []float32) []uint32 {
+// AsortAscI64F32 performs ascending argsort along the last dimension for float32 with int64 indices (contiguous memory)
+func AsortAscI64F32(ncols int, src []float32, dst []int64) {
 	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in ascending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = float32(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortAscF64 performs ascending argsort along the last dimension for float64 (contiguous memory)
-func AsortAscF64(ncols int, src, dst []float64) []uint32 {
+// AsortAscI64F64 performs ascending argsort along the last dimension for float64 with int64 indices (contiguous memory)
+func AsortAscI64F64(ncols int, src []float64, dst []int64) {
 	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in ascending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = float64(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortAscStrided performs ascending argsort along the last dimension for type T (strided memory)
-func AsortAscStrided[T D](ncols, numDims int, dims, strides []int, src, dst []T) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortAsc[T](ncols, src, dst)
+// AsortAscU32F32 performs ascending argsort along the last dimension for float32 with uint32 indices (contiguous memory)
+func AsortAscU32F32(ncols int, src []float32, dst []uint32) {
+	if ncols == 0 || len(src) == 0 {
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in ascending order
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscU32F64 performs ascending argsort along the last dimension for float64 with uint32 indices (contiguous memory)
+func AsortAscU32F64(ncols int, src []float64, dst []uint32) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscU8F32 performs ascending argsort along the last dimension for float32 with uint8 indices (contiguous memory)
+func AsortAscU8F32(ncols int, src []float32, dst []uint8) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscU8F64 performs ascending argsort along the last dimension for float64 with uint8 indices (contiguous memory)
+func AsortAscU8F64(ncols int, src []float64, dst []uint8) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] < rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscStrided performs ascending argsort along the last dimension for type T (strided memory) with indices of type U
+func AsortAscStrided[U I, T D](numDims int, dims, strides, stridesDst []int, ncols int, src []T, dst []U) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAsc(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]U, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = U(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
 				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
 		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = T(rowIndices[col])
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortAscStridedF32 performs ascending argsort along the last dimension for float32 (strided memory)
-func AsortAscStridedF32(ncols, numDims int, dims, strides []int, src, dst []float32) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortAscF32(ncols, src, dst)
+// AsortAscStridedI64F32 performs ascending argsort along the last dimension for float32 with int64 indices (strided memory)
+func AsortAscStridedI64F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []int64) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscI64F32(ncols, src, dst)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in ascending order
+		rowIndices := indices[:ncols]
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
 				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
 		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = float32(rowIndices[col])
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortAscStridedF64 performs ascending argsort along the last dimension for float64 (strided memory)
-func AsortAscStridedF64(ncols, numDims int, dims, strides []int, src, dst []float64) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortAscF64(ncols, src, dst)
+// AsortAscStridedI64F64 performs ascending argsort along the last dimension for float64 with int64 indices (strided memory)
+func AsortAscStridedI64F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []int64) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscI64F64(ncols, src, dst)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in ascending order
+		rowIndices := indices[:ncols]
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
 				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
 		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = float64(rowIndices[col])
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortDesc performs descending argsort along the last dimension for type T (contiguous memory)
-func AsortDesc[T D](ncols int, src, dst []T) []uint32 {
-	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+// AsortAscStridedU32F32 performs ascending argsort along the last dimension for float32 with uint32 indices (strided memory)
+func AsortAscStridedU32F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []uint32) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscU32F32(ncols, src, dst)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
 	}
-	for row := 0; row < rows; row++ {
+}
+
+// AsortAscStridedU32F64 performs ascending argsort along the last dimension for float64 with uint32 indices (strided memory)
+func AsortAscStridedU32F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []uint32) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscU32F64(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscStridedU8F32 performs ascending argsort along the last dimension for float32 with uint8 indices (strided memory)
+func AsortAscStridedU8F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []uint8) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscU8F32(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortAscStridedU8F64 performs ascending argsort along the last dimension for float64 with uint8 indices (strided memory)
+func AsortAscStridedU8F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []uint8) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortAscU8F64(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] <
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDesc performs descending argsort along the last dimension for type T (contiguous memory) with indices of type U
+func AsortDesc[U I, T D](ncols int, src []T, dst []U) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]U, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = U(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in descending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = T(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortDescF32 performs descending argsort along the last dimension for float32 (contiguous memory)
-func AsortDescF32(ncols int, src, dst []float32) []uint32 {
+// AsortDescI64F32 performs descending argsort along the last dimension for float32 with int64 indices (contiguous memory)
+func AsortDescI64F32(ncols int, src []float32, dst []int64) {
 	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in descending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = float32(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortDescF64 performs descending argsort along the last dimension for float64 (contiguous memory)
-func AsortDescF64(ncols int, src, dst []float64) []uint32 {
+// AsortDescI64F64 performs descending argsort along the last dimension for float64 with int64 indices (contiguous memory)
+func AsortDescI64F64(ncols int, src []float64, dst []int64) {
 	if ncols == 0 || len(src) == 0 {
-		return make([]uint32, 0)
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
+		rowIndices := indices[:ncols]
 		rowSrc := src[start:end]
-		// Sort indices based on src values in descending order
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
 		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[start+col] = float64(rowIndices[col])
+			dst[start+col] = rowIndices[col]
 		}
 	}
-	return indices
 }
 
-// AsortDescStrided performs descending argsort along the last dimension for type T (strided memory)
-func AsortDescStrided[T D](ncols, numDims int, dims, strides []int, src, dst []T) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortDesc[T](ncols, src, dst)
+// AsortDescU32F32 performs descending argsort along the last dimension for float32 with uint32 indices (contiguous memory)
+func AsortDescU32F32(ncols int, src []float32, dst []uint32) {
+	if ncols == 0 || len(src) == 0 {
+		return
 	}
 	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
 		start := row * ncols
 		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in descending order
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescU32F64 performs descending argsort along the last dimension for float64 with uint32 indices (contiguous memory)
+func AsortDescU32F64(ncols int, src []float64, dst []uint32) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescU8F32 performs descending argsort along the last dimension for float32 with uint8 indices (contiguous memory)
+func AsortDescU8F32(ncols int, src []float32, dst []uint8) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescU8F64 performs descending argsort along the last dimension for float64 with uint8 indices (contiguous memory)
+func AsortDescU8F64(ncols int, src []float64, dst []uint8) {
+	if ncols == 0 || len(src) == 0 {
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		end := start + ncols
+		rowIndices := indices[:ncols]
+		rowSrc := src[start:end]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return rowSrc[rowIndices[i]] > rowSrc[rowIndices[j]]
+		})
+		for col := range ncols {
+			dst[start+col] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStrided performs descending argsort along the last dimension for type T (strided memory) with indices of type U
+func AsortDescStrided[U I, T D](numDims int, dims, strides, stridesDst []int, ncols int, src []T, dst []U) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDesc(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]U, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = U(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
 		sort.Slice(rowIndices, func(i, j int) bool {
 			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
 				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
 		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = T(rowIndices[col])
-		}
-	}
-	return indices
-}
-
-// AsortDescStridedF32 performs descending argsort along the last dimension for float32 (strided memory)
-func AsortDescStridedF32(ncols, numDims int, dims, strides []int, src, dst []float32) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortDescF32(ncols, src, dst)
-	}
-	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
-		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in descending order
-		sort.Slice(rowIndices, func(i, j int) bool {
-			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
-				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
-		})
-		// Copy sorted indices to dst
-		for col := 0; col < ncols; col++ {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = float32(rowIndices[col])
-		}
-	}
-	return indices
-}
-
-// AsortDescStridedF64 performs descending argsort along the last dimension for float64 (strided memory)
-func AsortDescStridedF64(ncols, numDims int, dims, strides []int, src, dst []float64) []uint32 {
-	if IsContiguous(numDims, dims, strides) {
-		return AsortDescF64(ncols, src, dst)
-	}
-	rows := len(src) / ncols
-	indices := make([]uint32, len(src))
-	for i := range src {
-		indices[i] = uint32(i % ncols)
-	}
-	for row := 0; row < rows; row++ {
-		start := row * ncols
-		end := start + ncols
-		rowIndices := indices[start:end]
-		// Sort indices based on src values in descending order
-		sort.Slice(rowIndices, func(i, j int) bool {
-			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
-				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
-		})
-		// Copy sorted indices to dst
 		for col := range ncols {
-			dst[GetStridedIndex(start+col, numDims, dims, strides)] = float64(rowIndices[col])
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
 		}
 	}
-	return indices
+}
+
+// AsortDescStridedI64F32 performs descending argsort along the last dimension for float32 with int64 indices (strided memory)
+func AsortDescStridedI64F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []int64) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescI64F32(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStridedI64F64 performs descending argsort along the last dimension for float64 with int64 indices (strided memory)
+func AsortDescStridedI64F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []int64) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescI64F64(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]int64, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = int64(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStridedU32F32 performs descending argsort along the last dimension for float32 with uint32 indices (strided memory)
+func AsortDescStridedU32F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []uint32) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescU32F32(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStridedU32F64 performs descending argsort along the last dimension for float64 with uint32 indices (strided memory)
+func AsortDescStridedU32F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []uint32) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescU32F64(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint32, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint32(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStridedU8F32 performs descending argsort along the last dimension for float32 with uint8 indices (strided memory)
+func AsortDescStridedU8F32(numDims int, dims, strides, stridesDst []int, ncols int, src []float32, dst []uint8) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescU8F32(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
+}
+
+// AsortDescStridedU8F64 performs descending argsort along the last dimension for float64 with uint8 indices (strided memory)
+func AsortDescStridedU8F64(numDims int, dims, strides, stridesDst []int, ncols int, src []float64, dst []uint8) {
+	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesDst) {
+		AsortDescU8F64(ncols, src, dst)
+		return
+	}
+	rows := len(src) / ncols
+	indices := make([]uint8, ncols)
+	for row := range rows {
+		for col := range ncols {
+			indices[col] = uint8(col)
+		}
+		start := row * ncols
+		rowIndices := indices[:ncols]
+		sort.Slice(rowIndices, func(i, j int) bool {
+			return src[GetStridedIndex(start+int(rowIndices[i]), numDims, dims, strides)] >
+				src[GetStridedIndex(start+int(rowIndices[j]), numDims, dims, strides)]
+		})
+		for col := range ncols {
+			dst[GetStridedIndex(start+col, numDims, dims, stridesDst)] = rowIndices[col]
+		}
+	}
 }
