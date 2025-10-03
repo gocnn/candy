@@ -1,165 +1,138 @@
 package spark
 
-// CmpOp represents comparison operations
-type CmpOp int
+import "fmt"
 
-const (
-	CmpEq CmpOp = iota
-	CmpNe
-	CmpLe
-	CmpGe
-	CmpLt
-	CmpGt
-)
+type ForwardFunc[T D] func([]*Tensor[T]) (*Tensor[T], error)
+type BackwardFunc[T D] func(*Tensor[T], []*Tensor[T]) ([]*Tensor[T], error)
 
-// String returns the string representation of the comparison operation
-func (op CmpOp) String() string {
-	switch op {
-	case CmpEq:
-		return "eq"
-	case CmpNe:
-		return "ne"
-	case CmpLe:
-		return "le"
-	case CmpGe:
-		return "ge"
-	case CmpLt:
-		return "lt"
-	case CmpGt:
-		return "gt"
-	default:
-		return "unknown"
-	}
+type Op[T D] struct {
+	inputs   []*Tensor[T]
+	backward BackwardFunc[T]
 }
 
-// ReduceOp represents reduction operations
-type ReduceOp int
-
-const (
-	ReduceSum ReduceOp = iota
-	ReduceMin
-	ReduceMax
-	ReduceArgMin
-	ReduceArgMax
-)
-
-// String returns the string representation of the reduce operation
-func (op ReduceOp) String() string {
-	switch op {
-	case ReduceSum:
-		return "sum"
-	case ReduceMin:
-		return "min"
-	case ReduceMax:
-		return "max"
-	case ReduceArgMin:
-		return "argmin"
-	case ReduceArgMax:
-		return "argmax"
-	default:
-		return "unknown"
-	}
+func (op *Op[T]) Inputs() []*Tensor[T] {
+	return op.inputs
 }
 
-// BinaryOp represents binary operations that return the same type as input
-type BinaryOp int
-
-const (
-	BinaryAdd BinaryOp = iota
-	BinaryMul
-	BinarySub
-	BinaryDiv
-	BinaryMaximum
-	BinaryMinimum
-)
-
-// String returns the string representation of the binary operation
-func (op BinaryOp) String() string {
-	switch op {
-	case BinaryAdd:
-		return "add"
-	case BinaryMul:
-		return "mul"
-	case BinarySub:
-		return "sub"
-	case BinaryDiv:
-		return "div"
-	case BinaryMaximum:
-		return "maximum"
-	case BinaryMinimum:
-		return "minimum"
-	default:
-		return "unknown"
-	}
+func (op *Op[T]) Backward(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return op.backward(outputGrad, inputs)
 }
 
-// UnaryOp represents unary operations with no arguments
-type UnaryOp int
-
-const (
-	UnaryExp UnaryOp = iota
-	UnaryLog
-	UnarySin
-	UnaryCos
-	UnaryAbs
-	UnaryNeg
-	UnaryRecip
-	UnarySqr
-	UnarySqrt
-	UnaryGelu
-	UnaryGeluErf
-	UnaryErf
-	UnaryRelu
-	UnarySilu
-	UnaryTanh
-	UnaryFloor
-	UnaryCeil
-	UnaryRound
-	UnarySign
-)
-
-// String returns the string representation of the unary operation
-func (op UnaryOp) String() string {
-	switch op {
-	case UnaryExp:
-		return "exp"
-	case UnaryLog:
-		return "log"
-	case UnarySin:
-		return "sin"
-	case UnaryCos:
-		return "cos"
-	case UnaryAbs:
-		return "abs"
-	case UnaryNeg:
-		return "neg"
-	case UnaryRecip:
-		return "recip"
-	case UnarySqr:
-		return "sqr"
-	case UnarySqrt:
-		return "sqrt"
-	case UnaryGelu:
-		return "gelu"
-	case UnaryGeluErf:
-		return "gelu_erf"
-	case UnaryErf:
-		return "erf"
-	case UnaryRelu:
-		return "relu"
-	case UnarySilu:
-		return "silu"
-	case UnaryTanh:
-		return "tanh"
-	case UnaryFloor:
-		return "floor"
-	case UnaryCeil:
-		return "ceil"
-	case UnaryRound:
-		return "round"
-	case UnarySign:
-		return "sign"
-	default:
-		return "unknown"
+// ApplyOp applies a forward function and builds the computation graph.
+// This is the core function that enables users to define custom operations.
+//
+// Parameters:
+//   - inputs: Input tensors for the operation
+//   - forwardFn: Forward pass function that computes the result
+//   - backwardFn: Backward pass function that computes gradients
+//
+// Returns:
+//   - Result tensor with automatic differentiation support
+func ApplyOp[T D](inputs []*Tensor[T], forwardFn ForwardFunc[T], backwardFn BackwardFunc[T]) (*Tensor[T], error) {
+	// Execute forward pass
+	result, err := forwardFn(inputs)
+	if err != nil {
+		return nil, err
 	}
+
+	// Check if any input requires gradient
+	needsGrad := false
+	for _, input := range inputs {
+		if input.IsVar() {
+			needsGrad = true
+			break
+		}
+	}
+
+	// Build computation graph if needed
+	if needsGrad {
+		result.isVar = true
+		result.op = &Op[T]{
+			inputs:   inputs,
+			backward: backwardFn,
+		}
+	}
+
+	return result, nil
+}
+
+// AddForward computes element-wise addition: c = a + b
+func AddForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("AddForward expects 2 inputs, got %d", len(inputs))
+	}
+
+	a, b := inputs[0], inputs[1]
+	resultLayout := Contiguous(a.layout.Shape())
+	resultStorage, err := a.storage.Add(b.storage, a.layout, b.layout, &resultLayout)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tensor[T]{
+		id:      NewId(),
+		storage: resultStorage,
+		layout:  &resultLayout,
+		dtype:   a.dtype,
+		device:  a.device,
+	}, nil
+}
+
+// AddBackward computes gradients for addition: ∂(a+b)/∂a = 1, ∂(a+b)/∂b = 1
+func AddBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	// For addition, gradient flows unchanged to both inputs
+	ga := outputGrad
+	gb := outputGrad
+	return []*Tensor[T]{ga, gb}, nil
+}
+
+func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T], AddBackward[T])
+}
+
+// MulForward computes element-wise multiplication: c = a * b
+func MulForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("MulForward expects 2 inputs, got %d", len(inputs))
+	}
+
+	a, b := inputs[0], inputs[1]
+	resultLayout := Contiguous(a.layout.Shape())
+	resultStorage, err := a.storage.Mul(b.storage, a.layout, b.layout, &resultLayout)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tensor[T]{
+		id:      NewId(),
+		storage: resultStorage,
+		layout:  &resultLayout,
+		dtype:   a.dtype,
+		device:  a.device,
+	}, nil
+}
+
+// MulBackward computes gradients for multiplication: ∂(a*b)/∂a = b, ∂(a*b)/∂b = a
+func MulBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("MulBackward expects 2 inputs, got %d", len(inputs))
+	}
+
+	// ∂(a*b)/∂a = outputGrad * b
+	ga, err := outputGrad.Mul(inputs[1])
+	if err != nil {
+		return nil, err
+	}
+
+	// ∂(a*b)/∂b = outputGrad * a
+	gb, err := outputGrad.Mul(inputs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return []*Tensor[T]{ga, gb}, nil
+}
+
+func (a *Tensor[T]) Mul(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, MulForward[T], MulBackward[T])
 }

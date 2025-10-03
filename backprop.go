@@ -71,3 +71,92 @@ func (s *GradStore[T]) IDs() []TensorId {
 	}
 	return ids
 }
+
+// Backward computes gradients for all variable tensors contributing to the root tensor.
+// Root gradient will be automatically initialized to zeros if not already set.
+func Backward[T D](root *Tensor[T], store *GradStore[T]) error {
+	if !root.IsVar() {
+		return nil // No backpropagation needed for non-variable tensors.
+	}
+
+	// Collect variable nodes and build reverse graph using BFS.
+	vars := make(map[TensorId]*Tensor[T])
+	outputs := make(map[TensorId][]*Tensor[T]) // Maps input ID to its output tensors.
+	queue := []*Tensor[T]{root}
+	visited := make(map[TensorId]bool)
+	for len(queue) > 0 {
+		node := queue[0]
+		queue = queue[1:]
+		id := node.ID()
+		if visited[id] {
+			continue
+		}
+		visited[id] = true
+		if !node.IsVar() {
+			continue
+		}
+		vars[id] = node
+		if node.Op() == nil {
+			continue // Leaf node.
+		}
+		for _, input := range node.Op().Inputs() {
+			if input.IsVar() {
+				outputs[input.ID()] = append(outputs[input.ID()], node)
+				queue = append(queue, input)
+			}
+		}
+	}
+
+	// Track pending dependencies for each variable.
+	pending := make(map[TensorId]int, len(vars))
+	for id := range vars {
+		pending[id] = len(outputs[id])
+	}
+
+	// Propagate gradients backward starting from the root.
+	backQueue := []*Tensor[T]{root}
+	for len(backQueue) > 0 {
+		node := backQueue[0]
+		backQueue = backQueue[1:]
+
+		if node.Op() == nil {
+			continue // Skip leaf nodes - they have no inputs to propagate to.
+		}
+
+		// Compute input gradients for the current node.
+		nodeGrad, err := store.GetOrCreate(node)
+		if err != nil {
+			return err
+		}
+		inputGrads, err := node.Op().Backward(nodeGrad, node.Op().Inputs())
+		if err != nil {
+			return err
+		}
+
+		// Distribute gradients to input nodes.
+		for i, input := range node.Op().Inputs() {
+			if !input.IsVar() {
+				continue
+			}
+			inputID := input.ID()
+			grad := inputGrads[i]
+			existingGrad, err := store.GetOrCreate(input)
+			if err != nil {
+				return err
+			}
+
+			// Accumulate gradient.
+			newGrad, err := existingGrad.Add(grad)
+			if err != nil {
+				return err
+			}
+
+			store.SetByID(inputID, newGrad)
+			pending[inputID]--
+			if pending[inputID] == 0 {
+				backQueue = append(backQueue, input)
+			}
+		}
+	}
+	return nil
+}
