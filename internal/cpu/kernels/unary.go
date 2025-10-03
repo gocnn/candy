@@ -35,7 +35,7 @@ func UCopyF64(numel int, inp, out []float64) {
 // UCopyStrided performs element-wise copy for type T (strided memory)
 func UCopyStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UCopy[T](numel, inp, out)
+		UCopy(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -119,7 +119,7 @@ func UNegF64(numel int, inp, out []float64) {
 // UNegStrided performs element-wise negation for type T (strided memory)
 func UNegStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UNeg[T](numel, inp, out)
+		UNeg(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -212,7 +212,7 @@ func URecipF64(numel int, inp, out []float64) {
 // URecipStrided performs element-wise reciprocal for type T (strided memory)
 func URecipStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		URecip[T](numel, inp, out)
+		URecip(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -305,7 +305,7 @@ func UExpF64(numel int, inp, out []float64) {
 // UExpStrided performs element-wise exponential for type T (strided memory)
 func UExpStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UExp[T](numel, inp, out)
+		UExp(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -398,7 +398,7 @@ func ULogF64(numel int, inp, out []float64) {
 // ULogStrided performs element-wise logarithm for type T (strided memory)
 func ULogStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		ULog[T](numel, inp, out)
+		ULog(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -491,7 +491,7 @@ func USinF64(numel int, inp, out []float64) {
 // USinStrided performs element-wise sine for type T (strided memory)
 func USinStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USin[T](numel, inp, out)
+		USin(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -584,7 +584,7 @@ func UCosF64(numel int, inp, out []float64) {
 // UCosStrided performs element-wise cosine for type T (strided memory)
 func UCosStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UCos[T](numel, inp, out)
+		UCos(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -677,7 +677,7 @@ func UTanhF64(numel int, inp, out []float64) {
 // UTanhStrided performs element-wise tanh for type T (strided memory)
 func UTanhStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UTanh[T](numel, inp, out)
+		UTanh(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -770,7 +770,7 @@ func UErfF64(numel int, inp, out []float64) {
 // UErfStrided performs element-wise erf for type T (strided memory)
 func UErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UErf[T](numel, inp, out)
+		UErf(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -863,7 +863,7 @@ func UCeilF64(numel int, inp, out []float64) {
 // UCeilStrided performs element-wise ceil for type T (strided memory)
 func UCeilStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UCeil[T](numel, inp, out)
+		UCeil(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -956,7 +956,7 @@ func UFloorF64(numel int, inp, out []float64) {
 // UFloorStrided performs element-wise floor for type T (strided memory)
 func UFloorStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UFloor[T](numel, inp, out)
+		UFloor(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1049,7 +1049,7 @@ func URoundF64(numel int, inp, out []float64) {
 // URoundStrided performs element-wise round for type T (strided memory)
 func URoundStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		URound[T](numel, inp, out)
+		URound(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1146,7 +1146,7 @@ func UNormcdfF64(numel int, inp, out []float64) {
 // UNormcdfStrided performs element-wise normal CDF for type T (strided memory)
 func UNormcdfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UNormcdf[T](numel, inp, out)
+		UNormcdf(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1243,7 +1243,7 @@ func UAbsF64(numel int, inp, out []float64) {
 // UAbsStrided performs element-wise absolute value for type T (strided memory)
 func UAbsStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UAbs[T](numel, inp, out)
+		UAbs(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1336,7 +1336,7 @@ func USqrF64(numel int, inp, out []float64) {
 // USqrStrided performs element-wise square for type T (strided memory)
 func USqrStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USqr[T](numel, inp, out)
+		USqr(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1429,7 +1429,7 @@ func USqrtF64(numel int, inp, out []float64) {
 // USqrtStrided performs element-wise square root for type T (strided memory)
 func USqrtStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USqrt[T](numel, inp, out)
+		USqrt(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1546,7 +1546,7 @@ func UGeluF64(numel int, inp, out []float64) {
 // UGeluStrided performs element-wise GELU for type T (strided memory)
 func UGeluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UGelu[T](numel, inp, out)
+		UGelu(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1669,7 +1669,7 @@ func UGeluErfF64(numel int, inp, out []float64) {
 // UGeluErfStrided performs element-wise GELU (ERF-based) for type T (strided memory)
 func UGeluErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UGeluErf[T](numel, inp, out)
+		UGeluErf(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1786,7 +1786,7 @@ func UReluF64(numel int, inp, out []float64) {
 // UReluStrided performs element-wise ReLU for type T (strided memory)
 func UReluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		URelu[T](numel, inp, out)
+		URelu(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -1921,7 +1921,7 @@ func UEluF64(alpha float64, numel int, inp, out []float64) {
 // UEluStrided performs element-wise ELU for type T with parameter alpha (strided memory)
 func UEluStrided[T D](alpha T, numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UElu[T](alpha, numel, inp, out)
+		UElu(alpha, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -2044,7 +2044,7 @@ func USiluF64(numel int, inp, out []float64) {
 // USiluStrided performs element-wise SiLU for type T (strided memory)
 func USiluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USilu[T](numel, inp, out)
+		USilu(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -2143,7 +2143,7 @@ func UPowfF64(param float64, numel int, inp, out []float64) {
 // UPowfStrided performs element-wise power for type T with parameter param (strided memory)
 func UPowfStrided[T D](param T, numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		UPowf[T](param, numel, inp, out)
+		UPowf(param, numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -2278,7 +2278,7 @@ func USignF64(numel int, inp, out []float64) {
 // USignStrided performs element-wise sign for type T (strided memory)
 func USignStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USign[T](numel, inp, out)
+		USign(numel, inp, out)
 		return
 	}
 	if inp == nil {
@@ -2419,7 +2419,7 @@ func USigmoidF64(numel int, inp, out []float64) {
 // USigmoidStrided performs element-wise sigmoid for type T (strided memory)
 func USigmoidStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 	if IsContiguous(numDims, dims, strides) {
-		USigmoid[T](numel, inp, out)
+		USigmoid(numel, inp, out)
 		return
 	}
 	if inp == nil {

@@ -80,7 +80,7 @@ func WhereU8F64(numel int, ids []uint8, t, f, dst []float64) {
 // WhereStrided selects elements from t or f based on indices of type I for data of type T with strided memory
 func WhereStrided[U I, T D](numel, numDims int, dims, strides, stridesT, stridesF []int, ids []U, t, f, dst []T) {
 	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
-		Where[U, T](numel, ids, t, f, dst)
+		Where(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
