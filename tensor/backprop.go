@@ -30,10 +30,7 @@ func (s *GradStore[T]) Get(tensor *Tensor[T]) *Tensor[T] {
 func (s *GradStore[T]) GetOrCreate(tensor *Tensor[T]) (*Tensor[T], error) {
 	id := tensor.ID()
 	if _, ok := s.m[id]; !ok {
-		grad, err := tensor.ZerosLike()
-		if err != nil {
-			return nil, err
-		}
+		grad := tensor.ZerosLike()
 		s.m[id] = grad
 	}
 	return s.m[id], nil
@@ -85,6 +82,12 @@ func (s *GradStore[T]) Clear() {
 func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
 	if !root.IsVar() {
 		return nil // No backpropagation needed for non-variable tensors.
+	}
+
+	// Initialize root gradient if not already set.
+	if store.Get(root) == nil {
+		rootGrad := Ones[T](root.Layout().Shape(), root.Device())
+		store.Set(root, rootGrad)
 	}
 
 	// Collect variable nodes and build reverse graph using BFS.

@@ -53,15 +53,8 @@ func NewAdamW[T spark.D](vars []*tensor.Tensor[T], params AdamWParams) (*AdamW[T
 			continue
 		}
 
-		m, err := v.ZerosLike()
-		if err != nil {
-			return nil, fmt.Errorf("create first moment: %w", err)
-		}
-
-		vv, err := v.ZerosLike()
-		if err != nil {
-			return nil, fmt.Errorf("create second moment: %w", err)
-		}
+		m := v.ZerosLike()
+		vv := v.ZerosLike()
 
 		adamVars = append(adamVars, adamVar[T]{
 			varTensor: v,
@@ -199,14 +192,8 @@ func (a *AdamW[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
 		return errors.New("not a variable")
 	}
-	m, err := v.ZerosLike()
-	if err != nil {
-		return fmt.Errorf("create first moment: %w", err)
-	}
-	vv, err := v.ZerosLike()
-	if err != nil {
-		return fmt.Errorf("create second moment: %w", err)
-	}
+	m := v.ZerosLike()
+	vv := v.ZerosLike()
 	a.vars = append(a.vars, adamVar[T]{varTensor: v, m: m, v: vv})
 	return nil
 }
