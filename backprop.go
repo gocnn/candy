@@ -72,6 +72,12 @@ func (s *GradStore[T]) IDs() []TensorId {
 	return ids
 }
 
+// Clear removes all gradient tensors from the store.
+// This is useful for clearing gradients after each training step or epoch.
+func (s *GradStore[T]) Clear() {
+	s.m = make(map[TensorId]*Tensor[T])
+}
+
 // Backward computes gradients for all variable tensors contributing to the root tensor.
 // Root gradient will be automatically initialized to zeros if not already set.
 func Backward[T D](root *Tensor[T], store *GradStore[T]) error {

@@ -4,7 +4,7 @@ package spark
 type BackendStorage[T D] interface {
 
 	// TryClone creates a deep copy of the storage with the given layout.
-	TryClone(*Layout) (BackendStorage[T], error)
+	TryClone() (BackendStorage[T], error)
 
 	// DType returns the data type of the storage.
 	DType() DType

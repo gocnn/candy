@@ -86,10 +86,6 @@ func AddBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T],
 	return []*Tensor[T]{ga, gb}, nil
 }
 
-func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T], AddBackward[T])
-}
-
 // MulForward computes element-wise multiplication: c = a * b
 func MulForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	if len(inputs) != 2 {
@@ -131,8 +127,4 @@ func MulBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T],
 	}
 
 	return []*Tensor[T]{ga, gb}, nil
-}
-
-func (a *Tensor[T]) Mul(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, MulForward[T], MulBackward[T])
 }
