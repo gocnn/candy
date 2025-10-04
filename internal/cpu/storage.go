@@ -10,7 +10,7 @@ import (
 
 type CpuStorage[T kernels.D] struct {
 	data   []T
-	device spark.BackendDevice[T]
+	device *CpuDevice[T]
 	dtype  spark.DType
 }
 
@@ -18,7 +18,7 @@ func New[T kernels.D](data []T) *CpuStorage[T] {
 	return &CpuStorage[T]{data: data, device: &CpuDevice[T]{}, dtype: spark.DTypeOf[T]()}
 }
 
-func (s *CpuStorage[T]) TryClone(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) TryClone() (spark.BackendStorage[T], error) {
 	return &CpuStorage[T]{data: slices.Clone(s.data), device: s.device, dtype: s.dtype}, nil
 }
 
