@@ -5,19 +5,20 @@ import (
 	"fmt"
 
 	"github.com/gocnn/spark"
+	"github.com/gocnn/spark/tensor"
 )
 
 var _ Optimizer[float32] = (*SGD[float32])(nil)
 
 // SGD implements Stochastic Gradient Descent optimizer.
 type SGD[T spark.D] struct {
-	vars []*spark.Tensor[T]
+	vars []*tensor.Tensor[T]
 	lr   float64
 }
 
 // NewSGD creates a new SGD optimizer with the given variables and learning rate.
-func NewSGD[T spark.D](vars []*spark.Tensor[T], lr float64) *SGD[T] {
-	filtered := make([]*spark.Tensor[T], 0, len(vars))
+func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) *SGD[T] {
+	filtered := make([]*tensor.Tensor[T], 0, len(vars))
 	for _, v := range vars {
 		if v.IsVar() {
 			filtered = append(filtered, v)
@@ -27,7 +28,7 @@ func NewSGD[T spark.D](vars []*spark.Tensor[T], lr float64) *SGD[T] {
 }
 
 // Step performs an SGD optimization step.
-func (s *SGD[T]) Step(grads *spark.GradStore[T]) error {
+func (s *SGD[T]) Step(grads *tensor.GradStore[T]) error {
 	for _, v := range s.vars {
 		grad := grads.Get(v)
 		if grad == nil {
@@ -50,9 +51,9 @@ func (s *SGD[T]) Step(grads *spark.GradStore[T]) error {
 }
 
 // Optimize performs backward propagation and an SGD step.
-func (s *SGD[T]) Optimize(loss *spark.Tensor[T]) error {
-	store := spark.NewGradStore[T]()
-	if err := spark.Backward(loss, store); err != nil {
+func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
+	store := tensor.NewGradStore[T]()
+	if err := tensor.Backward(loss, store); err != nil {
 		return fmt.Errorf("backward propagation: %w", err)
 	}
 	return s.Step(store)
@@ -69,7 +70,7 @@ func (s *SGD[T]) SetLearningRate(lr float64) {
 }
 
 // Add adds a variable to be optimized.
-func (s *SGD[T]) Add(v *spark.Tensor[T]) error {
+func (s *SGD[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
 		return errors.New("not a variable")
 	}
@@ -78,6 +79,6 @@ func (s *SGD[T]) Add(v *spark.Tensor[T]) error {
 }
 
 // Vars returns all variables being optimized.
-func (s *SGD[T]) Vars() []*spark.Tensor[T] {
+func (s *SGD[T]) Vars() []*tensor.Tensor[T] {
 	return s.vars
 }

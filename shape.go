@@ -13,42 +13,42 @@ type Shape struct {
 }
 
 // NewShape creates a new Shape from the given dimensions.
-func NewShape(dims ...int) Shape {
-	return Shape{dims: slices.Clone(dims)}
+func NewShape(dims ...int) *Shape {
+	return &Shape{dims: slices.Clone(dims)}
 }
 
 // NewShapeFrom creates a new Shape from a slice of dimensions.
-func NewShapeFrom(dims []int) Shape {
-	return Shape{dims: slices.Clone(dims)}
+func NewShapeFrom(dims []int) *Shape {
+	return &Shape{dims: slices.Clone(dims)}
 }
 
 // Clone returns a deep copy of the Shape.
-func (s Shape) Clone() Shape {
-	return Shape{slices.Clone(s.dims)}
+func (s *Shape) Clone() *Shape {
+	return &Shape{slices.Clone(s.dims)}
 }
 
 // Equal checks if two shapes are equal.
-func (s Shape) Equal(other Shape) bool {
+func (s *Shape) Equal(other *Shape) bool {
 	return slices.Equal(s.dims, other.dims)
 }
 
 // IsScalar returns true if the shape represents a scalar (0 dimensions).
-func (s Shape) IsScalar() bool {
+func (s *Shape) IsScalar() bool {
 	return len(s.dims) == 0
 }
 
 // IsVector returns true if the shape represents a vector (1 dimension).
-func (s Shape) IsVector() bool {
+func (s *Shape) IsVector() bool {
 	return len(s.dims) == 1
 }
 
 // IsMatrix returns true if the shape represents a matrix (2 dimensions).
-func (s Shape) IsMatrix() bool {
+func (s *Shape) IsMatrix() bool {
 	return len(s.dims) == 2
 }
 
 // String returns a string representation of the shape.
-func (s Shape) String() string {
+func (s *Shape) String() string {
 	if len(s.dims) == 0 {
 		return "[]"
 	}
@@ -65,18 +65,18 @@ func (s Shape) String() string {
 }
 
 // Rank returns the number of dimensions (rank) of the shape.
-func (s Shape) Rank() int {
+func (s *Shape) Rank() int {
 	return len(s.dims)
 }
 
 // Dims returns a copy of the dimensions slice.
-func (s Shape) Dims() []int {
+func (s *Shape) Dims() []int {
 	return slices.Clone(s.dims)
 }
 
 // Dim returns the size of the dimension at the given index.
 // Negative indices count from the end (-1 is the last dimension).
-func (s Shape) Dim(dim int) int {
+func (s *Shape) Dim(dim int) int {
 	if dim < 0 {
 		dim += s.Rank()
 	}
@@ -87,7 +87,7 @@ func (s Shape) Dim(dim int) int {
 }
 
 // ElemCount returns the total number of elements (product of all dimensions).
-func (s Shape) ElemCount() int {
+func (s *Shape) ElemCount() int {
 	if len(s.dims) == 0 {
 		return 1 // Scalar has 1 element.
 	}
@@ -102,7 +102,7 @@ func (s Shape) ElemCount() int {
 }
 
 // StrideContiguous returns the strides for a contiguous (row-major) tensor with this shape.
-func (s Shape) StrideContiguous() []int {
+func (s *Shape) StrideContiguous() []int {
 	if len(s.dims) == 0 {
 		return []int{}
 	}
@@ -116,7 +116,7 @@ func (s Shape) StrideContiguous() []int {
 }
 
 // IsContiguous checks if the given strides are C-contiguous (row-major).
-func (s Shape) IsContiguous(strides []int) bool {
+func (s *Shape) IsContiguous(strides []int) bool {
 	if len(s.dims) != len(strides) {
 		return false
 	}
@@ -131,7 +131,7 @@ func (s Shape) IsContiguous(strides []int) bool {
 }
 
 // IsFortranContiguous checks if the given strides are Fortran-contiguous (column-major).
-func (s Shape) IsFortranContiguous(strides []int) bool {
+func (s *Shape) IsFortranContiguous(strides []int) bool {
 	if len(s.dims) != len(strides) {
 		return false
 	}
@@ -146,7 +146,7 @@ func (s Shape) IsFortranContiguous(strides []int) bool {
 }
 
 // Extend returns a new Shape with additional dimensions appended.
-func (s Shape) Extend(add ...int) Shape {
+func (s *Shape) Extend(add ...int) *Shape {
 	dims := append(slices.Clone(s.dims), add...)
 	return NewShapeFrom(dims)
 }
@@ -163,7 +163,7 @@ func (s Shape) Extend(add ...int) Shape {
 //	[3, 1, 4] + [2, 4] -> [3, 2, 4]  (missing dim treated as 1)
 //	[5, 1, 3] * [1, 4, 1] -> [5, 4, 3]  (1s broadcast to larger dims)
 //	[3, 4] + [2, 5] -> panic (incompatible: 4≠5 and neither is 1)
-func (s Shape) BroadcastShapeBinaryOp(rhs Shape, op string) (Shape, error) {
+func (s *Shape) BroadcastShapeBinaryOp(rhs *Shape, op string) (*Shape, error) {
 	lhsDims := s.dims
 	rhsDims := rhs.dims
 	lhsN := len(lhsDims)
@@ -188,34 +188,34 @@ func (s Shape) BroadcastShapeBinaryOp(rhs Shape, op string) (Shape, error) {
 		} else if r == 1 {
 			b = l
 		} else {
-			return Shape{}, fmt.Errorf("shape mismatch in binary op '%s': lhs %v, rhs %v", op, s, rhs)
+			return nil, fmt.Errorf("shape mismatch in binary op '%s': lhs %v, rhs %v", op, s, rhs)
 		}
 		bcastDims[maxN-1-i] = b
 	}
-	return Shape{bcastDims}, nil
+	return NewShapeFrom(bcastDims), nil
 }
 
 // BroadcastShapeMatmul returns the broadcasted shapes for matrix multiplication.
 // It broadcasts the batch dimensions and checks the inner dimensions for compatibility.
-func BroadcastShapeMatmul(lhs Shape, rhs Shape) (Shape, Shape, error) {
+func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
 	lhsDims := lhs.dims
 	rhsDims := rhs.dims
 	if len(lhsDims) < 2 || len(rhsDims) < 2 {
-		return Shape{}, Shape{}, errors.New("matmul requires at least 2D shapes")
+		return nil, nil, errors.New("matmul requires at least 2D shapes")
 	}
 	m := lhsDims[len(lhsDims)-2]
 	lhsK := lhsDims[len(lhsDims)-1]
 	rhsK := rhsDims[len(rhsDims)-2]
 	n := rhsDims[len(rhsDims)-1]
 	if lhsK != rhsK {
-		return Shape{}, Shape{}, fmt.Errorf("inner dimensions mismatch in matmul: lhs %v, rhs %v", lhs, rhs)
+		return nil, nil, fmt.Errorf("inner dimensions mismatch in matmul: lhs %v, rhs %v", lhs, rhs)
 	}
 
-	lhsBatch := Shape{lhsDims[:len(lhsDims)-2]}
-	rhsBatch := Shape{rhsDims[:len(rhsDims)-2]}
+	lhsBatch := &Shape{lhsDims[:len(lhsDims)-2]}
+	rhsBatch := &Shape{rhsDims[:len(rhsDims)-2]}
 	bcastBatch, err := lhsBatch.BroadcastShapeBinaryOp(rhsBatch, "broadcast_matmul")
 	if err != nil {
-		return Shape{}, Shape{}, err
+		return nil, nil, err
 	}
 
 	bcastLhs := bcastBatch.Extend(m, lhsK)
@@ -225,7 +225,7 @@ func BroadcastShapeMatmul(lhs Shape, rhs Shape) (Shape, Shape, error) {
 
 // ResolveAxes resolves a list of axis indices, supporting negative indices.
 // It checks for duplicates and out-of-range values.
-func ResolveAxes(axes []int, s Shape, op string) ([]int, error) {
+func ResolveAxes(axes []int, s *Shape, op string) ([]int, error) {
 	res := make([]int, len(axes))
 	seen := make(map[int]bool)
 	for i, ax := range axes {
@@ -245,7 +245,7 @@ func ResolveAxes(axes []int, s Shape, op string) ([]int, error) {
 }
 
 // Dims0 checks if the shape has 0 dimensions (scalar).
-func (s Shape) Dims0() error {
+func (s *Shape) Dims0() error {
 	if s.Rank() != 0 {
 		return fmt.Errorf("unexpected number of dims: expected 0, got %d, shape %v", s.Rank(), s)
 	}
@@ -253,7 +253,7 @@ func (s Shape) Dims0() error {
 }
 
 // Dims1 extracts the single dimension from a 1D shape.
-func (s Shape) Dims1() (int, error) {
+func (s *Shape) Dims1() (int, error) {
 	if s.Rank() != 1 {
 		return 0, fmt.Errorf("unexpected number of dims: expected 1, got %d, shape %v", s.Rank(), s)
 	}
@@ -261,7 +261,7 @@ func (s Shape) Dims1() (int, error) {
 }
 
 // Dims2 extracts the two dimensions from a 2D shape.
-func (s Shape) Dims2() (int, int, error) {
+func (s *Shape) Dims2() (int, int, error) {
 	if s.Rank() != 2 {
 		return 0, 0, fmt.Errorf("unexpected number of dims: expected 2, got %d, shape %v", s.Rank(), s)
 	}
@@ -269,7 +269,7 @@ func (s Shape) Dims2() (int, int, error) {
 }
 
 // Dims3 extracts the three dimensions from a 3D shape.
-func (s Shape) Dims3() (int, int, int, error) {
+func (s *Shape) Dims3() (int, int, int, error) {
 	if s.Rank() != 3 {
 		return 0, 0, 0, fmt.Errorf("unexpected number of dims: expected 3, got %d, shape %v", s.Rank(), s)
 	}
@@ -277,7 +277,7 @@ func (s Shape) Dims3() (int, int, int, error) {
 }
 
 // Dims4 extracts the four dimensions from a 4D shape.
-func (s Shape) Dims4() (int, int, int, int, error) {
+func (s *Shape) Dims4() (int, int, int, int, error) {
 	if s.Rank() != 4 {
 		return 0, 0, 0, 0, fmt.Errorf("unexpected number of dims: expected 4, got %d, shape %v", s.Rank(), s)
 	}
@@ -285,7 +285,7 @@ func (s Shape) Dims4() (int, int, int, int, error) {
 }
 
 // Dims5 extracts the five dimensions from a 5D shape.
-func (s Shape) Dims5() (int, int, int, int, int, error) {
+func (s *Shape) Dims5() (int, int, int, int, int, error) {
 	if s.Rank() != 5 {
 		return 0, 0, 0, 0, 0, fmt.Errorf("unexpected number of dims: expected 5, got %d, shape %v", s.Rank(), s)
 	}
@@ -294,7 +294,7 @@ func (s Shape) Dims5() (int, int, int, int, int, error) {
 
 // Reshape returns a new shape with the given dimensions, inferring one dimension if -1 is provided.
 // The total element count must match.
-func (s Shape) Reshape(newDims ...int) (Shape, error) {
+func (s *Shape) Reshape(newDims ...int) (*Shape, error) {
 	elCount := s.ElemCount()
 	prod := 1
 	holeIdx := -1
@@ -302,22 +302,22 @@ func (s Shape) Reshape(newDims ...int) (Shape, error) {
 	for i, d := range resDims {
 		if d == -1 {
 			if holeIdx != -1 {
-				return Shape{}, errors.New("multiple inference holes (-1) not allowed")
+				return nil, errors.New("multiple inference holes (-1) not allowed")
 			}
 			holeIdx = i
 		} else if d <= 0 {
-			return Shape{}, fmt.Errorf("invalid dimension %d (must be positive or -1 for inference)", d)
+			return nil, fmt.Errorf("invalid dimension %d (must be positive or -1 for inference)", d)
 		} else {
 			prod *= d
 		}
 	}
 	if holeIdx != -1 {
 		if prod == 0 || elCount%prod != 0 {
-			return Shape{}, fmt.Errorf("cannot infer dimension: element count %d not divisible by product %d", elCount, prod)
+			return nil, fmt.Errorf("cannot infer dimension: element count %d not divisible by product %d", elCount, prod)
 		}
 		resDims[holeIdx] = elCount / prod
 	} else if prod != elCount {
-		return Shape{}, fmt.Errorf("element count mismatch: original %d, new %d", elCount, prod)
+		return nil, fmt.Errorf("element count mismatch: original %d, new %d", elCount, prod)
 	}
-	return Shape{resDims}, nil
+	return NewShapeFrom(resDims), nil
 }

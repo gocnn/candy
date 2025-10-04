@@ -1,12 +1,14 @@
-package spark
+package tensor
+
+import "github.com/gocnn/spark"
 
 // GradStore is a store for gradients, associating a tensor ID to the corresponding gradient tensor, used for back propagation.
-type GradStore[T D] struct {
+type GradStore[T spark.D] struct {
 	m map[TensorId]*Tensor[T] // Private field for encapsulation
 }
 
 // NewGradStore creates a new gradient store.
-func NewGradStore[T D]() *GradStore[T] {
+func NewGradStore[T spark.D]() *GradStore[T] {
 	return &GradStore[T]{m: make(map[TensorId]*Tensor[T])}
 }
 
@@ -80,7 +82,7 @@ func (s *GradStore[T]) Clear() {
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.
 // Root gradient will be automatically initialized to zeros if not already set.
-func Backward[T D](root *Tensor[T], store *GradStore[T]) error {
+func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
 	if !root.IsVar() {
 		return nil // No backpropagation needed for non-variable tensors.
 	}

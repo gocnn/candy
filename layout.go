@@ -8,52 +8,52 @@ import (
 // Layout represents the layout of a tensor, including shape, strides, and starting offset.
 // Strides are in number of elements, not bytes.
 type Layout struct {
-	shape       Shape
+	shape       *Shape
 	stride      []int
 	startOffset int
 }
 
 // NewLayout creates a new Layout with the given shape, stride, and start offset.
 // It clones the inputs to ensure immutability.
-func NewLayout(shape Shape, stride []int, startOffset int) Layout {
+func NewLayout(shape *Shape, stride []int, startOffset int) *Layout {
 	if len(stride) != shape.Rank() {
 		panic(fmt.Sprintf("stride len %d != shape rank %d", len(stride), shape.Rank()))
 	}
-	return Layout{
-		shape:       shape.Clone(),
+	return &Layout{
+		shape:       shape,
 		stride:      slices.Clone(stride),
 		startOffset: startOffset,
 	}
 }
 
 // ContiguousWithOffset creates a contiguous (row-major) layout with the given start offset.
-func ContiguousWithOffset(shape Shape, startOffset int) Layout {
+func ContiguousWithOffset(shape *Shape, startOffset int) *Layout {
 	stride := shape.StrideContiguous()
 	return NewLayout(shape, stride, startOffset)
 }
 
 // Contiguous creates a contiguous (row-major) layout starting at offset 0.
-func Contiguous(shape Shape) Layout {
+func Contiguous(shape *Shape) *Layout {
 	return ContiguousWithOffset(shape, 0)
 }
 
 // Shape returns a copy of the shape.
-func (l Layout) Shape() Shape {
-	return l.shape.Clone()
+func (l *Layout) Shape() *Shape {
+	return l.shape
 }
 
 // Stride returns a copy of the stride slice.
-func (l Layout) Stride() []int {
+func (l *Layout) Stride() []int {
 	return slices.Clone(l.stride)
 }
 
 // StartOffset returns the starting offset.
-func (l Layout) StartOffset() int {
+func (l *Layout) StartOffset() int {
 	return l.startOffset
 }
 
 // String returns a string representation of the layout.
-func (l Layout) String() string {
+func (l *Layout) String() string {
 	if l.startOffset == 0 {
 		return fmt.Sprintf("Layout{shape=%v, stride=%v}", l.shape, l.stride)
 	}
@@ -61,37 +61,37 @@ func (l Layout) String() string {
 }
 
 // Clone returns a deep copy of the layout.
-func (l Layout) Clone() Layout {
-	return Layout{
-		shape:       l.shape.Clone(),
+func (l *Layout) Clone() *Layout {
+	return &Layout{
+		shape:       l.shape,
 		stride:      slices.Clone(l.stride),
 		startOffset: l.startOffset,
 	}
 }
 
 // Rank returns the number of dimensions (rank) of the layout.
-func (l Layout) Rank() int {
+func (l *Layout) Rank() int {
 	return l.shape.Rank()
 }
 
 // Dims returns the dimensions of the shape.
-func (l Layout) Dims() []int {
+func (l *Layout) Dims() []int {
 	return l.shape.Dims()
 }
 
 // Dim returns the size of the specified dimension, supporting negative indices.
-func (l Layout) Dim(dim int) int {
+func (l *Layout) Dim(dim int) int {
 	return l.shape.Dim(dim)
 }
 
 // ElemCount returns the total number of elements in the layout.
-func (l Layout) ElemCount() int {
+func (l *Layout) ElemCount() int {
 	return l.shape.ElemCount()
 }
 
 // ContiguousOffsets returns the start and end offsets if the layout is contiguous,
 // along with a boolean indicating if it is contiguous.
-func (l Layout) ContiguousOffsets() (start, end int, ok bool) {
+func (l *Layout) ContiguousOffsets() (start, end int, ok bool) {
 	if !l.IsContiguous() {
 		return 0, 0, false
 	}
@@ -101,64 +101,64 @@ func (l Layout) ContiguousOffsets() (start, end int, ok bool) {
 }
 
 // IsContiguous returns true if the strides represent a C-contiguous (row-major) layout.
-func (l Layout) IsContiguous() bool {
+func (l *Layout) IsContiguous() bool {
 	return l.shape.IsContiguous(l.stride)
 }
 
 // IsFortranContiguous returns true if the strides represent a Fortran-contiguous (column-major) layout.
-func (l Layout) IsFortranContiguous() bool {
+func (l *Layout) IsFortranContiguous() bool {
 	return l.shape.IsFortranContiguous(l.stride)
 }
 
 // Narrow returns a new layout narrowed along the specified dimension from start to start+len.
-func (l Layout) Narrow(dim, start, len int) (Layout, error) {
+func (l *Layout) Narrow(dim, start, len int) (*Layout, error) {
 	rank := l.shape.Rank()
 	resolvedDim, err := resolveDim(dim, rank, "narrow")
 	if err != nil {
-		return Layout{}, err
+		return nil, err
 	}
 	if start < 0 || len < 0 || start+len > l.Dims()[resolvedDim] {
-		return Layout{}, fmt.Errorf("invalid narrow args: dim %d, start %d, len %d, shape %v", resolvedDim, start, len, l.shape)
+		return nil, fmt.Errorf("invalid narrow args: dim %d, start %d, len %d, shape %v", resolvedDim, start, len, l.shape)
 	}
 	newDims := slices.Clone(l.Dims())
 	newDims[resolvedDim] = len
 	newOffset := l.startOffset + l.stride[resolvedDim]*start
-	return NewLayout(Shape{newDims}, l.stride, newOffset), nil
+	return NewLayout(NewShapeFrom(newDims), l.stride, newOffset), nil
 }
 
 // Transpose returns a new layout with the two specified dimensions swapped.
-func (l Layout) Transpose(dim1, dim2 int) (Layout, error) {
+func (l *Layout) Transpose(dim1, dim2 int) (*Layout, error) {
 	rank := l.shape.Rank()
 	resolvedDim1, err := resolveDim(dim1, rank, "transpose")
 	if err != nil {
-		return Layout{}, err
+		return nil, err
 	}
 	resolvedDim2, err := resolveDim(dim2, rank, "transpose")
 	if err != nil {
-		return Layout{}, err
+		return nil, err
 	}
 	newDims := slices.Clone(l.Dims())
 	newStride := slices.Clone(l.stride)
 	newDims[resolvedDim1], newDims[resolvedDim2] = newDims[resolvedDim2], newDims[resolvedDim1]
 	newStride[resolvedDim1], newStride[resolvedDim2] = newStride[resolvedDim2], newStride[resolvedDim1]
-	return NewLayout(Shape{newDims}, newStride, l.startOffset), nil
+	return NewLayout(NewShapeFrom(newDims), newStride, l.startOffset), nil
 }
 
 // Permute returns a new layout with dimensions reordered according to the permutation indices.
-func (l Layout) Permute(idxs []int) (Layout, error) {
+func (l *Layout) Permute(idxs []int) (*Layout, error) {
 	rank := l.shape.Rank()
 	if len(idxs) != rank {
-		return Layout{}, fmt.Errorf("permute idxs len %d != rank %d", len(idxs), rank)
+		return nil, fmt.Errorf("permute idxs len %d != rank %d", len(idxs), rank)
 	}
 	seen := make(map[int]struct{}, rank)
 	resolvedIdxs := make([]int, len(idxs))
 	for i, idx := range idxs {
 		resolved, err := resolveDim(idx, rank, "permute")
 		if err != nil {
-			return Layout{}, err
+			return nil, err
 		}
 		if _, exists := seen[resolved]; exists {
-			return Layout{}, fmt.Errorf("duplicate index in permute: %v", idxs)
+			return nil, fmt.Errorf("duplicate index in permute: %v", idxs)
 		}
 		seen[resolved] = struct{}{}
 		resolvedIdxs[i] = resolved
@@ -169,15 +169,15 @@ func (l Layout) Permute(idxs []int) (Layout, error) {
 		newDims[i] = l.Dims()[idx]
 		newStride[i] = l.stride[idx]
 	}
-	return NewLayout(Shape{newDims}, newStride, l.startOffset), nil
+	return NewLayout(NewShapeFrom(newDims), newStride, l.startOffset), nil
 }
 
 // BroadcastAs returns a new layout broadcasted to the target shape.
-func (l Layout) BroadcastAs(target Shape) (Layout, error) {
+func (l *Layout) BroadcastAs(target *Shape) (*Layout, error) {
 	srcRank := l.shape.Rank()
 	tgtRank := target.Rank()
 	if tgtRank < srcRank {
-		return Layout{}, fmt.Errorf("cannot broadcast to lower rank: src %d, tgt %d", srcRank, tgtRank)
+		return nil, fmt.Errorf("cannot broadcast to lower rank: src %d, tgt %d", srcRank, tgtRank)
 	}
 	addedDims := tgtRank - srcRank
 	newStride := make([]int, tgtRank)
@@ -193,7 +193,7 @@ func (l Layout) BroadcastAs(target Shape) (Layout, error) {
 		case 1:
 			newStride[addedDims+i] = 0
 		default:
-			return Layout{}, fmt.Errorf("broadcast incompatible shapes: src %v, tgt %v", l.shape, target)
+			return nil, fmt.Errorf("broadcast incompatible shapes: src %v, tgt %v", l.shape, target)
 		}
 	}
 	return NewLayout(target, newStride, l.startOffset), nil
@@ -201,7 +201,7 @@ func (l Layout) BroadcastAs(target Shape) (Layout, error) {
 
 // OffsetsB returns contiguous offsets with broadcast dimensions if applicable,
 // along with a boolean indicating success.
-func (l Layout) OffsetsB() (ContiguousOffsetsWithBroadcast, bool) {
+func (l *Layout) OffsetsB() (ContiguousOffsetsWithBroadcast, bool) {
 	dims := l.Dims()
 	strides := l.stride
 	leftBroadcast := 1

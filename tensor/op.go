@@ -1,11 +1,15 @@
-package spark
+package tensor
 
-import "fmt"
+import (
+	"fmt"
 
-type ForwardFunc[T D] func([]*Tensor[T]) (*Tensor[T], error)
-type BackwardFunc[T D] func(*Tensor[T], []*Tensor[T]) ([]*Tensor[T], error)
+	"github.com/gocnn/spark"
+)
 
-type Op[T D] struct {
+type ForwardFunc[T spark.D] func([]*Tensor[T]) (*Tensor[T], error)
+type BackwardFunc[T spark.D] func(*Tensor[T], []*Tensor[T]) ([]*Tensor[T], error)
+
+type Op[T spark.D] struct {
 	inputs   []*Tensor[T]
 	backward BackwardFunc[T]
 }
@@ -28,7 +32,7 @@ func (op *Op[T]) Backward(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor
 //
 // Returns:
 //   - Result tensor with automatic differentiation support
-func ApplyOp[T D](inputs []*Tensor[T], forwardFn ForwardFunc[T], backwardFn BackwardFunc[T]) (*Tensor[T], error) {
+func ApplyOp[T spark.D](inputs []*Tensor[T], forwardFn ForwardFunc[T], backwardFn BackwardFunc[T]) (*Tensor[T], error) {
 	// Execute forward pass
 	result, err := forwardFn(inputs)
 	if err != nil {
@@ -57,14 +61,14 @@ func ApplyOp[T D](inputs []*Tensor[T], forwardFn ForwardFunc[T], backwardFn Back
 }
 
 // AddForward computes element-wise addition: c = a + b
-func AddForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
+func AddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	if len(inputs) != 2 {
 		return nil, fmt.Errorf("AddForward expects 2 inputs, got %d", len(inputs))
 	}
 
 	a, b := inputs[0], inputs[1]
-	resultLayout := Contiguous(a.layout.Shape())
-	resultStorage, err := a.storage.Add(b.storage, a.layout, b.layout, &resultLayout)
+	resultLayout := spark.Contiguous(a.layout.Shape())
+	resultStorage, err := a.storage.Add(b.storage, a.layout, b.layout, resultLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +76,14 @@ func AddForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	return &Tensor[T]{
 		id:      NewId(),
 		storage: resultStorage,
-		layout:  &resultLayout,
+		layout:  resultLayout,
 		dtype:   a.dtype,
 		device:  a.device,
 	}, nil
 }
 
 // AddBackward computes gradients for addition: ∂(a+b)/∂a = 1, ∂(a+b)/∂b = 1
-func AddBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func AddBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 	// For addition, gradient flows unchanged to both inputs
 	ga := outputGrad
 	gb := outputGrad
@@ -87,14 +91,14 @@ func AddBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T],
 }
 
 // MulForward computes element-wise multiplication: c = a * b
-func MulForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
+func MulForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	if len(inputs) != 2 {
 		return nil, fmt.Errorf("MulForward expects 2 inputs, got %d", len(inputs))
 	}
 
 	a, b := inputs[0], inputs[1]
-	resultLayout := Contiguous(a.layout.Shape())
-	resultStorage, err := a.storage.Mul(b.storage, a.layout, b.layout, &resultLayout)
+	resultLayout := spark.Contiguous(a.layout.Shape())
+	resultStorage, err := a.storage.Mul(b.storage, a.layout, b.layout, resultLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -102,14 +106,14 @@ func MulForward[T D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	return &Tensor[T]{
 		id:      NewId(),
 		storage: resultStorage,
-		layout:  &resultLayout,
+		layout:  resultLayout,
 		dtype:   a.dtype,
 		device:  a.device,
 	}, nil
 }
 
 // MulBackward computes gradients for multiplication: ∂(a*b)/∂a = b, ∂(a*b)/∂b = a
-func MulBackward[T D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func MulBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 	if len(inputs) != 2 {
 		return nil, fmt.Errorf("MulBackward expects 2 inputs, got %d", len(inputs))
 	}

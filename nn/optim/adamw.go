@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/gocnn/spark"
+	"github.com/gocnn/spark/tensor"
 )
 
 // AdamWParams holds parameters for the AdamW optimizer.
@@ -30,9 +31,9 @@ func DefaultAdamWParams() AdamWParams {
 
 // adamVar holds a variable and its momentum states for AdamW.
 type adamVar[T spark.D] struct {
-	varTensor *spark.Tensor[T]
-	m         *spark.Tensor[T] // First moment (momentum)
-	v         *spark.Tensor[T] // Second moment (RMSprop)
+	varTensor *tensor.Tensor[T]
+	m         *tensor.Tensor[T] // First moment (momentum)
+	v         *tensor.Tensor[T] // Second moment (RMSprop)
 }
 
 var _ Optimizer[float32] = (*AdamW[float32])(nil)
@@ -45,7 +46,7 @@ type AdamW[T spark.D] struct {
 }
 
 // NewAdamW creates a new AdamW optimizer with the given parameters.
-func NewAdamW[T spark.D](vars []*spark.Tensor[T], params AdamWParams) (*AdamW[T], error) {
+func NewAdamW[T spark.D](vars []*tensor.Tensor[T], params AdamWParams) (*AdamW[T], error) {
 	adamVars := make([]adamVar[T], 0, len(vars))
 	for _, v := range vars {
 		if !v.IsVar() {
@@ -72,14 +73,14 @@ func NewAdamW[T spark.D](vars []*spark.Tensor[T], params AdamWParams) (*AdamW[T]
 }
 
 // NewAdamWWithLR creates an AdamW optimizer with a custom learning rate and default parameters.
-func NewAdamWWithLR[T spark.D](vars []*spark.Tensor[T], lr float64) (*AdamW[T], error) {
+func NewAdamWWithLR[T spark.D](vars []*tensor.Tensor[T], lr float64) (*AdamW[T], error) {
 	params := DefaultAdamWParams()
 	params.LearningRate = lr
-	return NewAdamW(vars, params)
+	return NewAdamW[T](vars, params)
 }
 
 // Step performs an AdamW optimization step.
-func (a *AdamW[T]) Step(grads *spark.GradStore[T]) error {
+func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 	a.step++
 	p := a.params
 
@@ -175,9 +176,9 @@ func (a *AdamW[T]) Step(grads *spark.GradStore[T]) error {
 }
 
 // Optimize performs backward propagation and an AdamW step.
-func (a *AdamW[T]) Optimize(loss *spark.Tensor[T]) error {
-	store := spark.NewGradStore[T]()
-	if err := spark.Backward(loss, store); err != nil {
+func (a *AdamW[T]) Optimize(loss *tensor.Tensor[T]) error {
+	store := tensor.NewGradStore[T]()
+	if err := tensor.Backward(loss, store); err != nil {
 		return fmt.Errorf("backward propagation: %w", err)
 	}
 	return a.Step(store)
@@ -194,7 +195,7 @@ func (a *AdamW[T]) SetLearningRate(lr float64) {
 }
 
 // Add adds a variable to be optimized.
-func (a *AdamW[T]) Add(v *spark.Tensor[T]) error {
+func (a *AdamW[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
 		return errors.New("not a variable")
 	}
@@ -211,8 +212,8 @@ func (a *AdamW[T]) Add(v *spark.Tensor[T]) error {
 }
 
 // Vars returns all variables being optimized.
-func (a *AdamW[T]) Vars() []*spark.Tensor[T] {
-	vars := make([]*spark.Tensor[T], 0, len(a.vars))
+func (a *AdamW[T]) Vars() []*tensor.Tensor[T] {
+	vars := make([]*tensor.Tensor[T], 0, len(a.vars))
 	for _, av := range a.vars {
 		vars = append(vars, av.varTensor)
 	}
