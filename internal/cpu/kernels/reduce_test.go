@@ -10,51 +10,51 @@ import (
 
 func TestFastSumF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{6, 15},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{6, 15},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []float32{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []float32{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{-3, 7},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{-3, 7},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastSumF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastSumF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -64,51 +64,51 @@ func TestFastSumF32(t *testing.T) {
 
 func TestFastSumF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{6, 15},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{6, 15},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []float64{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []float64{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{-3, 7},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{-3, 7},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastSumF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastSumF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -120,7 +120,7 @@ func TestFastSumStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -129,7 +129,7 @@ func TestFastSumStridedF32(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{1, 3, 2, 4},
@@ -138,7 +138,7 @@ func TestFastSumStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float32{1, 2, 3, 4},
@@ -147,7 +147,7 @@ func TestFastSumStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -156,7 +156,7 @@ func TestFastSumStridedF32(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{-1, 3, -2, 4},
@@ -165,7 +165,7 @@ func TestFastSumStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{},
@@ -176,7 +176,7 @@ func TestFastSumStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastSumStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastSumStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -188,7 +188,7 @@ func TestFastSumStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -197,7 +197,7 @@ func TestFastSumStridedF64(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{1, 3, 2, 4},
@@ -206,7 +206,7 @@ func TestFastSumStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float64{1, 2, 3, 4},
@@ -215,7 +215,7 @@ func TestFastSumStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -224,7 +224,7 @@ func TestFastSumStridedF64(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{-1, 3, -2, 4},
@@ -233,7 +233,7 @@ func TestFastSumStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{},
@@ -244,7 +244,7 @@ func TestFastSumStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastSumStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastSumStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -254,59 +254,59 @@ func TestFastSumStridedF64(t *testing.T) {
 
 func TestFastMinF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{3, 1, 2, 6, 5, 4},
-			want:    []float32{1, 4},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{3, 1, 2, 6, 5, 4},
+			want:  []float32{1, 4},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []float32{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []float32{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{-2, 3},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{-2, 3},
 		},
 		{
-			name:    "With Inf",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{float32(math.Inf(1)), -2, 3, float32(math.Inf(-1))},
-			want:    []float32{-2, float32(math.Inf(-1))},
+			name:  "With Inf",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{float32(math.Inf(1)), -2, 3, float32(math.Inf(-1))},
+			want:  []float32{-2, float32(math.Inf(-1))},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastMinF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastMinF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool {
 				return math.Abs(float64(a-b)) < 1e-6 || (math.IsInf(float64(a), -1) && math.IsInf(float64(b), -1))
 			}) {
@@ -318,59 +318,59 @@ func TestFastMinF32(t *testing.T) {
 
 func TestFastMinF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{3, 1, 2, 6, 5, 4},
-			want:    []float64{1, 4},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{3, 1, 2, 6, 5, 4},
+			want:  []float64{1, 4},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []float64{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []float64{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{-2, 3},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{-2, 3},
 		},
 		{
-			name:    "With Inf",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{math.Inf(1), -2, 3, math.Inf(-1)},
-			want:    []float64{-2, math.Inf(-1)},
+			name:  "With Inf",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{math.Inf(1), -2, 3, math.Inf(-1)},
+			want:  []float64{-2, math.Inf(-1)},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastMinF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastMinF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 || (math.IsInf(a, -1) && math.IsInf(b, -1)) }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -382,7 +382,7 @@ func TestFastMinStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -391,7 +391,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{3, 1, 2, 4},
@@ -400,7 +400,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float32{3, 1, 2, 4},
@@ -409,7 +409,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -418,7 +418,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{-1, 3, -2, 4},
@@ -427,7 +427,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "With Inf",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{float32(math.Inf(1)), -2, 3, float32(math.Inf(-1))},
@@ -436,7 +436,7 @@ func TestFastMinStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{},
@@ -447,7 +447,7 @@ func TestFastMinStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastMinStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastMinStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool {
 				return math.Abs(float64(a-b)) < 1e-6 || (math.IsInf(float64(a), -1) && math.IsInf(float64(b), -1))
 			}) {
@@ -461,7 +461,7 @@ func TestFastMinStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -470,7 +470,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{3, 1, 2, 4},
@@ -479,7 +479,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float64{3, 1, 2, 4},
@@ -488,7 +488,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -497,7 +497,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{-1, 3, -2, 4},
@@ -506,7 +506,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "With Inf",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{math.Inf(1), -2, 3, math.Inf(-1)},
@@ -515,7 +515,7 @@ func TestFastMinStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{},
@@ -526,7 +526,7 @@ func TestFastMinStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastMinStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastMinStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 || (math.IsInf(a, -1) && math.IsInf(b, -1)) }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -536,59 +536,59 @@ func TestFastMinStridedF64(t *testing.T) {
 
 func TestFastMaxF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{3, 1, 2, 6, 5, 4},
-			want:    []float32{3, 6},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{3, 1, 2, 6, 5, 4},
+			want:  []float32{3, 6},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []float32{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []float32{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{-1, 4},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{-1, 4},
 		},
 		{
-			name:    "With Inf",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{float32(math.Inf(-1)), 2, -3, float32(math.Inf(1))},
-			want:    []float32{2, float32(math.Inf(1))},
+			name:  "With Inf",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{float32(math.Inf(-1)), 2, -3, float32(math.Inf(1))},
+			want:  []float32{2, float32(math.Inf(1))},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastMaxF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastMaxF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool {
 				return math.Abs(float64(a-b)) < 1e-6 || (math.IsInf(float64(a), 1) && math.IsInf(float64(b), 1))
 			}) {
@@ -600,59 +600,59 @@ func TestFastMaxF32(t *testing.T) {
 
 func TestFastMaxF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{3, 1, 2, 6, 5, 4},
-			want:    []float64{3, 6},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{3, 1, 2, 6, 5, 4},
+			want:  []float64{3, 6},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []float64{42},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []float64{42},
 		},
 		{
-			name:    "Negative values",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{-1, 4},
+			name:  "Negative values",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{-1, 4},
 		},
 		{
-			name:    "With Inf",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{math.Inf(-1), 2, -3, math.Inf(1)},
-			want:    []float64{2, math.Inf(1)},
+			name:  "With Inf",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{math.Inf(-1), 2, -3, math.Inf(1)},
+			want:  []float64{2, math.Inf(1)},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastMaxF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastMaxF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 || (math.IsInf(a, 1) && math.IsInf(b, 1)) }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -664,7 +664,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -673,7 +673,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{3, 1, 2, 4},
@@ -682,7 +682,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float32{3, 1, 2, 4},
@@ -691,7 +691,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -700,7 +700,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{-1, 3, -2, 4},
@@ -709,7 +709,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "With Inf",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{float32(math.Inf(-1)), 2, -3, float32(math.Inf(1))},
@@ -718,7 +718,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{},
@@ -729,7 +729,7 @@ func TestFastMaxStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.FastMaxStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastMaxStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool {
 				return math.Abs(float64(a-b)) < 1e-6 || (math.IsInf(float64(a), 1) && math.IsInf(float64(b), 1))
 			}) {
@@ -743,7 +743,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -752,7 +752,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{3, 1, 2, 4},
@@ -761,7 +761,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float64{3, 1, 2, 4},
@@ -770,7 +770,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -779,7 +779,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "Negative values",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{-1, 3, -2, 4},
@@ -788,7 +788,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "With Inf",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{math.Inf(-1), 2, -3, math.Inf(1)},
@@ -797,7 +797,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{},
@@ -808,7 +808,7 @@ func TestFastMaxStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.FastMaxStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastMaxStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 || (math.IsInf(a, 1) && math.IsInf(b, 1)) }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -818,51 +818,51 @@ func TestFastMaxStridedF64(t *testing.T) {
 
 func TestFastArgminF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []uint32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []uint32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{3, 1, 2, 6, 5, 4},
-			want:    []uint32{1, 2},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{3, 1, 2, 6, 5, 4},
+			want:  []uint32{1, 2},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []uint32{0},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []uint32{0},
 		},
 		{
-			name:    "Ties, take first",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{1, 1, 3, 2},
-			want:    []uint32{0, 1},
+			name:  "Ties, take first",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{1, 1, 3, 2},
+			want:  []uint32{0, 1},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{},
-			want:    []uint32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{},
+			want:  []uint32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgminF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastArgminF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -872,51 +872,51 @@ func TestFastArgminF32(t *testing.T) {
 
 func TestFastArgminF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []uint32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []uint32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{3, 1, 2, 6, 5, 4},
-			want:    []uint32{1, 2},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{3, 1, 2, 6, 5, 4},
+			want:  []uint32{1, 2},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []uint32{0},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []uint32{0},
 		},
 		{
-			name:    "Ties, take first",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{1, 1, 3, 2},
-			want:    []uint32{0, 1},
+			name:  "Ties, take first",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{1, 1, 3, 2},
+			want:  []uint32{0, 1},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{},
-			want:    []uint32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{},
+			want:  []uint32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgminF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastArgminF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -928,7 +928,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -937,7 +937,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{3, 1, 2, 4},
@@ -946,7 +946,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float32{3, 1, 2, 4},
@@ -955,7 +955,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -964,7 +964,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 		{
 			name:    "Ties, take first",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{1, 3, 1, 2},
@@ -973,7 +973,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{},
@@ -984,7 +984,7 @@ func TestFastArgminStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgminStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastArgminStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -996,7 +996,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -1005,7 +1005,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{3, 1, 2, 4},
@@ -1014,7 +1014,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float64{3, 1, 2, 4},
@@ -1023,7 +1023,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -1032,7 +1032,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 		{
 			name:    "Ties, take first",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{1, 3, 1, 2},
@@ -1041,7 +1041,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{},
@@ -1052,7 +1052,7 @@ func TestFastArgminStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgminStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastArgminStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1062,51 +1062,51 @@ func TestFastArgminStridedF64(t *testing.T) {
 
 func TestFastArgmaxF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []uint32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []uint32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{3, 1, 2, 6, 5, 4},
-			want:    []uint32{0, 0},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{3, 1, 2, 6, 5, 4},
+			want:  []uint32{0, 0},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []uint32{0},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []uint32{0},
 		},
 		{
-			name:    "Ties, take first",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{3, 3, 2, 4},
-			want:    []uint32{0, 1},
+			name:  "Ties, take first",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{3, 3, 2, 4},
+			want:  []uint32{0, 1},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{},
-			want:    []uint32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{},
+			want:  []uint32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgmaxF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastArgmaxF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1116,51 +1116,51 @@ func TestFastArgmaxF32(t *testing.T) {
 
 func TestFastArgmaxF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []uint32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []uint32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{3, 1, 2, 6, 5, 4},
-			want:    []uint32{0, 0},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{3, 1, 2, 6, 5, 4},
+			want:  []uint32{0, 0},
 		},
 		{
-			name:    "1x1 single element",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []uint32{0},
+			name:  "1x1 single element",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []uint32{0},
 		},
 		{
-			name:    "Ties, take first",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{3, 3, 2, 4},
-			want:    []uint32{0, 1},
+			name:  "Ties, take first",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{3, 3, 2, 4},
+			want:  []uint32{0, 1},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{},
-			want:    []uint32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{},
+			want:  []uint32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgmaxF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.FastArgmaxF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1172,7 +1172,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -1181,7 +1181,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{3, 1, 2, 4},
@@ -1190,7 +1190,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float32{3, 1, 2, 4},
@@ -1199,7 +1199,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -1208,7 +1208,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 		{
 			name:    "Ties, take first",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{3, 1, 3, 2},
@@ -1217,7 +1217,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{},
@@ -1228,7 +1228,7 @@ func TestFastArgmaxStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgmaxStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastArgmaxStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1240,7 +1240,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -1249,7 +1249,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 		{
 			name:    "2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{3, 1, 2, 4},
@@ -1258,7 +1258,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous fallback",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			src:     []float64{3, 1, 2, 4},
@@ -1267,7 +1267,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single element",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -1276,7 +1276,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 		{
 			name:    "Ties, take first",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{3, 1, 3, 2},
@@ -1285,7 +1285,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{},
@@ -1296,7 +1296,7 @@ func TestFastArgmaxStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]uint32, len(tt.want))
-			kernels.FastArgmaxStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastArgmaxStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1308,7 +1308,7 @@ func TestSumF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		sumDims []int
 		src     []float32
@@ -1317,7 +1317,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "2x3 sum last",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{1},
 			src:     []float32{1, 2, 3, 4, 5, 6},
@@ -1326,7 +1326,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "2x3 sum first",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{0},
 			src:     []float32{1, 2, 3, 4, 5, 6},
@@ -1335,7 +1335,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "2x3 sum all",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{0, 1},
 			src:     []float32{1, 2, 3, 4, 5, 6},
@@ -1344,7 +1344,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			sumDims: []int{0},
 			src:     []float32{1},
@@ -1353,7 +1353,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "negative 2x2 sum last",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			sumDims: []int{1},
 			src:     []float32{-1, -2, 3, 4},
@@ -1362,7 +1362,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "2x3x4 sum middle",
 			numel:   24,
-			numDims: 3,
+			ndims:   3,
 			dims:    []int{2, 3, 4},
 			sumDims: []int{1},
 			src:     []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
@@ -1371,7 +1371,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "2x3x4 sum multiple",
 			numel:   24,
-			numDims: 3,
+			ndims:   3,
 			dims:    []int{2, 3, 4},
 			sumDims: []int{0, 2},
 			src:     []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
@@ -1380,7 +1380,7 @@ func TestSumF32(t *testing.T) {
 		{
 			name:    "Empty no reduction",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			sumDims: []int{},
 			src:     []float32{},
@@ -1391,7 +1391,7 @@ func TestSumF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.SumF32(tt.numel, tt.numDims, tt.dims, tt.sumDims, tt.src, dst)
+			kernels.SumF32(tt.numel, tt.ndims, tt.dims, tt.sumDims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1403,7 +1403,7 @@ func TestSumF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		sumDims []int
 		src     []float64
@@ -1412,7 +1412,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "2x3 sum last",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{1},
 			src:     []float64{1, 2, 3, 4, 5, 6},
@@ -1421,7 +1421,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "2x3 sum first",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{0},
 			src:     []float64{1, 2, 3, 4, 5, 6},
@@ -1430,7 +1430,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "2x3 sum all",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			sumDims: []int{0, 1},
 			src:     []float64{1, 2, 3, 4, 5, 6},
@@ -1439,7 +1439,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			sumDims: []int{0},
 			src:     []float64{1},
@@ -1448,7 +1448,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "negative 2x2 sum last",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			sumDims: []int{1},
 			src:     []float64{-1, -2, 3, 4},
@@ -1457,7 +1457,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "2x3x4 sum middle",
 			numel:   24,
-			numDims: 3,
+			ndims:   3,
 			dims:    []int{2, 3, 4},
 			sumDims: []int{1},
 			src:     []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
@@ -1466,7 +1466,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "2x3x4 sum multiple",
 			numel:   24,
-			numDims: 3,
+			ndims:   3,
 			dims:    []int{2, 3, 4},
 			sumDims: []int{0, 2},
 			src:     []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
@@ -1475,7 +1475,7 @@ func TestSumF64(t *testing.T) {
 		{
 			name:    "Empty no reduction",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			sumDims: []int{},
 			src:     []float64{},
@@ -1486,7 +1486,7 @@ func TestSumF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.SumF64(tt.numel, tt.numDims, tt.dims, tt.sumDims, tt.src, dst)
+			kernels.SumF64(tt.numel, tt.ndims, tt.dims, tt.sumDims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1498,7 +1498,7 @@ func TestSumStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		sumDims []int
@@ -1508,7 +1508,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "2x3 sum last contiguous fallback",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			sumDims: []int{1},
@@ -1518,7 +1518,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "3x2 sum last strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{1},
@@ -1528,7 +1528,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "3x2 sum first strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{0},
@@ -1538,7 +1538,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "3x2 sum all strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{0, 1},
@@ -1548,7 +1548,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "negative 2x2 sum last strided",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			sumDims: []int{1},
@@ -1558,7 +1558,7 @@ func TestSumStridedF32(t *testing.T) {
 		{
 			name:    "Empty no reduction",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			sumDims: []int{},
@@ -1570,7 +1570,7 @@ func TestSumStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.want))
-			kernels.SumStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.sumDims, tt.src, dst)
+			kernels.SumStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.sumDims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1582,7 +1582,7 @@ func TestSumStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		sumDims []int
@@ -1592,7 +1592,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "2x3 sum last contiguous fallback",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			sumDims: []int{1},
@@ -1602,7 +1602,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "3x2 sum last strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{1},
@@ -1612,7 +1612,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "3x2 sum first strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{0},
@@ -1622,7 +1622,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "3x2 sum all strided",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			sumDims: []int{0, 1},
@@ -1632,7 +1632,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "negative 2x2 sum last strided",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			sumDims: []int{1},
@@ -1642,7 +1642,7 @@ func TestSumStridedF64(t *testing.T) {
 		{
 			name:    "Empty no reduction",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			sumDims: []int{},
@@ -1654,7 +1654,7 @@ func TestSumStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.want))
-			kernels.SumStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.sumDims, tt.src, dst)
+			kernels.SumStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.sumDims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1664,51 +1664,51 @@ func TestSumStridedF64(t *testing.T) {
 
 func TestSoftmaxF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{0.09003057, 0.24472848, 0.66524094, 0.09003057, 0.24472848, 0.66524094},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{0.09003057, 0.24472848, 0.66524094, 0.09003057, 0.24472848, 0.66524094},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float32{42},
-			want:    []float32{1},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float32{42},
+			want:  []float32{1},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{0.7310586, 0.26894143, 0.26894143, 0.7310586},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{0.7310586, 0.26894143, 0.26894143, 0.7310586},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 2,
-			dims:    []int{0, 3},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 2,
+			dims:  []int{0, 3},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.SoftmaxF32(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.SoftmaxF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1718,51 +1718,51 @@ func TestSoftmaxF32(t *testing.T) {
 
 func TestSoftmaxF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{0.09003057317038046, 0.24472847105479767, 0.6652409557748219, 0.09003057317038046, 0.24472847105479767, 0.6652409557748219},
+			name:  "2x3 contiguous",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{0.09003057317038046, 0.24472847105479767, 0.6652409557748219, 0.09003057317038046, 0.24472847105479767, 0.6652409557748219},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			src:     []float64{42},
-			want:    []float64{1},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			src:   []float64{42},
+			want:  []float64{1},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{0.7310585786300049, 0.2689414213699951, 0.2689414213699951, 0.7310585786300049},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{0.7310585786300049, 0.2689414213699951, 0.2689414213699951, 0.7310585786300049},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 2,
-			dims:    []int{0, 3},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 2,
+			dims:  []int{0, 3},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.SoftmaxF64(tt.numel, tt.numDims, tt.dims, tt.src, dst)
+			kernels.SoftmaxF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1774,7 +1774,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float32
@@ -1783,7 +1783,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			src:     []float32{1, 2, 3, 4, 5, 6},
@@ -1792,7 +1792,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed)",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			src:     []float32{1, 2, 3, 4, 5, 6},
@@ -1801,7 +1801,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float32{-1, 3, -2, 4},
@@ -1810,7 +1810,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float32{42},
@@ -1819,7 +1819,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 3},
 			strides: []int{3, 1},
 			src:     []float32{},
@@ -1830,7 +1830,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.SoftmaxStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.SoftmaxStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1842,7 +1842,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		src     []float64
@@ -1851,7 +1851,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			src:     []float64{1, 2, 3, 4, 5, 6},
@@ -1860,7 +1860,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed)",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			src:     []float64{1, 2, 3, 4, 5, 6},
@@ -1869,7 +1869,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			src:     []float64{-1, 3, -2, 4},
@@ -1878,7 +1878,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			src:     []float64{42},
@@ -1887,7 +1887,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 3},
 			strides: []int{3, 1},
 			src:     []float64{},
@@ -1898,7 +1898,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.SoftmaxStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.src, dst)
+			kernels.SoftmaxStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1908,61 +1908,61 @@ func TestSoftmaxStridedF64(t *testing.T) {
 
 func TestRmsNormF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		eps     float32
-		alpha   []float32
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		eps   float32
+		alpha []float32
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous no alpha",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{0.4629095494747162, 0.9258190989494324, 1.3887286186218262, 0.7895419001579285, 0.9869273900985718, 1.1843128204345703},
+			name:  "2x3 contiguous no alpha",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{0.4629095494747162, 0.9258190989494324, 1.3887286186218262, 0.7895419001579285, 0.9869273900985718, 1.1843128204345703},
 		},
 		{
-			name:    "2x3 contiguous with alpha",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   []float32{0.5, 0.5, 0.5},
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{0.2314547747373581, 0.4629095494747162, 0.6943643093109131, 0.39477095007896423, 0.4934636950492859, 0.5921564102172852},
+			name:  "2x3 contiguous with alpha",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: []float32{0.5, 0.5, 0.5},
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{0.2314547747373581, 0.4629095494747162, 0.6943643093109131, 0.39477095007896423, 0.4934636950492859, 0.5921564102172852},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float32{42},
-			want:    []float32{1.0},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float32{42},
+			want:  []float32{1.0},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{-0.6324542760848999, -1.2649085521697998, 0.8485277891159058, 1.1313704252243042},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{-0.6324542760848999, -1.2649085521697998, 0.8485277891159058, 1.1313704252243042},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.RmsNormF32(tt.numel, tt.numDims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
+			kernels.RmsNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1972,61 +1972,61 @@ func TestRmsNormF32(t *testing.T) {
 
 func TestRmsNormF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		eps     float64
-		alpha   []float64
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		eps   float64
+		alpha []float64
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous no alpha",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{0.4629095494747162, 0.9258190989494324, 1.3887286186218262, 0.7895419001579285, 0.9869273900985718, 1.1843128204345703},
+			name:  "2x3 contiguous no alpha",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{0.4629095494747162, 0.9258190989494324, 1.3887286186218262, 0.7895419001579285, 0.9869273900985718, 1.1843128204345703},
 		},
 		{
-			name:    "2x3 contiguous with alpha",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   []float64{0.5, 0.5, 0.5},
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{0.2314547747373581, 0.4629095494747162, 0.6943643093109131, 0.39477095007896423, 0.4934636950492859, 0.5921564102172852},
+			name:  "2x3 contiguous with alpha",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: []float64{0.5, 0.5, 0.5},
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{0.2314547747373581, 0.4629095494747162, 0.6943643093109131, 0.39477095007896423, 0.4934636950492859, 0.5921564102172852},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float64{42},
-			want:    []float64{1.0},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float64{42},
+			want:  []float64{1.0},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			eps:     1e-5,
-			alpha:   nil,
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{-0.6324542760848999, -1.2649085521697998, 0.8485277891159058, 1.1313704252243042},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			eps:   1e-5,
+			alpha: nil,
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{-0.6324542760848999, -1.2649085521697998, 0.8485277891159058, 1.1313704252243042},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.RmsNormF64(tt.numel, tt.numDims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
+			kernels.RmsNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2038,7 +2038,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		eps     float32
@@ -2049,7 +2049,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback no alpha",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2060,7 +2060,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed) no alpha",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			eps:     1e-5,
@@ -2071,7 +2071,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed) no alpha",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			eps:     1e-5,
@@ -2082,7 +2082,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			eps:     1e-5,
@@ -2095,7 +2095,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.RmsNormStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
+			kernels.RmsNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2107,7 +2107,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		eps     float64
@@ -2118,7 +2118,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback no alpha",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2129,7 +2129,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed) no alpha",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			eps:     1e-5,
@@ -2140,7 +2140,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed) no alpha",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			eps:     1e-5,
@@ -2151,7 +2151,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			eps:     1e-5,
@@ -2164,7 +2164,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.RmsNormStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
+			kernels.RmsNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2174,77 +2174,77 @@ func TestRmsNormStridedF64(t *testing.T) {
 
 func TestLayerNormF32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		eps     float32
-		alpha   []float32
-		beta    []float32
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		eps   float32
+		alpha []float32
+		beta  []float32
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "2x3 contiguous no alpha beta",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{-1.2247357, 0, 1.2247357, -1.2247357, 0, 1.2247357},
+			name:  "2x3 contiguous no alpha beta",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{-1.2247357, 0, 1.2247357, -1.2247357, 0, 1.2247357},
 		},
 		{
-			name:    "2x3 contiguous with alpha beta",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   []float32{0.5, 0.5, 0.5},
-			beta:    []float32{1, 1, 1},
-			src:     []float32{1, 2, 3, 4, 5, 6},
-			want:    []float32{0.38763216, 1, 1.6123678, 0.38763216, 1, 1.6123678},
+			name:  "2x3 contiguous with alpha beta",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: []float32{0.5, 0.5, 0.5},
+			beta:  []float32{1, 1, 1},
+			src:   []float32{1, 2, 3, 4, 5, 6},
+			want:  []float32{0.38763216, 1, 1.6123678, 0.38763216, 1, 1.6123678},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float32{42},
-			want:    []float32{0},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float32{42},
+			want:  []float32{0},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float32{-1, -2, 3, 4},
-			want:    []float32{0.99998, -0.99998, -0.99998, 0.99998},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float32{-1, -2, 3, 4},
+			want:  []float32{0.99998, -0.99998, -0.99998, 0.99998},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 2,
-			dims:    []int{0, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 2,
+			dims:  []int{0, 3},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.LayerNormF32(tt.numel, tt.numDims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.LayerNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2254,77 +2254,77 @@ func TestLayerNormF32(t *testing.T) {
 
 func TestLayerNormF64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dims    []int
-		eps     float64
-		alpha   []float64
-		beta    []float64
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dims  []int
+		eps   float64
+		alpha []float64
+		beta  []float64
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "2x3 contiguous no alpha beta",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{-1.2247356859083902, 0.0, 1.2247356859083902, -1.2247356859083902, 0.0, 1.2247356859083902},
+			name:  "2x3 contiguous no alpha beta",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{-1.2247356859083902, 0.0, 1.2247356859083902, -1.2247356859083902, 0.0, 1.2247356859083902},
 		},
 		{
-			name:    "2x3 contiguous with alpha beta",
-			numel:   6,
-			numDims: 2,
-			dims:    []int{2, 3},
-			eps:     1e-5,
-			alpha:   []float64{0.5, 0.5, 0.5},
-			beta:    []float64{1, 1, 1},
-			src:     []float64{1, 2, 3, 4, 5, 6},
-			want:    []float64{0.3876321570458049, 1.0, 1.6123678429541952, 0.3876321570458049, 1.0, 1.6123678429541952},
+			name:  "2x3 contiguous with alpha beta",
+			numel: 6,
+			ndims: 2,
+			dims:  []int{2, 3},
+			eps:   1e-5,
+			alpha: []float64{0.5, 0.5, 0.5},
+			beta:  []float64{1, 1, 1},
+			src:   []float64{1, 2, 3, 4, 5, 6},
+			want:  []float64{0.3876321570458049, 1.0, 1.6123678429541952, 0.3876321570458049, 1.0, 1.6123678429541952},
 		},
 		{
-			name:    "1x1 single",
-			numel:   1,
-			numDims: 1,
-			dims:    []int{1},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float64{42},
-			want:    []float64{0.0},
+			name:  "1x1 single",
+			numel: 1,
+			ndims: 1,
+			dims:  []int{1},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float64{42},
+			want:  []float64{0.0},
 		},
 		{
-			name:    "Negative values 2x2",
-			numel:   4,
-			numDims: 2,
-			dims:    []int{2, 2},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float64{-1, -2, 3, 4},
-			want:    []float64{0.9999800005999799, -0.9999800005999799, -0.9999800005999799, 0.9999800005999799},
+			name:  "Negative values 2x2",
+			numel: 4,
+			ndims: 2,
+			dims:  []int{2, 2},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float64{-1, -2, 3, 4},
+			want:  []float64{0.9999800005999799, -0.9999800005999799, -0.9999800005999799, 0.9999800005999799},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 2,
-			dims:    []int{0, 3},
-			eps:     1e-5,
-			alpha:   nil,
-			beta:    nil,
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 2,
+			dims:  []int{0, 3},
+			eps:   1e-5,
+			alpha: nil,
+			beta:  nil,
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.LayerNormF64(tt.numel, tt.numDims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.LayerNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2336,7 +2336,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		eps     float32
@@ -2348,7 +2348,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback no alpha beta",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2360,7 +2360,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed) no alpha beta",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			eps:     1e-5,
@@ -2372,7 +2372,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed) no alpha beta",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			eps:     1e-5,
@@ -2384,7 +2384,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			eps:     1e-5,
@@ -2396,7 +2396,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2410,7 +2410,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.LayerNormStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.LayerNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2422,7 +2422,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		eps     float64
@@ -2434,7 +2434,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 		{
 			name:    "2x3 contiguous fallback no alpha beta",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2446,7 +2446,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 		{
 			name:    "3x2 strided (transposed) no alpha beta",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{1, 3},
 			eps:     1e-5,
@@ -2458,7 +2458,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 		{
 			name:    "Negative 2x2 strided (transposed) no alpha beta",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			eps:     1e-5,
@@ -2470,7 +2470,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 		{
 			name:    "1x1 single",
 			numel:   1,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{1},
 			strides: []int{1},
 			eps:     1e-5,
@@ -2482,7 +2482,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 3},
 			strides: []int{3, 1},
 			eps:     1e-5,
@@ -2496,7 +2496,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.LayerNormStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.LayerNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2617,7 +2617,7 @@ func TestRopeIF64(t *testing.T) {
 func TestRopeIStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		bh      int
@@ -2630,7 +2630,7 @@ func TestRopeIStridedF32(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback bh=2 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 4},
 			strides: []int{4, 1},
 			bh:      2,
@@ -2643,7 +2643,7 @@ func TestRopeIStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Strided bh=2 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{4, 2},
 			strides: []int{1, 4},
 			bh:      2,
@@ -2656,7 +2656,7 @@ func TestRopeIStridedF32(t *testing.T) {
 		},
 		{
 			name:    "bh=1 td=2 strideB=0 negative",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{1, 2},
 			strides: []int{2, 1},
 			bh:      1,
@@ -2669,7 +2669,7 @@ func TestRopeIStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Empty bh=0 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 4},
 			strides: []int{4, 1},
 			bh:      0,
@@ -2685,7 +2685,7 @@ func TestRopeIStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.src))
-			kernels.RopeIStridedF32(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeIStridedF32(tt.ndims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2696,7 +2696,7 @@ func TestRopeIStridedF32(t *testing.T) {
 func TestRopeIStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		bh      int
@@ -2709,7 +2709,7 @@ func TestRopeIStridedF64(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback bh=2 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 4},
 			strides: []int{4, 1},
 			bh:      2,
@@ -2722,7 +2722,7 @@ func TestRopeIStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Strided bh=2 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{4, 2},
 			strides: []int{1, 4},
 			bh:      2,
@@ -2735,7 +2735,7 @@ func TestRopeIStridedF64(t *testing.T) {
 		},
 		{
 			name:    "bh=1 td=2 strideB=0 negative",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{1, 2},
 			strides: []int{2, 1},
 			bh:      1,
@@ -2748,7 +2748,7 @@ func TestRopeIStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Empty bh=0 td=4 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 4},
 			strides: []int{4, 1},
 			bh:      0,
@@ -2764,7 +2764,7 @@ func TestRopeIStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.src))
-			kernels.RopeIStridedF64(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeIStridedF64(tt.ndims, tt.dims, tt.strides, tt.bh, tt.td, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2893,7 +2893,7 @@ func TestRopeF64(t *testing.T) {
 func TestRopeStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		bh      int
@@ -2907,7 +2907,7 @@ func TestRopeStridedF32(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback bh=2 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 4},
 			strides: []int{4, 1},
 			bh:      2,
@@ -2921,7 +2921,7 @@ func TestRopeStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Strided bh=2 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{4, 2},
 			strides: []int{1, 4},
 			bh:      2,
@@ -2935,7 +2935,7 @@ func TestRopeStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Empty bh=0 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 4},
 			strides: []int{4, 1},
 			bh:      0,
@@ -2952,7 +2952,7 @@ func TestRopeStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.src))
-			kernels.RopeStridedF32(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeStridedF32(tt.ndims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2963,7 +2963,7 @@ func TestRopeStridedF32(t *testing.T) {
 func TestRopeStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		bh      int
@@ -2977,7 +2977,7 @@ func TestRopeStridedF64(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback bh=2 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 4},
 			strides: []int{4, 1},
 			bh:      2,
@@ -2991,7 +2991,7 @@ func TestRopeStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Strided bh=2 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{4, 2},
 			strides: []int{1, 4},
 			bh:      2,
@@ -3005,7 +3005,7 @@ func TestRopeStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Empty bh=0 td=4 d=2 strideB=0",
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{0, 4},
 			strides: []int{4, 1},
 			bh:      0,
@@ -3022,7 +3022,7 @@ func TestRopeStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.src))
-			kernels.RopeStridedF64(tt.numDims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeStridedF64(tt.ndims, tt.dims, tt.strides, tt.bh, tt.td, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -3159,7 +3159,7 @@ func TestRopeThdF64(t *testing.T) {
 func TestRopeThdStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		b       int
@@ -3174,7 +3174,7 @@ func TestRopeThdStridedF32(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback b=1 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{1, 2, 2, 2},
 			strides: []int{8, 4, 2, 1},
 			b:       1,
@@ -3189,7 +3189,7 @@ func TestRopeThdStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Strided b=1 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{2, 2, 2, 1},
 			strides: []int{4, 2, 1, 8},
 			b:       1,
@@ -3204,7 +3204,7 @@ func TestRopeThdStridedF32(t *testing.T) {
 		},
 		{
 			name:    "Empty b=0 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{0, 2, 2, 2},
 			strides: []int{8, 4, 2, 1},
 			b:       0,
@@ -3222,7 +3222,7 @@ func TestRopeThdStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.src))
-			kernels.RopeThdStridedF32(tt.numDims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeThdStridedF32(tt.ndims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -3233,7 +3233,7 @@ func TestRopeThdStridedF32(t *testing.T) {
 func TestRopeThdStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		b       int
@@ -3248,7 +3248,7 @@ func TestRopeThdStridedF64(t *testing.T) {
 	}{
 		{
 			name:    "Contiguous fallback b=1 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{1, 2, 2, 2},
 			strides: []int{8, 4, 2, 1},
 			b:       1,
@@ -3263,7 +3263,7 @@ func TestRopeThdStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Strided b=1 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{2, 2, 2, 1},
 			strides: []int{4, 2, 1, 8},
 			b:       1,
@@ -3278,7 +3278,7 @@ func TestRopeThdStridedF64(t *testing.T) {
 		},
 		{
 			name:    "Empty b=0 t=2 h=2 d=2 strideB=0",
-			numDims: 4,
+			ndims:   4,
 			dims:    []int{0, 2, 2, 2},
 			strides: []int{8, 4, 2, 1},
 			b:       0,
@@ -3296,7 +3296,7 @@ func TestRopeThdStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, len(tt.src))
-			kernels.RopeThdStridedF64(tt.numDims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
+			kernels.RopeThdStridedF64(tt.ndims, tt.dims, tt.strides, tt.b, tt.t, tt.h, tt.d, tt.strideB, tt.src, tt.cos, tt.sin, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}

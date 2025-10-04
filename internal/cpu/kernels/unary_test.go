@@ -13,7 +13,7 @@ func TestUCopyStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -23,7 +23,7 @@ func TestUCopyStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			inp:     []float64{1, 2, 3, 4, 5},
@@ -33,7 +33,7 @@ func TestUCopyStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float64{1, 2, 3, 4},
@@ -43,7 +43,7 @@ func TestUCopyStridedF64(t *testing.T) {
 		{
 			name:    "In-place no-op",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -53,7 +53,7 @@ func TestUCopyStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -66,7 +66,7 @@ func TestUCopyStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UCopyStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UCopyStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -121,7 +121,7 @@ func TestUNegStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -131,7 +131,7 @@ func TestUNegStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			inp:     []float32{1, -2, 3, -4, 5},
@@ -141,7 +141,7 @@ func TestUNegStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float32{1, -2, 3, -4},
@@ -151,7 +151,7 @@ func TestUNegStridedF32(t *testing.T) {
 		{
 			name:    "In-place negation",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -161,7 +161,7 @@ func TestUNegStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -174,7 +174,7 @@ func TestUNegStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UNegStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UNegStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -229,7 +229,7 @@ func TestUNegStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -239,7 +239,7 @@ func TestUNegStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			inp:     []float64{1, -2, 3, -4, 5},
@@ -249,7 +249,7 @@ func TestUNegStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float64{1, -2, 3, -4},
@@ -259,7 +259,7 @@ func TestUNegStridedF64(t *testing.T) {
 		{
 			name:    "In-place negation",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -269,7 +269,7 @@ func TestUNegStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -282,7 +282,7 @@ func TestUNegStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UNegStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UNegStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -337,7 +337,7 @@ func TestURecipStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -347,7 +347,7 @@ func TestURecipStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			inp:     []float32{1, 2, 4, 5, 10},
@@ -357,7 +357,7 @@ func TestURecipStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float32{1, 2, 4, 5},
@@ -367,7 +367,7 @@ func TestURecipStridedF32(t *testing.T) {
 		{
 			name:    "In-place reciprocal",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -377,7 +377,7 @@ func TestURecipStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -390,7 +390,7 @@ func TestURecipStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.URecipStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.URecipStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -445,7 +445,7 @@ func TestURecipStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -455,7 +455,7 @@ func TestURecipStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			inp:     []float64{1, 2, 4, 5, 10},
@@ -465,7 +465,7 @@ func TestURecipStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float64{1, 2, 4, 5},
@@ -475,7 +475,7 @@ func TestURecipStridedF64(t *testing.T) {
 		{
 			name:    "In-place reciprocal",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -485,7 +485,7 @@ func TestURecipStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -498,7 +498,7 @@ func TestURecipStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.URecipStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.URecipStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -553,7 +553,7 @@ func TestUExpStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -563,7 +563,7 @@ func TestUExpStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -573,7 +573,7 @@ func TestUExpStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float32{0, 1, 0, -1},
@@ -583,7 +583,7 @@ func TestUExpStridedF32(t *testing.T) {
 		{
 			name:    "In-place exp",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -593,7 +593,7 @@ func TestUExpStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -606,7 +606,7 @@ func TestUExpStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UExpStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UExpStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -661,7 +661,7 @@ func TestUExpStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -671,7 +671,7 @@ func TestUExpStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -681,7 +681,7 @@ func TestUExpStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{2, 1},
 			inp:     []float64{0, 1, 0, -1},
@@ -691,7 +691,7 @@ func TestUExpStridedF64(t *testing.T) {
 		{
 			name:    "In-place exp",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -701,7 +701,7 @@ func TestUExpStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -714,7 +714,7 @@ func TestUExpStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UExpStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UExpStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -769,7 +769,7 @@ func TestULogStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -779,7 +779,7 @@ func TestULogStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{1, float32(math.E), float32(math.E * math.E)},
@@ -789,7 +789,7 @@ func TestULogStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1, 0, float32(math.E), 0},
@@ -799,7 +799,7 @@ func TestULogStridedF32(t *testing.T) {
 		{
 			name:    "In-place log",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -809,7 +809,7 @@ func TestULogStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -822,7 +822,7 @@ func TestULogStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.ULogStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.ULogStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -877,7 +877,7 @@ func TestULogStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -887,7 +887,7 @@ func TestULogStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{1, math.E, math.E * math.E},
@@ -897,7 +897,7 @@ func TestULogStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1, 0, math.E, 0},
@@ -907,7 +907,7 @@ func TestULogStridedF64(t *testing.T) {
 		{
 			name:    "In-place log",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -917,7 +917,7 @@ func TestULogStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -930,7 +930,7 @@ func TestULogStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.ULogStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.ULogStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -985,7 +985,7 @@ func TestUSinStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -995,7 +995,7 @@ func TestUSinStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, float32(math.Pi / 2), float32(math.Pi)},
@@ -1005,7 +1005,7 @@ func TestUSinStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, float32(math.Pi / 2), 0},
@@ -1015,7 +1015,7 @@ func TestUSinStridedF32(t *testing.T) {
 		{
 			name:    "In-place sin",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1025,7 +1025,7 @@ func TestUSinStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -1038,7 +1038,7 @@ func TestUSinStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USinStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USinStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1093,7 +1093,7 @@ func TestUSinStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -1103,7 +1103,7 @@ func TestUSinStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, math.Pi / 2, math.Pi},
@@ -1113,7 +1113,7 @@ func TestUSinStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, math.Pi / 2, 0},
@@ -1123,7 +1123,7 @@ func TestUSinStridedF64(t *testing.T) {
 		{
 			name:    "In-place sin",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1133,7 +1133,7 @@ func TestUSinStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -1146,7 +1146,7 @@ func TestUSinStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USinStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USinStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1201,7 +1201,7 @@ func TestUCosStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -1211,7 +1211,7 @@ func TestUCosStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, float32(math.Pi / 2), float32(math.Pi)},
@@ -1221,7 +1221,7 @@ func TestUCosStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, float32(math.Pi / 2), 0},
@@ -1231,7 +1231,7 @@ func TestUCosStridedF32(t *testing.T) {
 		{
 			name:    "In-place cos",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1241,7 +1241,7 @@ func TestUCosStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -1254,7 +1254,7 @@ func TestUCosStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UCosStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UCosStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1309,7 +1309,7 @@ func TestUCosStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -1319,7 +1319,7 @@ func TestUCosStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, math.Pi / 2, math.Pi},
@@ -1329,7 +1329,7 @@ func TestUCosStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, math.Pi / 2, 0},
@@ -1339,7 +1339,7 @@ func TestUCosStridedF64(t *testing.T) {
 		{
 			name:    "In-place cos",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1349,7 +1349,7 @@ func TestUCosStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -1362,7 +1362,7 @@ func TestUCosStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UCosStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UCosStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1417,7 +1417,7 @@ func TestUTanhStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -1427,7 +1427,7 @@ func TestUTanhStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -1437,7 +1437,7 @@ func TestUTanhStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -1447,7 +1447,7 @@ func TestUTanhStridedF32(t *testing.T) {
 		{
 			name:    "In-place tanh",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1457,7 +1457,7 @@ func TestUTanhStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -1470,7 +1470,7 @@ func TestUTanhStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UTanhStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UTanhStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1525,7 +1525,7 @@ func TestUTanhStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -1535,7 +1535,7 @@ func TestUTanhStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -1545,7 +1545,7 @@ func TestUTanhStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -1555,7 +1555,7 @@ func TestUTanhStridedF64(t *testing.T) {
 		{
 			name:    "In-place tanh",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1565,7 +1565,7 @@ func TestUTanhStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -1578,7 +1578,7 @@ func TestUTanhStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UTanhStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UTanhStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1633,7 +1633,7 @@ func TestUErfStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -1643,7 +1643,7 @@ func TestUErfStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -1653,7 +1653,7 @@ func TestUErfStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -1663,7 +1663,7 @@ func TestUErfStridedF32(t *testing.T) {
 		{
 			name:    "In-place erf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1673,7 +1673,7 @@ func TestUErfStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -1686,7 +1686,7 @@ func TestUErfStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UErfStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UErfStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1741,7 +1741,7 @@ func TestUErfStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -1751,7 +1751,7 @@ func TestUErfStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -1761,7 +1761,7 @@ func TestUErfStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -1771,7 +1771,7 @@ func TestUErfStridedF64(t *testing.T) {
 		{
 			name:    "In-place erf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -1781,7 +1781,7 @@ func TestUErfStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -1794,7 +1794,7 @@ func TestUErfStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UErfStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UErfStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1849,7 +1849,7 @@ func TestUCeilStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -1859,7 +1859,7 @@ func TestUCeilStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{1.1, 2.9, -1.1, -2.9},
@@ -1869,7 +1869,7 @@ func TestUCeilStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1.1, 0, 2.9, 0},
@@ -1879,7 +1879,7 @@ func TestUCeilStridedF32(t *testing.T) {
 		{
 			name:    "In-place ceil",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -1889,7 +1889,7 @@ func TestUCeilStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -1902,7 +1902,7 @@ func TestUCeilStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UCeilStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UCeilStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -1957,7 +1957,7 @@ func TestUCeilStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -1967,7 +1967,7 @@ func TestUCeilStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{1.1, 2.9, -1.1, -2.9},
@@ -1977,7 +1977,7 @@ func TestUCeilStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1.1, 0, 2.9, 0},
@@ -1987,7 +1987,7 @@ func TestUCeilStridedF64(t *testing.T) {
 		{
 			name:    "In-place ceil",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -1997,7 +1997,7 @@ func TestUCeilStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -2010,7 +2010,7 @@ func TestUCeilStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UCeilStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UCeilStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2065,7 +2065,7 @@ func TestUFloorStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -2075,7 +2075,7 @@ func TestUFloorStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{1.1, 2.9, -1.1, -2.9},
@@ -2085,7 +2085,7 @@ func TestUFloorStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1.1, 0, 2.9, 0},
@@ -2095,7 +2095,7 @@ func TestUFloorStridedF32(t *testing.T) {
 		{
 			name:    "In-place floor",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2105,7 +2105,7 @@ func TestUFloorStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -2118,7 +2118,7 @@ func TestUFloorStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UFloorStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UFloorStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2173,7 +2173,7 @@ func TestUFloorStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -2183,7 +2183,7 @@ func TestUFloorStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{1.1, 2.9, -1.1, -2.9},
@@ -2193,7 +2193,7 @@ func TestUFloorStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1.1, 0, 2.9, 0},
@@ -2203,7 +2203,7 @@ func TestUFloorStridedF64(t *testing.T) {
 		{
 			name:    "In-place floor",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2213,7 +2213,7 @@ func TestUFloorStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -2226,7 +2226,7 @@ func TestUFloorStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UFloorStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UFloorStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2281,7 +2281,7 @@ func TestURoundStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -2291,7 +2291,7 @@ func TestURoundStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{1.1, 2.6, -1.1, -2.6},
@@ -2301,7 +2301,7 @@ func TestURoundStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1.1, 0, 2.6, 0},
@@ -2311,7 +2311,7 @@ func TestURoundStridedF32(t *testing.T) {
 		{
 			name:    "In-place round",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2321,7 +2321,7 @@ func TestURoundStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -2334,7 +2334,7 @@ func TestURoundStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.URoundStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.URoundStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2389,7 +2389,7 @@ func TestURoundStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -2399,7 +2399,7 @@ func TestURoundStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{1.1, 2.6, -1.1, -2.6},
@@ -2409,7 +2409,7 @@ func TestURoundStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1.1, 0, 2.6, 0},
@@ -2419,7 +2419,7 @@ func TestURoundStridedF64(t *testing.T) {
 		{
 			name:    "In-place round",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2429,7 +2429,7 @@ func TestURoundStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -2442,7 +2442,7 @@ func TestURoundStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.URoundStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.URoundStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2497,7 +2497,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -2507,7 +2507,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -2517,7 +2517,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -2527,7 +2527,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 		{
 			name:    "In-place normcdf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -2537,7 +2537,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -2550,7 +2550,7 @@ func TestUNormcdfStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UNormcdfStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UNormcdfStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2605,7 +2605,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -2615,7 +2615,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -2625,7 +2625,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -2635,7 +2635,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 		{
 			name:    "In-place normcdf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -2645,7 +2645,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -2658,7 +2658,7 @@ func TestUNormcdfStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UNormcdfStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UNormcdfStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2713,7 +2713,7 @@ func TestUAbsStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -2723,7 +2723,7 @@ func TestUAbsStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{1, -1, 0, -0},
@@ -2733,7 +2733,7 @@ func TestUAbsStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1, 0, -1, 0},
@@ -2743,7 +2743,7 @@ func TestUAbsStridedF32(t *testing.T) {
 		{
 			name:    "In-place abs",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2753,7 +2753,7 @@ func TestUAbsStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -2766,7 +2766,7 @@ func TestUAbsStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UAbsStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UAbsStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2821,7 +2821,7 @@ func TestUAbsStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -2831,7 +2831,7 @@ func TestUAbsStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{1, -1, 0, -0},
@@ -2841,7 +2841,7 @@ func TestUAbsStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1, 0, -1, 0},
@@ -2851,7 +2851,7 @@ func TestUAbsStridedF64(t *testing.T) {
 		{
 			name:    "In-place abs",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -2861,7 +2861,7 @@ func TestUAbsStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -2874,7 +2874,7 @@ func TestUAbsStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UAbsStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UAbsStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -2929,7 +2929,7 @@ func TestUSqrStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -2939,7 +2939,7 @@ func TestUSqrStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{1, 2, 3},
@@ -2949,7 +2949,7 @@ func TestUSqrStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1, 0, 2, 0},
@@ -2959,7 +2959,7 @@ func TestUSqrStridedF32(t *testing.T) {
 		{
 			name:    "In-place sqr",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -2969,7 +2969,7 @@ func TestUSqrStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -2982,7 +2982,7 @@ func TestUSqrStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USqrStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USqrStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3037,7 +3037,7 @@ func TestUSqrStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -3047,7 +3047,7 @@ func TestUSqrStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{1, 2, 3},
@@ -3057,7 +3057,7 @@ func TestUSqrStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1, 0, 2, 0},
@@ -3067,7 +3067,7 @@ func TestUSqrStridedF64(t *testing.T) {
 		{
 			name:    "In-place sqr",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3077,7 +3077,7 @@ func TestUSqrStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -3090,7 +3090,7 @@ func TestUSqrStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USqrStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USqrStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3145,7 +3145,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -3155,7 +3155,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{1, 4, 9},
@@ -3165,7 +3165,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1, 0, 4, 0},
@@ -3175,7 +3175,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 		{
 			name:    "In-place sqrt",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3185,7 +3185,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -3198,7 +3198,7 @@ func TestUSqrtStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USqrtStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USqrtStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3253,7 +3253,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -3263,7 +3263,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{1, 4, 9},
@@ -3273,7 +3273,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1, 0, 4, 0},
@@ -3283,7 +3283,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 		{
 			name:    "In-place sqrt",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3293,7 +3293,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -3306,7 +3306,7 @@ func TestUSqrtStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USqrtStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USqrtStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3361,7 +3361,7 @@ func TestUGeluStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -3371,7 +3371,7 @@ func TestUGeluStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -3381,7 +3381,7 @@ func TestUGeluStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -3391,7 +3391,7 @@ func TestUGeluStridedF32(t *testing.T) {
 		{
 			name:    "In-place gelu",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3401,7 +3401,7 @@ func TestUGeluStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -3414,7 +3414,7 @@ func TestUGeluStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UGeluStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UGeluStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3469,7 +3469,7 @@ func TestUGeluStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -3479,7 +3479,7 @@ func TestUGeluStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -3489,7 +3489,7 @@ func TestUGeluStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -3499,7 +3499,7 @@ func TestUGeluStridedF64(t *testing.T) {
 		{
 			name:    "In-place gelu",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3509,7 +3509,7 @@ func TestUGeluStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -3522,7 +3522,7 @@ func TestUGeluStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UGeluStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UGeluStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3577,7 +3577,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -3587,7 +3587,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -3597,7 +3597,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -3607,7 +3607,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 		{
 			name:    "In-place gelu_erf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3617,7 +3617,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -3630,7 +3630,7 @@ func TestUGeluErfStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UGeluErfStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UGeluErfStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3685,7 +3685,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -3695,7 +3695,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -3705,7 +3705,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -3715,7 +3715,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 		{
 			name:    "In-place gelu_erf",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -3725,7 +3725,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -3738,7 +3738,7 @@ func TestUGeluErfStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UGeluErfStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UGeluErfStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3793,7 +3793,7 @@ func TestUReluStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -3803,7 +3803,7 @@ func TestUReluStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{-2, -1, 0, 1},
@@ -3813,7 +3813,7 @@ func TestUReluStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{-1, 0, 1, 0},
@@ -3823,7 +3823,7 @@ func TestUReluStridedF32(t *testing.T) {
 		{
 			name:    "In-place relu",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -3833,7 +3833,7 @@ func TestUReluStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -3846,7 +3846,7 @@ func TestUReluStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UReluStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UReluStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -3901,7 +3901,7 @@ func TestUReluStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -3911,7 +3911,7 @@ func TestUReluStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{-2, -1, 0, 1},
@@ -3921,7 +3921,7 @@ func TestUReluStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{-1, 0, 1, 0},
@@ -3931,7 +3931,7 @@ func TestUReluStridedF64(t *testing.T) {
 		{
 			name:    "In-place relu",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -3941,7 +3941,7 @@ func TestUReluStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -3954,7 +3954,7 @@ func TestUReluStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UReluStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UReluStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4014,7 +4014,7 @@ func TestUEluStridedF32(t *testing.T) {
 		name    string
 		alpha   float32
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -4025,7 +4025,7 @@ func TestUEluStridedF32(t *testing.T) {
 			name:    "Contiguous 1D",
 			alpha:   1.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{-2, 0, 1},
@@ -4036,7 +4036,7 @@ func TestUEluStridedF32(t *testing.T) {
 			name:    "Non-contiguous 2D (strided inp)",
 			alpha:   1.0,
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{-2, 0, 1, 0},
@@ -4047,7 +4047,7 @@ func TestUEluStridedF32(t *testing.T) {
 			name:    "In-place elu",
 			alpha:   1.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4058,7 +4058,7 @@ func TestUEluStridedF32(t *testing.T) {
 			name:    "Empty",
 			alpha:   1.0,
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -4071,7 +4071,7 @@ func TestUEluStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UEluStridedF32(tt.alpha, tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UEluStridedF32(tt.alpha, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4131,7 +4131,7 @@ func TestUEluStridedF64(t *testing.T) {
 		name    string
 		alpha   float64
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -4142,7 +4142,7 @@ func TestUEluStridedF64(t *testing.T) {
 			name:    "Contiguous 1D",
 			alpha:   1.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{-2, 0, 1},
@@ -4153,7 +4153,7 @@ func TestUEluStridedF64(t *testing.T) {
 			name:    "Non-contiguous 2D (strided inp)",
 			alpha:   1.0,
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{-2, 0, 1, 0},
@@ -4164,7 +4164,7 @@ func TestUEluStridedF64(t *testing.T) {
 			name:    "In-place elu",
 			alpha:   1.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4175,7 +4175,7 @@ func TestUEluStridedF64(t *testing.T) {
 			name:    "Empty",
 			alpha:   1.0,
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -4188,7 +4188,7 @@ func TestUEluStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UEluStridedF64(tt.alpha, tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UEluStridedF64(tt.alpha, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4243,7 +4243,7 @@ func TestUSiluStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -4253,7 +4253,7 @@ func TestUSiluStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -4263,7 +4263,7 @@ func TestUSiluStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -4273,7 +4273,7 @@ func TestUSiluStridedF32(t *testing.T) {
 		{
 			name:    "In-place silu",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4283,7 +4283,7 @@ func TestUSiluStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -4296,7 +4296,7 @@ func TestUSiluStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USiluStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USiluStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4351,7 +4351,7 @@ func TestUSiluStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -4361,7 +4361,7 @@ func TestUSiluStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -4371,7 +4371,7 @@ func TestUSiluStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -4381,7 +4381,7 @@ func TestUSiluStridedF64(t *testing.T) {
 		{
 			name:    "In-place silu",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4391,7 +4391,7 @@ func TestUSiluStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -4404,7 +4404,7 @@ func TestUSiluStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USiluStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USiluStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4464,7 +4464,7 @@ func TestUPowfStridedF32(t *testing.T) {
 		name    string
 		param   float32
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -4475,7 +4475,7 @@ func TestUPowfStridedF32(t *testing.T) {
 			name:    "Contiguous 1D",
 			param:   2.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{1, 2, 3},
@@ -4486,7 +4486,7 @@ func TestUPowfStridedF32(t *testing.T) {
 			name:    "Non-contiguous 2D (strided inp)",
 			param:   2.0,
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{1, 0, 2, 0},
@@ -4497,7 +4497,7 @@ func TestUPowfStridedF32(t *testing.T) {
 			name:    "In-place powf",
 			param:   2.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4508,7 +4508,7 @@ func TestUPowfStridedF32(t *testing.T) {
 			name:    "Empty",
 			param:   2.0,
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -4521,7 +4521,7 @@ func TestUPowfStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UPowfStridedF32(tt.param, tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UPowfStridedF32(tt.param, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4581,7 +4581,7 @@ func TestUPowfStridedF64(t *testing.T) {
 		name    string
 		param   float64
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -4592,7 +4592,7 @@ func TestUPowfStridedF64(t *testing.T) {
 			name:    "Contiguous 1D",
 			param:   2.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{1, 2, 3},
@@ -4603,7 +4603,7 @@ func TestUPowfStridedF64(t *testing.T) {
 			name:    "Non-contiguous 2D (strided inp)",
 			param:   2.0,
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{1, 0, 2, 0},
@@ -4614,7 +4614,7 @@ func TestUPowfStridedF64(t *testing.T) {
 			name:    "In-place powf",
 			param:   2.0,
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4625,7 +4625,7 @@ func TestUPowfStridedF64(t *testing.T) {
 			name:    "Empty",
 			param:   2.0,
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -4638,7 +4638,7 @@ func TestUPowfStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UPowfStridedF64(tt.param, tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UPowfStridedF64(tt.param, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4693,7 +4693,7 @@ func TestUSignStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -4703,7 +4703,7 @@ func TestUSignStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float32{-2, -1, 0, 1},
@@ -4713,7 +4713,7 @@ func TestUSignStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{-1, 0, 1, 0},
@@ -4723,7 +4723,7 @@ func TestUSignStridedF32(t *testing.T) {
 		{
 			name:    "In-place sign",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -4733,7 +4733,7 @@ func TestUSignStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -4746,7 +4746,7 @@ func TestUSignStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USignStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USignStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4801,7 +4801,7 @@ func TestUSignStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -4811,7 +4811,7 @@ func TestUSignStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     []float64{-2, -1, 0, 1},
@@ -4821,7 +4821,7 @@ func TestUSignStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{-1, 0, 1, 0},
@@ -4831,7 +4831,7 @@ func TestUSignStridedF64(t *testing.T) {
 		{
 			name:    "In-place sign",
 			numel:   4,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{4},
 			strides: []int{1},
 			inp:     nil,
@@ -4841,7 +4841,7 @@ func TestUSignStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -4854,7 +4854,7 @@ func TestUSignStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USignStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USignStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4909,7 +4909,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float32
@@ -4919,7 +4919,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float32{0, 1, -1},
@@ -4929,7 +4929,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float32{0, 0, 1, 0},
@@ -4939,7 +4939,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 		{
 			name:    "In-place sigmoid",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -4949,7 +4949,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float32{},
@@ -4962,7 +4962,7 @@ func TestUSigmoidStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USigmoidStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USigmoidStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -5017,7 +5017,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		inp     []float64
@@ -5027,7 +5027,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     []float64{0, 1, -1},
@@ -5037,7 +5037,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (strided inp)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 1},
 			strides: []int{2, 1},
 			inp:     []float64{0, 0, 1, 0},
@@ -5047,7 +5047,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 		{
 			name:    "In-place sigmoid",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{3},
 			strides: []int{1},
 			inp:     nil,
@@ -5057,7 +5057,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			inp:     []float64{},
@@ -5070,7 +5070,7 @@ func TestUSigmoidStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.USigmoidStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.USigmoidStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}

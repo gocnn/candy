@@ -53,11 +53,11 @@ func TestAffineF64(t *testing.T) {
 
 func TestAffineStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims, strides  []int
-		a, b           float32
-		x, y           []float32
-		want           []float32
+		numel, ndims  int
+		dims, strides []int
+		a, b          float32
+		x, y          []float32
+		want          []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, 2, 1, []float32{1, 2, 3}, make([]float32, 3), []float32{3, 5, 7}},
@@ -75,7 +75,7 @@ func TestAffineStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.AffineStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
+		kernels.AffineStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -84,11 +84,11 @@ func TestAffineStridedF32(t *testing.T) {
 
 func TestAffineStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims, strides  []int
-		a, b           float64
-		x, y           []float64
-		want           []float64
+		numel, ndims  int
+		dims, strides []int
+		a, b          float64
+		x, y          []float64
+		want          []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, 2, 1, []float64{1, 2, 3}, make([]float64, 3), []float64{3, 5, 7}},
@@ -106,7 +106,7 @@ func TestAffineStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.AffineStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
+		kernels.AffineStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.a, tt.b, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}

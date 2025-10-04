@@ -78,106 +78,106 @@ func WhereU8F64(numel int, ids []uint8, t, f, dst []float64) {
 }
 
 // WhereStrided selects elements from t or f based on indices of type I for data of type T with strided memory
-func WhereStrided[U I, T D](numel, numDims int, dims, strides, stridesT, stridesF []int, ids []U, t, f, dst []T) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStrided[U I, T D](numel, ndims int, dims, strides, stridesT, stridesF []int, ids []U, t, f, dst []T) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		Where(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedI64F32 selects elements from t or f based on int64 indices for float32 with strided memory
-func WhereStridedI64F32(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []float32) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedI64F32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []float32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereI64F32(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedI64F64 selects elements from t or f based on int64 indices for float64 with strided memory
-func WhereStridedI64F64(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []float64) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedI64F64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []float64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereI64F64(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedU32F32 selects elements from t or f based on uint32 indices for float32 with strided memory
-func WhereStridedU32F32(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []float32) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedU32F32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []float32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereU32F32(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedU32F64 selects elements from t or f based on uint32 indices for float64 with strided memory
-func WhereStridedU32F64(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []float64) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedU32F64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []float64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereU32F64(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedU8F32 selects elements from t or f based on uint8 indices for float32 with strided memory
-func WhereStridedU8F32(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []float32) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedU8F32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []float32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereU8F32(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }
 
 // WhereStridedU8F64 selects elements from t or f based on uint8 indices for float64 with strided memory
-func WhereStridedU8F64(numel, numDims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []float64) {
-	if IsContiguous(numDims, dims, strides) && IsContiguous(numDims, dims, stridesT) && IsContiguous(numDims, dims, stridesF) {
+func WhereStridedU8F64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []float64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereU8F64(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {
-		if ids[GetStridedIndex(i, numDims, dims, strides)] != 0 {
-			dst[i] = t[GetStridedIndex(i, numDims, dims, stridesT)]
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
 		} else {
-			dst[i] = f[GetStridedIndex(i, numDims, dims, stridesF)]
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
 		}
 	}
 }

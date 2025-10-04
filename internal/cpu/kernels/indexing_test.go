@@ -272,7 +272,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -284,7 +284,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -296,7 +296,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -308,7 +308,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -321,7 +321,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -334,7 +334,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -346,7 +346,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -358,7 +358,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -370,7 +370,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -383,7 +383,7 @@ func TestIndexSelectStridedI64F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedI64F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedI64F64(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -396,7 +396,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -408,7 +408,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -420,7 +420,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -432,7 +432,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -445,7 +445,7 @@ func TestIndexSelectStridedU32F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedU32F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU32F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -458,7 +458,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -470,7 +470,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -482,7 +482,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -494,7 +494,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -507,7 +507,7 @@ func TestIndexSelectStridedU32F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedU32F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU32F64(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -520,7 +520,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -532,7 +532,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -544,7 +544,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -556,7 +556,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -569,7 +569,7 @@ func TestIndexSelectStridedU8F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.IndexSelectStridedU8F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU8F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -582,7 +582,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -594,7 +594,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -606,7 +606,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 			name:       "Non-contiguous src and dst",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{2},
 			stridesDst: []int{1},
@@ -618,7 +618,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -631,7 +631,7 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.IndexSelectStridedU8F64(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexSelectStridedU8F64(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -641,44 +641,44 @@ func TestIndexSelectStridedU8F64(t *testing.T) {
 
 func TestGatherI64F32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []int64
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []int64
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []int64{1, 3, 0},
-			src:     []float32{10, 20, 30, 40, 50},
-			want:    []float32{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []int64{1, 3, 0},
+			src:   []float32{10, 20, 30, 40, 50},
+			want:  []float32{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []int64{2, 2},
-			src:     []float32{1, 2, 3},
-			want:    []float32{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []int64{2, 2},
+			src:   []float32{1, 2, 3},
+			want:  []float32{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []int64{},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []int64{},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
@@ -695,44 +695,44 @@ func TestGatherI64F32(t *testing.T) {
 
 func TestGatherI64F64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []int64
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []int64
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []int64{1, 3, 0},
-			src:     []float64{10, 20, 30, 40, 50},
-			want:    []float64{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []int64{1, 3, 0},
+			src:   []float64{10, 20, 30, 40, 50},
+			want:  []float64{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []int64{2, 2},
-			src:     []float64{1, 2, 3},
-			want:    []float64{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []int64{2, 2},
+			src:   []float64{1, 2, 3},
+			want:  []float64{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []int64{},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []int64{},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
@@ -749,44 +749,44 @@ func TestGatherI64F64(t *testing.T) {
 
 func TestGatherU32F32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []uint32
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []uint32
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []uint32{1, 3, 0},
-			src:     []float32{10, 20, 30, 40, 50},
-			want:    []float32{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []uint32{1, 3, 0},
+			src:   []float32{10, 20, 30, 40, 50},
+			want:  []float32{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []uint32{2, 2},
-			src:     []float32{1, 2, 3},
-			want:    []float32{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []uint32{2, 2},
+			src:   []float32{1, 2, 3},
+			want:  []float32{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []uint32{},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []uint32{},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
@@ -803,44 +803,44 @@ func TestGatherU32F32(t *testing.T) {
 
 func TestGatherU32F64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []uint32
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []uint32
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []uint32{1, 3, 0},
-			src:     []float64{10, 20, 30, 40, 50},
-			want:    []float64{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []uint32{1, 3, 0},
+			src:   []float64{10, 20, 30, 40, 50},
+			want:  []float64{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []uint32{2, 2},
-			src:     []float64{1, 2, 3},
-			want:    []float64{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []uint32{2, 2},
+			src:   []float64{1, 2, 3},
+			want:  []float64{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []uint32{},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []uint32{},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
@@ -857,44 +857,44 @@ func TestGatherU32F64(t *testing.T) {
 
 func TestGatherU8F32(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []uint8
-		src     []float32
-		want    []float32
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []uint8
+		src   []float32
+		want  []float32
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []uint8{1, 3, 0},
-			src:     []float32{10, 20, 30, 40, 50},
-			want:    []float32{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []uint8{1, 3, 0},
+			src:   []float32{10, 20, 30, 40, 50},
+			want:  []float32{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []uint8{2, 2},
-			src:     []float32{1, 2, 3},
-			want:    []float32{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []uint8{2, 2},
+			src:   []float32{1, 2, 3},
+			want:  []float32{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []uint8{},
-			src:     []float32{},
-			want:    []float32{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []uint8{},
+			src:   []float32{},
+			want:  []float32{},
 		},
 	}
 
@@ -911,44 +911,44 @@ func TestGatherU8F32(t *testing.T) {
 
 func TestGatherU8F64(t *testing.T) {
 	tests := []struct {
-		name    string
-		numel   int
-		numDims int
-		dim     int
-		dims    []int
-		ids     []uint8
-		src     []float64
-		want    []float64
+		name  string
+		numel int
+		ndims int
+		dim   int
+		dims  []int
+		ids   []uint8
+		src   []float64
+		want  []float64
 	}{
 		{
-			name:    "Basic gather",
-			numel:   3,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{5},
-			ids:     []uint8{1, 3, 0},
-			src:     []float64{10, 20, 30, 40, 50},
-			want:    []float64{20, 40, 10},
+			name:  "Basic gather",
+			numel: 3,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{5},
+			ids:   []uint8{1, 3, 0},
+			src:   []float64{10, 20, 30, 40, 50},
+			want:  []float64{20, 40, 10},
 		},
 		{
-			name:    "All same index",
-			numel:   2,
-			numDims: 1,
-			dim:     0,
-			dims:    []int{3},
-			ids:     []uint8{2, 2},
-			src:     []float64{1, 2, 3},
-			want:    []float64{3, 3},
+			name:  "All same index",
+			numel: 2,
+			ndims: 1,
+			dim:   0,
+			dims:  []int{3},
+			ids:   []uint8{2, 2},
+			src:   []float64{1, 2, 3},
+			want:  []float64{3, 3},
 		},
 		{
-			name:    "Empty",
-			numel:   0,
-			numDims: 0,
-			dim:     0,
-			dims:    []int{},
-			ids:     []uint8{},
-			src:     []float64{},
-			want:    []float64{},
+			name:  "Empty",
+			numel: 0,
+			ndims: 0,
+			dim:   0,
+			dims:  []int{},
+			ids:   []uint8{},
+			src:   []float64{},
+			want:  []float64{},
 		},
 	}
 
@@ -967,7 +967,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 	tests := []struct {
 		name       string
 		numel      int
-		numDims    int
+		ndims      int
 		dim        int
 		dims       []int
 		stridesSrc []int
@@ -980,7 +980,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 		{
 			name:       "Contiguous",
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dim:        0,
 			dims:       []int{5},
 			stridesSrc: []int{1},
@@ -993,7 +993,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 		{
 			name:       "Non-contiguous",
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dim:        0,
 			dims:       []int{5},
 			stridesSrc: []int{2},
@@ -1006,7 +1006,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 		{
 			name:       "Empty",
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dim:        0,
 			dims:       []int{},
 			stridesSrc: []int{},
@@ -1021,7 +1021,7 @@ func TestGatherStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.GatherStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.stridesIds, tt.ids, tt.src, dst)
+			kernels.GatherStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.stridesIds, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1089,7 +1089,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -1102,7 +1102,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -1115,7 +1115,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 			name:       "Non-contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{2},
@@ -1128,7 +1128,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -1143,7 +1143,7 @@ func TestIndexAddStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.IndexAddStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.IndexAddStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1211,7 +1211,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -1224,7 +1224,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -1237,7 +1237,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 			name:       "Non-contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{2},
@@ -1250,7 +1250,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -1265,7 +1265,7 @@ func TestScatterStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.ScatterStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1333,7 +1333,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 		name       string
 		dim        int
 		numel      int
-		numDims    int
+		ndims      int
 		dims       []int
 		stridesSrc []int
 		stridesDst []int
@@ -1346,7 +1346,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 			name:       "Contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{1},
@@ -1359,7 +1359,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 			name:       "Non-contiguous",
 			dim:        0,
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			stridesSrc: []int{1},
 			stridesDst: []int{2},
@@ -1372,7 +1372,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 			name:       "Empty",
 			dim:        0,
 			numel:      0,
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			stridesSrc: []int{},
 			stridesDst: []int{},
@@ -1387,7 +1387,7 @@ func TestScatterAddStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, len(tt.initDst))
 			copy(dst, tt.initDst)
-			kernels.ScatterAddStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
+			kernels.ScatterAddStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.stridesSrc, tt.stridesDst, tt.ids, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}

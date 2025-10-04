@@ -51,13 +51,13 @@ func TestBAddF64(t *testing.T) {
 
 func TestBAddStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{4, 5, 6}, make([]float32, 3), []float32{5, 7, 9}},
@@ -75,7 +75,7 @@ func TestBAddStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BAddStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BAddStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -84,13 +84,13 @@ func TestBAddStridedF32(t *testing.T) {
 
 func TestBAddStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{4, 5, 6}, make([]float64, 3), []float64{5, 7, 9}},
@@ -108,7 +108,7 @@ func TestBAddStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BAddStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BAddStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -157,13 +157,13 @@ func TestBSubF64(t *testing.T) {
 
 func TestBSubStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{4, 5, 6}, make([]float32, 3), []float32{-3, -3, -3}},
@@ -181,7 +181,7 @@ func TestBSubStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BSubStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BSubStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -190,13 +190,13 @@ func TestBSubStridedF32(t *testing.T) {
 
 func TestBSubStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{4, 5, 6}, make([]float64, 3), []float64{-3, -3, -3}},
@@ -214,7 +214,7 @@ func TestBSubStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BSubStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BSubStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -263,13 +263,13 @@ func TestBMulF64(t *testing.T) {
 
 func TestBMulStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{4, 5, 6}, make([]float32, 3), []float32{4, 10, 18}},
@@ -287,7 +287,7 @@ func TestBMulStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMulStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMulStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -296,13 +296,13 @@ func TestBMulStridedF32(t *testing.T) {
 
 func TestBMulStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{4, 5, 6}, make([]float64, 3), []float64{4, 10, 18}},
@@ -320,7 +320,7 @@ func TestBMulStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMulStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMulStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -369,13 +369,13 @@ func TestBDivF64(t *testing.T) {
 
 func TestBDivStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{4, 10, 18}, []float32{4, 5, 6}, make([]float32, 3), []float32{1, 2, 3}},
@@ -393,7 +393,7 @@ func TestBDivStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BDivStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BDivStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -402,13 +402,13 @@ func TestBDivStridedF32(t *testing.T) {
 
 func TestBDivStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{4, 10, 18}, []float64{4, 5, 6}, make([]float64, 3), []float64{1, 2, 3}},
@@ -426,7 +426,7 @@ func TestBDivStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BDivStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BDivStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -475,13 +475,13 @@ func TestBMaximumF64(t *testing.T) {
 
 func TestBMaximumStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 5, 3}, []float32{4, 2, 6}, make([]float32, 3), []float32{4, 5, 6}},
@@ -499,7 +499,7 @@ func TestBMaximumStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMaximumStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMaximumStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -508,13 +508,13 @@ func TestBMaximumStridedF32(t *testing.T) {
 
 func TestBMaximumStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 5, 3}, []float64{4, 2, 6}, make([]float64, 3), []float64{4, 5, 6}},
@@ -532,7 +532,7 @@ func TestBMaximumStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMaximumStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMaximumStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -581,13 +581,13 @@ func TestBMinimumF64(t *testing.T) {
 
 func TestBMinimumStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 5, 3}, []float32{4, 2, 6}, make([]float32, 3), []float32{1, 2, 3}},
@@ -605,7 +605,7 @@ func TestBMinimumStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMinimumStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMinimumStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -614,13 +614,13 @@ func TestBMinimumStridedF32(t *testing.T) {
 
 func TestBMinimumStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2, y      []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2, y    []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 5, 3}, []float64{4, 2, 6}, make([]float64, 3), []float64{1, 2, 3}},
@@ -638,7 +638,7 @@ func TestBMinimumStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.BMinimumStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.BMinimumStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -691,14 +691,14 @@ func TestEqF64(t *testing.T) {
 
 func TestEqStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{0, 1, 0}},
@@ -716,7 +716,7 @@ func TestEqStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.EqStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.EqStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -725,14 +725,14 @@ func TestEqStridedF32(t *testing.T) {
 
 func TestEqStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{0, 1, 0}},
@@ -750,7 +750,7 @@ func TestEqStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.EqStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.EqStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -801,14 +801,14 @@ func TestNeF64(t *testing.T) {
 
 func TestNeStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{1, 0, 1}},
@@ -826,7 +826,7 @@ func TestNeStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.NeStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.NeStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -835,14 +835,14 @@ func TestNeStridedF32(t *testing.T) {
 
 func TestNeStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{1, 0, 1}},
@@ -860,7 +860,7 @@ func TestNeStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.NeStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.NeStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -911,14 +911,14 @@ func TestLtF64(t *testing.T) {
 
 func TestLtStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{1, 0, 1}},
@@ -936,7 +936,7 @@ func TestLtStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.LtStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.LtStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -945,14 +945,14 @@ func TestLtStridedF32(t *testing.T) {
 
 func TestLtStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{1, 0, 1}},
@@ -970,7 +970,7 @@ func TestLtStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.LtStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.LtStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1021,14 +1021,14 @@ func TestLeF64(t *testing.T) {
 
 func TestLeStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{1, 1, 1}},
@@ -1046,7 +1046,7 @@ func TestLeStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.LeStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.LeStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1055,14 +1055,14 @@ func TestLeStridedF32(t *testing.T) {
 
 func TestLeStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{1, 1, 1}},
@@ -1080,7 +1080,7 @@ func TestLeStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.LeStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.LeStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1131,14 +1131,14 @@ func TestGtF64(t *testing.T) {
 
 func TestGtStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{0, 0, 0}},
@@ -1156,7 +1156,7 @@ func TestGtStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.GtStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.GtStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1165,14 +1165,14 @@ func TestGtStridedF32(t *testing.T) {
 
 func TestGtStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{0, 0, 0}},
@@ -1190,7 +1190,7 @@ func TestGtStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.GtStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.GtStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1241,14 +1241,14 @@ func TestGeF64(t *testing.T) {
 
 func TestGeStridedF32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float32{1, 2, 3}, []float32{2, 2, 4}, make([]uint8, 3), []uint8{0, 1, 0}},
@@ -1266,7 +1266,7 @@ func TestGeStridedF32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.GeStridedF32(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.GeStridedF32(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -1275,14 +1275,14 @@ func TestGeStridedF32(t *testing.T) {
 
 func TestGeStridedF64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX1      []int
-		stridesX2      []int
-		stridesY       []int
-		x1, x2         []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX1    []int
+		stridesX2    []int
+		stridesY     []int
+		x1, x2       []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []int{1}, []float64{1, 2, 3}, []float64{2, 2, 4}, make([]uint8, 3), []uint8{0, 1, 0}},
@@ -1300,7 +1300,7 @@ func TestGeStridedF64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.GeStridedF64(tt.numel, tt.numDims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
+		kernels.GeStridedF64(tt.numel, tt.ndims, tt.dims, tt.stridesX1, tt.stridesX2, tt.stridesY, tt.x1, tt.x2, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}

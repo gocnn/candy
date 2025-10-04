@@ -33,8 +33,8 @@ func UCopyF64(numel int, inp, out []float64) {
 }
 
 // UCopyStrided performs element-wise copy for type T (strided memory)
-func UCopyStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UCopyStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UCopy(numel, inp, out)
 		return
 	}
@@ -42,14 +42,14 @@ func UCopyStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return // No-op for in-place
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI]
 	}
 }
 
 // UCopyStridedF32 performs element-wise copy for float32 (strided memory)
-func UCopyStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UCopyStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UCopyF32(numel, inp, out)
 		return
 	}
@@ -57,14 +57,14 @@ func UCopyStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return // No-op for in-place
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI]
 	}
 }
 
 // UCopyStridedF64 performs element-wise copy for float64 (strided memory)
-func UCopyStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UCopyStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UCopyF64(numel, inp, out)
 		return
 	}
@@ -72,7 +72,7 @@ func UCopyStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return // No-op for in-place
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI]
 	}
 }
@@ -117,8 +117,8 @@ func UNegF64(numel int, inp, out []float64) {
 }
 
 // UNegStrided performs element-wise negation for type T (strided memory)
-func UNegStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UNegStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UNeg(numel, inp, out)
 		return
 	}
@@ -129,14 +129,14 @@ func UNegStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = -inp[stridedI]
 	}
 }
 
 // UNegStridedF32 performs element-wise negation for float32 (strided memory)
-func UNegStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UNegStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UNegF32(numel, inp, out)
 		return
 	}
@@ -147,14 +147,14 @@ func UNegStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = -inp[stridedI]
 	}
 }
 
 // UNegStridedF64 performs element-wise negation for float64 (strided memory)
-func UNegStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UNegStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UNegF64(numel, inp, out)
 		return
 	}
@@ -165,7 +165,7 @@ func UNegStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = -inp[stridedI]
 	}
 }
@@ -210,8 +210,8 @@ func URecipF64(numel int, inp, out []float64) {
 }
 
 // URecipStrided performs element-wise reciprocal for type T (strided memory)
-func URecipStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func URecipStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		URecip(numel, inp, out)
 		return
 	}
@@ -222,14 +222,14 @@ func URecipStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(1) / inp[stridedI]
 	}
 }
 
 // URecipStridedF32 performs element-wise reciprocal for float32 (strided memory)
-func URecipStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func URecipStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		URecipF32(numel, inp, out)
 		return
 	}
@@ -240,14 +240,14 @@ func URecipStridedF32(numel, numDims int, dims, strides []int, inp, out []float3
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = 1.0 / inp[stridedI]
 	}
 }
 
 // URecipStridedF64 performs element-wise reciprocal for float64 (strided memory)
-func URecipStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func URecipStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		URecipF64(numel, inp, out)
 		return
 	}
@@ -258,7 +258,7 @@ func URecipStridedF64(numel, numDims int, dims, strides []int, inp, out []float6
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = 1.0 / inp[stridedI]
 	}
 }
@@ -303,8 +303,8 @@ func UExpF64(numel int, inp, out []float64) {
 }
 
 // UExpStrided performs element-wise exponential for type T (strided memory)
-func UExpStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UExpStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UExp(numel, inp, out)
 		return
 	}
@@ -315,14 +315,14 @@ func UExpStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Exp(float64(inp[stridedI])))
 	}
 }
 
 // UExpStridedF32 performs element-wise exponential for float32 (strided memory)
-func UExpStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UExpStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UExpF32(numel, inp, out)
 		return
 	}
@@ -333,14 +333,14 @@ func UExpStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Exp(float64(inp[stridedI])))
 	}
 }
 
 // UExpStridedF64 performs element-wise exponential for float64 (strided memory)
-func UExpStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UExpStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UExpF64(numel, inp, out)
 		return
 	}
@@ -351,7 +351,7 @@ func UExpStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Exp(inp[stridedI])
 	}
 }
@@ -396,8 +396,8 @@ func ULogF64(numel int, inp, out []float64) {
 }
 
 // ULogStrided performs element-wise logarithm for type T (strided memory)
-func ULogStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func ULogStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		ULog(numel, inp, out)
 		return
 	}
@@ -408,14 +408,14 @@ func ULogStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Log(float64(inp[stridedI])))
 	}
 }
 
 // ULogStridedF32 performs element-wise logarithm for float32 (strided memory)
-func ULogStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ULogStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ULogF32(numel, inp, out)
 		return
 	}
@@ -426,14 +426,14 @@ func ULogStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Log(float64(inp[stridedI])))
 	}
 }
 
 // ULogStridedF64 performs element-wise logarithm for float64 (strided memory)
-func ULogStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ULogStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ULogF64(numel, inp, out)
 		return
 	}
@@ -444,7 +444,7 @@ func ULogStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Log(inp[stridedI])
 	}
 }
@@ -489,8 +489,8 @@ func USinF64(numel int, inp, out []float64) {
 }
 
 // USinStrided performs element-wise sine for type T (strided memory)
-func USinStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USinStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USin(numel, inp, out)
 		return
 	}
@@ -501,14 +501,14 @@ func USinStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Sin(float64(inp[stridedI])))
 	}
 }
 
 // USinStridedF32 performs element-wise sine for float32 (strided memory)
-func USinStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USinStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USinF32(numel, inp, out)
 		return
 	}
@@ -519,14 +519,14 @@ func USinStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Sin(float64(inp[stridedI])))
 	}
 }
 
 // USinStridedF64 performs element-wise sine for float64 (strided memory)
-func USinStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USinStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USinF64(numel, inp, out)
 		return
 	}
@@ -537,7 +537,7 @@ func USinStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Sin(inp[stridedI])
 	}
 }
@@ -582,8 +582,8 @@ func UCosF64(numel int, inp, out []float64) {
 }
 
 // UCosStrided performs element-wise cosine for type T (strided memory)
-func UCosStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UCosStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UCos(numel, inp, out)
 		return
 	}
@@ -594,14 +594,14 @@ func UCosStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Cos(float64(inp[stridedI])))
 	}
 }
 
 // UCosStridedF32 performs element-wise cosine for float32 (strided memory)
-func UCosStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UCosStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UCosF32(numel, inp, out)
 		return
 	}
@@ -612,14 +612,14 @@ func UCosStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Cos(float64(inp[stridedI])))
 	}
 }
 
 // UCosStridedF64 performs element-wise cosine for float64 (strided memory)
-func UCosStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UCosStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UCosF64(numel, inp, out)
 		return
 	}
@@ -630,7 +630,7 @@ func UCosStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Cos(inp[stridedI])
 	}
 }
@@ -675,8 +675,8 @@ func UTanhF64(numel int, inp, out []float64) {
 }
 
 // UTanhStrided performs element-wise tanh for type T (strided memory)
-func UTanhStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UTanhStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UTanh(numel, inp, out)
 		return
 	}
@@ -687,14 +687,14 @@ func UTanhStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Tanh(float64(inp[stridedI])))
 	}
 }
 
 // UTanhStridedF32 performs element-wise tanh for float32 (strided memory)
-func UTanhStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UTanhStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UTanhF32(numel, inp, out)
 		return
 	}
@@ -705,14 +705,14 @@ func UTanhStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Tanh(float64(inp[stridedI])))
 	}
 }
 
 // UTanhStridedF64 performs element-wise tanh for float64 (strided memory)
-func UTanhStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UTanhStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UTanhF64(numel, inp, out)
 		return
 	}
@@ -723,7 +723,7 @@ func UTanhStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Tanh(inp[stridedI])
 	}
 }
@@ -768,8 +768,8 @@ func UErfF64(numel int, inp, out []float64) {
 }
 
 // UErfStrided performs element-wise erf for type T (strided memory)
-func UErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UErfStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UErf(numel, inp, out)
 		return
 	}
@@ -780,14 +780,14 @@ func UErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Erf(float64(inp[stridedI])))
 	}
 }
 
 // UErfStridedF32 performs element-wise erf for float32 (strided memory)
-func UErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UErfStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UErfF32(numel, inp, out)
 		return
 	}
@@ -798,14 +798,14 @@ func UErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Erf(float64(inp[stridedI])))
 	}
 }
 
 // UErfStridedF64 performs element-wise erf for float64 (strided memory)
-func UErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UErfStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UErfF64(numel, inp, out)
 		return
 	}
@@ -816,7 +816,7 @@ func UErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Erf(inp[stridedI])
 	}
 }
@@ -861,8 +861,8 @@ func UCeilF64(numel int, inp, out []float64) {
 }
 
 // UCeilStrided performs element-wise ceil for type T (strided memory)
-func UCeilStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UCeilStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UCeil(numel, inp, out)
 		return
 	}
@@ -873,14 +873,14 @@ func UCeilStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Ceil(float64(inp[stridedI])))
 	}
 }
 
 // UCeilStridedF32 performs element-wise ceil for float32 (strided memory)
-func UCeilStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UCeilStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UCeilF32(numel, inp, out)
 		return
 	}
@@ -891,14 +891,14 @@ func UCeilStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Ceil(float64(inp[stridedI])))
 	}
 }
 
 // UCeilStridedF64 performs element-wise ceil for float64 (strided memory)
-func UCeilStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UCeilStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UCeilF64(numel, inp, out)
 		return
 	}
@@ -909,7 +909,7 @@ func UCeilStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Ceil(inp[stridedI])
 	}
 }
@@ -954,8 +954,8 @@ func UFloorF64(numel int, inp, out []float64) {
 }
 
 // UFloorStrided performs element-wise floor for type T (strided memory)
-func UFloorStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UFloorStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UFloor(numel, inp, out)
 		return
 	}
@@ -966,14 +966,14 @@ func UFloorStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Floor(float64(inp[stridedI])))
 	}
 }
 
 // UFloorStridedF32 performs element-wise floor for float32 (strided memory)
-func UFloorStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UFloorStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UFloorF32(numel, inp, out)
 		return
 	}
@@ -984,14 +984,14 @@ func UFloorStridedF32(numel, numDims int, dims, strides []int, inp, out []float3
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Floor(float64(inp[stridedI])))
 	}
 }
 
 // UFloorStridedF64 performs element-wise floor for float64 (strided memory)
-func UFloorStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UFloorStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UFloorF64(numel, inp, out)
 		return
 	}
@@ -1002,7 +1002,7 @@ func UFloorStridedF64(numel, numDims int, dims, strides []int, inp, out []float6
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Floor(inp[stridedI])
 	}
 }
@@ -1047,8 +1047,8 @@ func URoundF64(numel int, inp, out []float64) {
 }
 
 // URoundStrided performs element-wise round for type T (strided memory)
-func URoundStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func URoundStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		URound(numel, inp, out)
 		return
 	}
@@ -1059,14 +1059,14 @@ func URoundStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Round(float64(inp[stridedI])))
 	}
 }
 
 // URoundStridedF32 performs element-wise round for float32 (strided memory)
-func URoundStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func URoundStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		URoundF32(numel, inp, out)
 		return
 	}
@@ -1077,14 +1077,14 @@ func URoundStridedF32(numel, numDims int, dims, strides []int, inp, out []float3
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Round(float64(inp[stridedI])))
 	}
 }
 
 // URoundStridedF64 performs element-wise round for float64 (strided memory)
-func URoundStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func URoundStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		URoundF64(numel, inp, out)
 		return
 	}
@@ -1095,7 +1095,7 @@ func URoundStridedF64(numel, numDims int, dims, strides []int, inp, out []float6
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Round(inp[stridedI])
 	}
 }
@@ -1144,8 +1144,8 @@ func UNormcdfF64(numel int, inp, out []float64) {
 }
 
 // UNormcdfStrided performs element-wise normal CDF for type T (strided memory)
-func UNormcdfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UNormcdfStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UNormcdf(numel, inp, out)
 		return
 	}
@@ -1157,15 +1157,15 @@ func UNormcdfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = T(0.5 * (1 + math.Erf(x/math.Sqrt(2))))
 	}
 }
 
 // UNormcdfStridedF32 performs element-wise normal CDF for float32 (strided memory)
-func UNormcdfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UNormcdfStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UNormcdfF32(numel, inp, out)
 		return
 	}
@@ -1177,15 +1177,15 @@ func UNormcdfStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = float32(0.5 * (1 + math.Erf(x/math.Sqrt(2))))
 	}
 }
 
 // UNormcdfStridedF64 performs element-wise normal CDF for float64 (strided memory)
-func UNormcdfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UNormcdfStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UNormcdfF64(numel, inp, out)
 		return
 	}
@@ -1196,7 +1196,7 @@ func UNormcdfStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = 0.5 * (1 + math.Erf(inp[stridedI]/math.Sqrt(2)))
 	}
 }
@@ -1241,8 +1241,8 @@ func UAbsF64(numel int, inp, out []float64) {
 }
 
 // UAbsStrided performs element-wise absolute value for type T (strided memory)
-func UAbsStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UAbsStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UAbs(numel, inp, out)
 		return
 	}
@@ -1253,14 +1253,14 @@ func UAbsStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Abs(float64(inp[stridedI])))
 	}
 }
 
 // UAbsStridedF32 performs element-wise absolute value for float32 (strided memory)
-func UAbsStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UAbsStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UAbsF32(numel, inp, out)
 		return
 	}
@@ -1271,14 +1271,14 @@ func UAbsStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Abs(float64(inp[stridedI])))
 	}
 }
 
 // UAbsStridedF64 performs element-wise absolute value for float64 (strided memory)
-func UAbsStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UAbsStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UAbsF64(numel, inp, out)
 		return
 	}
@@ -1289,7 +1289,7 @@ func UAbsStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Abs(inp[stridedI])
 	}
 }
@@ -1334,8 +1334,8 @@ func USqrF64(numel int, inp, out []float64) {
 }
 
 // USqrStrided performs element-wise square for type T (strided memory)
-func USqrStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USqr(numel, inp, out)
 		return
 	}
@@ -1346,14 +1346,14 @@ func USqrStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI] * inp[stridedI]
 	}
 }
 
 // USqrStridedF32 performs element-wise square for float32 (strided memory)
-func USqrStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USqrF32(numel, inp, out)
 		return
 	}
@@ -1364,14 +1364,14 @@ func USqrStridedF32(numel, numDims int, dims, strides []int, inp, out []float32)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI] * inp[stridedI]
 	}
 }
 
 // USqrStridedF64 performs element-wise square for float64 (strided memory)
-func USqrStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USqrF64(numel, inp, out)
 		return
 	}
@@ -1382,7 +1382,7 @@ func USqrStridedF64(numel, numDims int, dims, strides []int, inp, out []float64)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = inp[stridedI] * inp[stridedI]
 	}
 }
@@ -1427,8 +1427,8 @@ func USqrtF64(numel int, inp, out []float64) {
 }
 
 // USqrtStrided performs element-wise square root for type T (strided memory)
-func USqrtStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrtStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USqrt(numel, inp, out)
 		return
 	}
@@ -1439,14 +1439,14 @@ func USqrtStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Sqrt(float64(inp[stridedI])))
 	}
 }
 
 // USqrtStridedF32 performs element-wise square root for float32 (strided memory)
-func USqrtStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrtStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USqrtF32(numel, inp, out)
 		return
 	}
@@ -1457,14 +1457,14 @@ func USqrtStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Sqrt(float64(inp[stridedI])))
 	}
 }
 
 // USqrtStridedF64 performs element-wise square root for float64 (strided memory)
-func USqrtStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USqrtStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USqrtF64(numel, inp, out)
 		return
 	}
@@ -1475,7 +1475,7 @@ func USqrtStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Sqrt(inp[stridedI])
 	}
 }
@@ -1544,8 +1544,8 @@ func UGeluF64(numel int, inp, out []float64) {
 }
 
 // UGeluStrided performs element-wise GELU for type T (strided memory)
-func UGeluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UGelu(numel, inp, out)
 		return
 	}
@@ -1560,7 +1560,7 @@ func UGeluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		xSq := x * x
 		xCube := xSq * x
@@ -1570,8 +1570,8 @@ func UGeluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 }
 
 // UGeluStridedF32 performs element-wise GELU for float32 (strided memory)
-func UGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UGeluF32(numel, inp, out)
 		return
 	}
@@ -1586,7 +1586,7 @@ func UGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		xSq := x * x
 		xCube := xSq * x
@@ -1596,8 +1596,8 @@ func UGeluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 }
 
 // UGeluStridedF64 performs element-wise GELU for float64 (strided memory)
-func UGeluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UGeluF64(numel, inp, out)
 		return
 	}
@@ -1612,7 +1612,7 @@ func UGeluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		xSq := x * x
 		xCube := xSq * x
@@ -1667,8 +1667,8 @@ func UGeluErfF64(numel int, inp, out []float64) {
 }
 
 // UGeluErfStrided performs element-wise GELU (ERF-based) for type T (strided memory)
-func UGeluErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluErfStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UGeluErf(numel, inp, out)
 		return
 	}
@@ -1680,15 +1680,15 @@ func UGeluErfStrided[T D](numel, numDims int, dims, strides []int, inp, out []T)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = T(x * 0.5 * (1 + math.Erf(x/math.Sqrt(2))))
 	}
 }
 
 // UGeluErfStridedF32 performs element-wise GELU (ERF-based) for float32 (strided memory)
-func UGeluErfStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluErfStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UGeluErfF32(numel, inp, out)
 		return
 	}
@@ -1700,15 +1700,15 @@ func UGeluErfStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = float32(x * 0.5 * (1 + math.Erf(x/math.Sqrt(2))))
 	}
 }
 
 // UGeluErfStridedF64 performs element-wise GELU (ERF-based) for float64 (strided memory)
-func UGeluErfStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UGeluErfStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UGeluErfF64(numel, inp, out)
 		return
 	}
@@ -1720,7 +1720,7 @@ func UGeluErfStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		out[i] = x * 0.5 * (1 + math.Erf(x/math.Sqrt(2)))
 	}
@@ -1784,8 +1784,8 @@ func UReluF64(numel int, inp, out []float64) {
 }
 
 // UReluStrided performs element-wise ReLU for type T (strided memory)
-func UReluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UReluStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		URelu(numel, inp, out)
 		return
 	}
@@ -1798,7 +1798,7 @@ func UReluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x < 0 {
 			x = 0
@@ -1808,8 +1808,8 @@ func UReluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 }
 
 // UReluStridedF32 performs element-wise ReLU for float32 (strided memory)
-func UReluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UReluStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UReluF32(numel, inp, out)
 		return
 	}
@@ -1822,7 +1822,7 @@ func UReluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x < 0 {
 			x = 0
@@ -1832,8 +1832,8 @@ func UReluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 }
 
 // UReluStridedF64 performs element-wise ReLU for float64 (strided memory)
-func UReluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UReluStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UReluF64(numel, inp, out)
 		return
 	}
@@ -1846,7 +1846,7 @@ func UReluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x < 0 {
 			x = 0
@@ -1919,8 +1919,8 @@ func UEluF64(alpha float64, numel int, inp, out []float64) {
 }
 
 // UEluStrided performs element-wise ELU for type T with parameter alpha (strided memory)
-func UEluStrided[T D](alpha T, numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UEluStrided[T D](alpha T, numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UElu(alpha, numel, inp, out)
 		return
 	}
@@ -1934,7 +1934,7 @@ func UEluStrided[T D](alpha T, numel, numDims int, dims, strides []int, inp, out
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = x
@@ -1945,8 +1945,8 @@ func UEluStrided[T D](alpha T, numel, numDims int, dims, strides []int, inp, out
 }
 
 // UEluStridedF32 performs element-wise ELU for float32 with parameter alpha (strided memory)
-func UEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UEluStridedF32(alpha float32, numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UEluF32(alpha, numel, inp, out)
 		return
 	}
@@ -1960,7 +1960,7 @@ func UEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, inp,
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = x
@@ -1971,8 +1971,8 @@ func UEluStridedF32(alpha float32, numel, numDims int, dims, strides []int, inp,
 }
 
 // UEluStridedF64 performs element-wise ELU for float64 with parameter alpha (strided memory)
-func UEluStridedF64(alpha float64, numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UEluStridedF64(alpha float64, numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UEluF64(alpha, numel, inp, out)
 		return
 	}
@@ -1986,7 +1986,7 @@ func UEluStridedF64(alpha float64, numel, numDims int, dims, strides []int, inp,
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = x
@@ -2042,8 +2042,8 @@ func USiluF64(numel int, inp, out []float64) {
 }
 
 // USiluStrided performs element-wise SiLU for type T (strided memory)
-func USiluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USiluStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USilu(numel, inp, out)
 		return
 	}
@@ -2055,15 +2055,15 @@ func USiluStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = T(x / (1 + math.Exp(-x)))
 	}
 }
 
 // USiluStridedF32 performs element-wise SiLU for float32 (strided memory)
-func USiluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USiluStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USiluF32(numel, inp, out)
 		return
 	}
@@ -2075,15 +2075,15 @@ func USiluStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = float32(x / (1 + math.Exp(-x)))
 	}
 }
 
 // USiluStridedF64 performs element-wise SiLU for float64 (strided memory)
-func USiluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USiluStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USiluF64(numel, inp, out)
 		return
 	}
@@ -2095,7 +2095,7 @@ func USiluStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		out[i] = x / (1 + math.Exp(-x))
 	}
@@ -2141,8 +2141,8 @@ func UPowfF64(param float64, numel int, inp, out []float64) {
 }
 
 // UPowfStrided performs element-wise power for type T with parameter param (strided memory)
-func UPowfStrided[T D](param T, numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func UPowfStrided[T D](param T, numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		UPowf(param, numel, inp, out)
 		return
 	}
@@ -2153,14 +2153,14 @@ func UPowfStrided[T D](param T, numel, numDims int, dims, strides []int, inp, ou
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = T(math.Pow(float64(inp[stridedI]), float64(param)))
 	}
 }
 
 // UPowfStridedF32 performs element-wise power for float32 with parameter param (strided memory)
-func UPowfStridedF32(param float32, numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func UPowfStridedF32(param float32, numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		UPowfF32(param, numel, inp, out)
 		return
 	}
@@ -2171,14 +2171,14 @@ func UPowfStridedF32(param float32, numel, numDims int, dims, strides []int, inp
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = float32(math.Pow(float64(inp[stridedI]), float64(param)))
 	}
 }
 
 // UPowfStridedF64 performs element-wise power for float64 with parameter param (strided memory)
-func UPowfStridedF64(param float64, numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func UPowfStridedF64(param float64, numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		UPowfF64(param, numel, inp, out)
 		return
 	}
@@ -2189,7 +2189,7 @@ func UPowfStridedF64(param float64, numel, numDims int, dims, strides []int, inp
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		out[i] = math.Pow(inp[stridedI], param)
 	}
 }
@@ -2276,8 +2276,8 @@ func USignF64(numel int, inp, out []float64) {
 }
 
 // USignStrided performs element-wise sign for type T (strided memory)
-func USignStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USignStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USign(numel, inp, out)
 		return
 	}
@@ -2295,7 +2295,7 @@ func USignStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = T(1)
@@ -2308,8 +2308,8 @@ func USignStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
 }
 
 // USignStridedF32 performs element-wise sign for float32 (strided memory)
-func USignStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USignStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USignF32(numel, inp, out)
 		return
 	}
@@ -2327,7 +2327,7 @@ func USignStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = 1
@@ -2340,8 +2340,8 @@ func USignStridedF32(numel, numDims int, dims, strides []int, inp, out []float32
 }
 
 // USignStridedF64 performs element-wise sign for float64 (strided memory)
-func USignStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USignStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USignF64(numel, inp, out)
 		return
 	}
@@ -2359,7 +2359,7 @@ func USignStridedF64(numel, numDims int, dims, strides []int, inp, out []float64
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		if x > 0 {
 			out[i] = 1
@@ -2417,8 +2417,8 @@ func USigmoidF64(numel int, inp, out []float64) {
 }
 
 // USigmoidStrided performs element-wise sigmoid for type T (strided memory)
-func USigmoidStrided[T D](numel, numDims int, dims, strides []int, inp, out []T) {
-	if IsContiguous(numDims, dims, strides) {
+func USigmoidStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	if IsContiguous(ndims, dims, strides) {
 		USigmoid(numel, inp, out)
 		return
 	}
@@ -2430,15 +2430,15 @@ func USigmoidStrided[T D](numel, numDims int, dims, strides []int, inp, out []T)
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = T(1 / (1 + math.Exp(-x)))
 	}
 }
 
 // USigmoidStridedF32 performs element-wise sigmoid for float32 (strided memory)
-func USigmoidStridedF32(numel, numDims int, dims, strides []int, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func USigmoidStridedF32(numel, ndims int, dims, strides []int, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		USigmoidF32(numel, inp, out)
 		return
 	}
@@ -2450,15 +2450,15 @@ func USigmoidStridedF32(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := float64(inp[stridedI])
 		out[i] = float32(1 / (1 + math.Exp(-x)))
 	}
 }
 
 // USigmoidStridedF64 performs element-wise sigmoid for float64 (strided memory)
-func USigmoidStridedF64(numel, numDims int, dims, strides []int, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func USigmoidStridedF64(numel, ndims int, dims, strides []int, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		USigmoidF64(numel, inp, out)
 		return
 	}
@@ -2470,7 +2470,7 @@ func USigmoidStridedF64(numel, numDims int, dims, strides []int, inp, out []floa
 		return
 	}
 	for i := range numel {
-		stridedI := GetStridedIndex(i, numDims, dims, strides)
+		stridedI := GetStridedIndex(i, ndims, dims, strides)
 		x := inp[stridedI]
 		out[i] = 1 / (1 + math.Exp(-x))
 	}

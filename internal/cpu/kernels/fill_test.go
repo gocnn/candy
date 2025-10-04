@@ -99,7 +99,7 @@ func TestFillStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		val     float32
@@ -108,7 +108,7 @@ func TestFillStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			val:     2.5,
@@ -117,7 +117,7 @@ func TestFillStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (transposed view)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			val:     1.0,
@@ -126,7 +126,7 @@ func TestFillStridedF32(t *testing.T) {
 		{
 			name:    "Broadcast-like (zero stride)",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{0, 1},
 			val:     0.5,
@@ -135,7 +135,7 @@ func TestFillStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			val:     1,
@@ -148,13 +148,13 @@ func TestFillStridedF32(t *testing.T) {
 			dstSize := 0
 			if tt.numel > 0 {
 				maxIdx := 0
-				for d := 0; d < tt.numDims; d++ {
+				for d := 0; d < tt.ndims; d++ {
 					maxIdx += (tt.dims[d] - 1) * tt.strides[d]
 				}
 				dstSize = maxIdx + 1
 			}
 			dst := make([]float32, dstSize)
-			kernels.FillStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.val, dst)
+			kernels.FillStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.val, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -166,7 +166,7 @@ func TestFillStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		val     float64
@@ -175,7 +175,7 @@ func TestFillStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous 1D",
 			numel:   5,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			val:     2.5,
@@ -184,7 +184,7 @@ func TestFillStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous 2D (transposed view)",
 			numel:   4,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			val:     1.0,
@@ -193,7 +193,7 @@ func TestFillStridedF64(t *testing.T) {
 		{
 			name:    "Broadcast-like (zero stride)",
 			numel:   6,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{3, 2},
 			strides: []int{0, 1},
 			val:     0.5,
@@ -202,7 +202,7 @@ func TestFillStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			val:     1,
@@ -215,13 +215,13 @@ func TestFillStridedF64(t *testing.T) {
 			dstSize := 0
 			if tt.numel > 0 {
 				maxIdx := 0
-				for d := 0; d < tt.numDims; d++ {
+				for d := 0; d < tt.ndims; d++ {
 					maxIdx += (tt.dims[d] - 1) * tt.strides[d]
 				}
 				dstSize = maxIdx + 1
 			}
 			dst := make([]float64, dstSize)
-			kernels.FillStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.val, dst)
+			kernels.FillStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.val, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -481,7 +481,7 @@ func TestConstSetStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		val     float32
@@ -491,7 +491,7 @@ func TestConstSetStridedF32(t *testing.T) {
 		{
 			name:    "Contiguous",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			val:     5.0,
@@ -501,7 +501,7 @@ func TestConstSetStridedF32(t *testing.T) {
 		{
 			name:    "Non-contiguous (strided ids)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			val:     10,
@@ -511,7 +511,7 @@ func TestConstSetStridedF32(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			val:     1,
@@ -529,7 +529,7 @@ func TestConstSetStridedF32(t *testing.T) {
 				}
 			}
 			dst := make([]float32, dstSize)
-			kernels.ConstSetStridedF32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.val, tt.ids, dst)
+			kernels.ConstSetStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.val, tt.ids, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -541,7 +541,7 @@ func TestConstSetStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		val     float64
@@ -551,7 +551,7 @@ func TestConstSetStridedF64(t *testing.T) {
 		{
 			name:    "Contiguous",
 			numel:   3,
-			numDims: 1,
+			ndims:   1,
 			dims:    []int{5},
 			strides: []int{1},
 			val:     5.0,
@@ -561,7 +561,7 @@ func TestConstSetStridedF64(t *testing.T) {
 		{
 			name:    "Non-contiguous (strided ids)",
 			numel:   2,
-			numDims: 2,
+			ndims:   2,
 			dims:    []int{2, 2},
 			strides: []int{1, 2},
 			val:     10,
@@ -571,7 +571,7 @@ func TestConstSetStridedF64(t *testing.T) {
 		{
 			name:    "Empty",
 			numel:   0,
-			numDims: 0,
+			ndims:   0,
 			dims:    []int{},
 			strides: []int{},
 			val:     1,
@@ -589,7 +589,7 @@ func TestConstSetStridedF64(t *testing.T) {
 				}
 			}
 			dst := make([]float64, dstSize)
-			kernels.ConstSetStridedF64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.val, tt.ids, dst)
+			kernels.ConstSetStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.val, tt.ids, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}

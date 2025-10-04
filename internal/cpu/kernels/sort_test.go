@@ -53,7 +53,7 @@ func TestAsortAscI64F32(t *testing.T) {
 func TestAsortAscStridedI64F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -64,7 +64,7 @@ func TestAsortAscStridedI64F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -75,7 +75,7 @@ func TestAsortAscStridedI64F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -86,7 +86,7 @@ func TestAsortAscStridedI64F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -101,7 +101,7 @@ func TestAsortAscStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]int64, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedI64F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedI64F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -155,7 +155,7 @@ func TestAsortAscI64F64(t *testing.T) {
 func TestAsortAscStridedI64F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -166,7 +166,7 @@ func TestAsortAscStridedI64F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -177,7 +177,7 @@ func TestAsortAscStridedI64F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -188,7 +188,7 @@ func TestAsortAscStridedI64F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -203,7 +203,7 @@ func TestAsortAscStridedI64F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]int64, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedI64F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedI64F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -257,7 +257,7 @@ func TestAsortAscU32F32(t *testing.T) {
 func TestAsortAscStridedU32F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -268,7 +268,7 @@ func TestAsortAscStridedU32F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -279,7 +279,7 @@ func TestAsortAscStridedU32F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -290,7 +290,7 @@ func TestAsortAscStridedU32F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -305,7 +305,7 @@ func TestAsortAscStridedU32F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint32, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedU32F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedU32F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -359,7 +359,7 @@ func TestAsortAscU32F64(t *testing.T) {
 func TestAsortAscStridedU32F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -370,7 +370,7 @@ func TestAsortAscStridedU32F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -381,7 +381,7 @@ func TestAsortAscStridedU32F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -392,7 +392,7 @@ func TestAsortAscStridedU32F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -407,7 +407,7 @@ func TestAsortAscStridedU32F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint32, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedU32F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedU32F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -461,7 +461,7 @@ func TestAsortAscU8F32(t *testing.T) {
 func TestAsortAscStridedU8F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -472,7 +472,7 @@ func TestAsortAscStridedU8F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -483,7 +483,7 @@ func TestAsortAscStridedU8F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -494,7 +494,7 @@ func TestAsortAscStridedU8F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -509,7 +509,7 @@ func TestAsortAscStridedU8F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint8, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedU8F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedU8F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -563,7 +563,7 @@ func TestAsortAscU8F64(t *testing.T) {
 func TestAsortAscStridedU8F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -574,7 +574,7 @@ func TestAsortAscStridedU8F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -585,7 +585,7 @@ func TestAsortAscStridedU8F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -596,7 +596,7 @@ func TestAsortAscStridedU8F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -611,7 +611,7 @@ func TestAsortAscStridedU8F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint8, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortAscStridedU8F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortAscStridedU8F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -665,7 +665,7 @@ func TestAsortDescI64F32(t *testing.T) {
 func TestAsortDescStridedI64F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -676,7 +676,7 @@ func TestAsortDescStridedI64F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -687,7 +687,7 @@ func TestAsortDescStridedI64F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -698,7 +698,7 @@ func TestAsortDescStridedI64F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -713,7 +713,7 @@ func TestAsortDescStridedI64F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]int64, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedI64F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedI64F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -767,7 +767,7 @@ func TestAsortDescI64F64(t *testing.T) {
 func TestAsortDescStridedI64F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -778,7 +778,7 @@ func TestAsortDescStridedI64F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -789,7 +789,7 @@ func TestAsortDescStridedI64F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -800,7 +800,7 @@ func TestAsortDescStridedI64F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -815,7 +815,7 @@ func TestAsortDescStridedI64F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]int64, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedI64F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedI64F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -869,7 +869,7 @@ func TestAsortDescU32F32(t *testing.T) {
 func TestAsortDescStridedU32F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -880,7 +880,7 @@ func TestAsortDescStridedU32F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -891,7 +891,7 @@ func TestAsortDescStridedU32F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -902,7 +902,7 @@ func TestAsortDescStridedU32F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -917,7 +917,7 @@ func TestAsortDescStridedU32F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint32, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedU32F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedU32F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -971,7 +971,7 @@ func TestAsortDescU32F64(t *testing.T) {
 func TestAsortDescStridedU32F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -982,7 +982,7 @@ func TestAsortDescStridedU32F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -993,7 +993,7 @@ func TestAsortDescStridedU32F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -1004,7 +1004,7 @@ func TestAsortDescStridedU32F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -1019,7 +1019,7 @@ func TestAsortDescStridedU32F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint32, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedU32F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedU32F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -1073,7 +1073,7 @@ func TestAsortDescU8F32(t *testing.T) {
 func TestAsortDescStridedU8F32(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -1084,7 +1084,7 @@ func TestAsortDescStridedU8F32(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -1095,7 +1095,7 @@ func TestAsortDescStridedU8F32(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -1106,7 +1106,7 @@ func TestAsortDescStridedU8F32(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -1121,7 +1121,7 @@ func TestAsortDescStridedU8F32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint8, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedU8F32(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedU8F32(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}
@@ -1175,7 +1175,7 @@ func TestAsortDescU8F64(t *testing.T) {
 func TestAsortDescStridedU8F64(t *testing.T) {
 	tests := []struct {
 		name       string
-		numDims    int
+		ndims      int
 		dims       []int
 		strides    []int
 		stridesDst []int
@@ -1186,7 +1186,7 @@ func TestAsortDescStridedU8F64(t *testing.T) {
 	}{
 		{
 			name:       "Contiguous 1D",
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{1},
 			stridesDst: []int{1},
@@ -1197,7 +1197,7 @@ func TestAsortDescStridedU8F64(t *testing.T) {
 		},
 		{
 			name:       "Non-contiguous 2D (strided src)",
-			numDims:    2,
+			ndims:      2,
 			dims:       []int{2, 2},
 			strides:    []int{1, 2},
 			stridesDst: []int{2, 1},
@@ -1208,7 +1208,7 @@ func TestAsortDescStridedU8F64(t *testing.T) {
 		},
 		{
 			name:       "Empty",
-			numDims:    0,
+			ndims:      0,
 			dims:       []int{},
 			strides:    []int{},
 			stridesDst: []int{},
@@ -1223,7 +1223,7 @@ func TestAsortDescStridedU8F64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dstCopy := make([]uint8, len(tt.dst))
 			copy(dstCopy, tt.dst)
-			kernels.AsortDescStridedU8F64(tt.numDims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
+			kernels.AsortDescStridedU8F64(tt.ndims, tt.dims, tt.strides, tt.stridesDst, tt.ncols, tt.src, dstCopy)
 			if !slices.Equal(dstCopy, tt.want) {
 				t.Errorf("dst: got %v, want %v", dstCopy, tt.want)
 			}

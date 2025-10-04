@@ -224,12 +224,12 @@ func TestCastF64I64(t *testing.T) {
 
 func TestCastStridedF32F32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x, y           []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x, y         []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float32{1.1, 2.2, 3.3}, make([]float32, 3), []float32{1.1, 2.2, 3.3}},
@@ -247,7 +247,7 @@ func TestCastStridedF32F32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF32F32(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF32F32(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -256,13 +256,13 @@ func TestCastStridedF32F32(t *testing.T) {
 
 func TestCastStridedF32F64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float32
-		y              []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float32
+		y            []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float32{1.1, 2.2, 3.3}, make([]float64, 3), []float64{1.1, 2.2, 3.3}},
@@ -280,7 +280,7 @@ func TestCastStridedF32F64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF32F64(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF32F64(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.EqualFunc(tt.y, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -289,13 +289,13 @@ func TestCastStridedF32F64(t *testing.T) {
 
 func TestCastStridedF32U8(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float32
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float32
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float32{1, 2, 3}, make([]uint8, 3), []uint8{1, 2, 3}},
@@ -313,7 +313,7 @@ func TestCastStridedF32U8(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF32U8(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF32U8(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -322,13 +322,13 @@ func TestCastStridedF32U8(t *testing.T) {
 
 func TestCastStridedF32U32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float32
-		y              []uint32
-		want           []uint32
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float32
+		y            []uint32
+		want         []uint32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float32{1, 2, 3}, make([]uint32, 3), []uint32{1, 2, 3}},
@@ -346,7 +346,7 @@ func TestCastStridedF32U32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF32U32(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF32U32(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -355,13 +355,13 @@ func TestCastStridedF32U32(t *testing.T) {
 
 func TestCastStridedF32I64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float32
-		y              []int64
-		want           []int64
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float32
+		y            []int64
+		want         []int64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float32{1, 2, 3}, make([]int64, 3), []int64{1, 2, 3}},
@@ -379,7 +379,7 @@ func TestCastStridedF32I64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF32I64(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF32I64(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -390,13 +390,13 @@ func TestCastStridedF32I64(t *testing.T) {
 
 func TestCastStridedF64F32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float64
-		y              []float32
-		want           []float32
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float64
+		y            []float32
+		want         []float32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float64{1.1, 2.2, 3.3}, make([]float32, 3), []float32{1.1, 2.2, 3.3}},
@@ -414,7 +414,7 @@ func TestCastStridedF64F32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF64F32(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF64F32(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -423,12 +423,12 @@ func TestCastStridedF64F32(t *testing.T) {
 
 func TestCastStridedF64F64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x, y           []float64
-		want           []float64
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x, y         []float64
+		want         []float64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float64{1.1, 2.2, 3.3}, make([]float64, 3), []float64{1.1, 2.2, 3.3}},
@@ -446,7 +446,7 @@ func TestCastStridedF64F64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF64F64(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF64F64(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -455,13 +455,13 @@ func TestCastStridedF64F64(t *testing.T) {
 
 func TestCastStridedF64U8(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float64
-		y              []uint8
-		want           []uint8
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float64
+		y            []uint8
+		want         []uint8
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float64{1, 2, 3}, make([]uint8, 3), []uint8{1, 2, 3}},
@@ -479,7 +479,7 @@ func TestCastStridedF64U8(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF64U8(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF64U8(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -488,13 +488,13 @@ func TestCastStridedF64U8(t *testing.T) {
 
 func TestCastStridedF64U32(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float64
-		y              []uint32
-		want           []uint32
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float64
+		y            []uint32
+		want         []uint32
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float64{1, 2, 3}, make([]uint32, 3), []uint32{1, 2, 3}},
@@ -512,7 +512,7 @@ func TestCastStridedF64U32(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF64U32(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF64U32(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
@@ -521,13 +521,13 @@ func TestCastStridedF64U32(t *testing.T) {
 
 func TestCastStridedF64I64(t *testing.T) {
 	tests := []struct {
-		numel, numDims int
-		dims           []int
-		stridesX       []int
-		stridesY       []int
-		x              []float64
-		y              []int64
-		want           []int64
+		numel, ndims int
+		dims         []int
+		stridesX     []int
+		stridesY     []int
+		x            []float64
+		y            []int64
+		want         []int64
 	}{
 		// 1D contiguous
 		{3, 1, []int{3}, []int{1}, []int{1}, []float64{1, 2, 3}, make([]int64, 3), []int64{1, 2, 3}},
@@ -545,7 +545,7 @@ func TestCastStridedF64I64(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kernels.CastStridedF64I64(tt.numel, tt.numDims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
+		kernels.CastStridedF64I64(tt.numel, tt.ndims, tt.dims, tt.stridesX, tt.stridesY, tt.x, tt.y)
 		if !slices.Equal(tt.y, tt.want) {
 			t.Errorf("got %v, want %v", tt.y, tt.want)
 		}
