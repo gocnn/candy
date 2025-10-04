@@ -4,6 +4,7 @@ import "github.com/gocnn/spark"
 
 type D interface {
 	spark.D
+
 	~float32 | ~float64
 }
 

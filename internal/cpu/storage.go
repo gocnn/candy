@@ -8,6 +8,9 @@ import (
 	"github.com/gocnn/spark/internal/cpu/kernels"
 )
 
+var _ spark.BackendStorage[float32] = (*CpuStorage[float32])(nil)
+var _ spark.BackendStorage[float64] = (*CpuStorage[float64])(nil)
+
 type CpuStorage[T kernels.D] struct {
 	data   []T
 	device *CpuDevice[T]
@@ -38,12 +41,22 @@ func (s *CpuStorage[T]) Affine(layout *spark.Layout, scale, bias T) (spark.Backe
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
+
 	result := New(make([]T, numel))
-	kernels.AffineStrided(numel, layout.Rank(), layout.Dims(), layout.Stride(), scale, bias, s.data, result.data)
+	kernels.AffineStrided(
+		numel,           // numel
+		layout.Rank(),   // ndims
+		layout.Dims(),   // dims
+		layout.Stride(), // strides
+		scale,           // scale
+		bias,            // bias
+		s.data,          // x
+		result.data,     // y
+	)
 	return result, nil
 }
 
-func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resultLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -54,18 +67,21 @@ func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if rhsLayout == nil {
 		return nil, errors.New("rhsLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() {
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resultLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.BAddStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims
 		lhsLayout.Stride(),    // stridesX1
 		rhsLayout.Stride(),    // stridesX2
-		resultLayout.Stride(), // stridesY
+		resLayout.Stride(),    // stridesY
 		s.data,                // x1
 		rhsC.data,             // x2
 		result.data,           // y
@@ -74,7 +90,7 @@ func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	return result, nil
 }
 
-func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resultLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -85,18 +101,21 @@ func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if rhsLayout == nil {
 		return nil, errors.New("rhsLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() {
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resultLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.BMulStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims
 		lhsLayout.Stride(),    // stridesX1
 		rhsLayout.Stride(),    // stridesX2
-		resultLayout.Stride(), // stridesY
+		resLayout.Stride(),    // stridesY
 		s.data,                // x1
 		rhsC.data,             // x2
 		result.data,           // y
