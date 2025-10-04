@@ -15,26 +15,32 @@ type BackendStorage[T D] interface {
 	// Affine applies an affine transformation (scale * x + bias) to the storage.
 	Affine(*Layout, T, T) (BackendStorage[T], error)
 
-	// Powf raises each element to the given power.
-	Powf(*Layout, T) (BackendStorage[T], error)
+	// Add performs element-wise addition between this and another storage.
+	Add(BackendStorage[T], *Layout, *Layout, *Layout) (BackendStorage[T], error)
 
-	// Elu applies the ELU activation function with the given alpha.
-	Elu(*Layout, T) (BackendStorage[T], error)
+	// Mul performs element-wise multiplication between this and another storage.
+	Mul(BackendStorage[T], *Layout, *Layout, *Layout) (BackendStorage[T], error)
 
-	// ReduceOp applies a reduction operation (e.g., sum, max) along specified dimensions.
-	ReduceOp(ReduceOp, *Layout, []int) (BackendStorage[T], error)
+	// // Powf raises each element to the given power.
+	// Powf(*Layout, T) (BackendStorage[T], error)
 
-	// Cmp performs a comparison operation between this and another storage.
-	Cmp(CmpOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
+	// // Elu applies the ELU activation function with the given alpha.
+	// Elu(*Layout, T) (BackendStorage[T], error)
 
-	// ToDType converts the storage to the specified data type.
-	ToDType(*Layout, DType) (BackendStorage[T], error)
+	// // ReduceOp applies a reduction operation (e.g., sum, max) along specified dimensions.
+	// ReduceOp(ReduceOp, *Layout, []int) (BackendStorage[T], error)
 
-	// UnaryImpl applies a unary operation to the storage.
-	UnaryImpl(UnaryOp, *Layout) (BackendStorage[T], error)
+	// // Cmp performs a comparison operation between this and another storage.
+	// Cmp(CmpOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
 
-	// BinaryImpl applies a binary operation between this and another storage.
-	BinaryImpl(BinaryOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
+	// // ToDType converts the storage to the specified data type.
+	// ToDType(*Layout, DType) (BackendStorage[T], error)
+
+	// // UnaryImpl applies a unary operation to the storage.
+	// UnaryImpl(UnaryOp, *Layout) (BackendStorage[T], error)
+
+	// // BinaryImpl applies a binary operation between this and another storage.
+	// BinaryImpl(BinaryOp, BackendStorage[T], *Layout, *Layout) (BackendStorage[T], error)
 
 	// WhereCond applies a conditional operation: if cond then true_value else false_value.
 	// 	WhereCond(condLayout *Layout, trueValue BackendStorage[T], trueLayout *Layout, falseValue BackendStorage[T], falseLayout *Layout) (BackendStorage[T], error)

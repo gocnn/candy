@@ -1,24 +1,21 @@
 package cpu
 
-import "github.com/gocnn/spark/internal/cpu/kernels"
+import (
+	"github.com/gocnn/spark"
+	"github.com/gocnn/spark/internal/cpu/kernels"
+)
 
 // CpuDevice is a CPU-based implementation of the BackendDevice interface.
 type CpuDevice[T kernels.D] struct{}
 
-// // NewCpuDevice creates a new CpuDevice.
-// func NewCpuDevice[T spark.D](size ...int) (spark.BackendDevice[T], error) {
-// 	return &CpuDevice[T]{}, nil
-// }
+func NewCpuDevice[T kernels.D]() spark.BackendDevice[T] {
+	return &CpuDevice[T]{}
+}
 
-// // Location returns the device location as "cpu".
-// func (c *CpuDevice[T]) Location() spark.DeviceLocation {
-// 	return spark.CpuLocation
-// }
-
-// // SameDevice checks if another device is also a CpuDevice.
-// func (c *CpuDevice[T]) SameDevice() bool {
-// 	return true
-// }
+// SameDevice checks if another device is also a CpuDevice.
+func (c *CpuDevice[T]) SameDevice() bool {
+	return true
+}
 
 // // StorageFromSlice creates a CpuStorage from a slice of float32 or float64.
 // func (c *CpuDevice[T]) StorageFromSlice(data []T) CpuStorage[T] {

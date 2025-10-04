@@ -43,102 +43,64 @@ func (s *CpuStorage[T]) Affine(layout *spark.Layout, scale, bias T) (spark.Backe
 	return result, nil
 }
 
-func (s *CpuStorage[T]) BinaryImpl(op spark.BinaryOp, other spark.BackendStorage[T], layout *spark.Layout, otherLayout *spark.Layout) (spark.BackendStorage[T], error) {
-	return nil, nil
+func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resultLayout *spark.Layout) (spark.BackendStorage[T], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]T, resultLayout.ElemCount()))
+	kernels.BAddStrided(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // numDims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resultLayout.Stride(), // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
 }
 
-func (s *CpuStorage[T]) Powf(layout *spark.Layout, power T) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
+func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resultLayout *spark.Layout) (spark.BackendStorage[T], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
 
-func (s *CpuStorage[T]) Elu(layout *spark.Layout, alpha T) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
+	result := New(make([]T, resultLayout.ElemCount()))
+	kernels.BMulStrided(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // numDims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resultLayout.Stride(), // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
 
-func (s *CpuStorage[T]) ReduceOp(op spark.ReduceOp, layout *spark.Layout, dims []int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) Cmp(op spark.CmpOp, other spark.BackendStorage[T], layout *spark.Layout, otherLayout *spark.Layout) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) ToDType(layout *spark.Layout, dtype spark.DType) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) UnaryImpl(op spark.UnaryOp, layout *spark.Layout) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) WhereCond(condLayout *spark.Layout, trueValue spark.BackendStorage[T], trueLayout *spark.Layout, falseValue spark.BackendStorage[T], falseLayout *spark.Layout) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) Conv1D(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ParamsConv1D) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) ConvTranspose1D(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ParamsConvTranspose1D) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) Conv2D(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ParamsConv2D) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) ConvTranspose2D(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ParamsConvTranspose2D) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) AvgPool2D(layout *spark.Layout, kernelSize, strides [2]int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) MaxPool2D(layout *spark.Layout, kernelSize, strides [2]int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) UpsampleNearest1D(layout *spark.Layout, outSize int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) UpsampleNearest2D(layout *spark.Layout, outH, outW int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) Gather(layout *spark.Layout, indices spark.BackendStorage[T], indicesLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) ScatterSet(layout *spark.Layout, indices spark.BackendStorage[T], indicesLayout *spark.Layout, values spark.BackendStorage[T], valuesLayout *spark.Layout, dim int) error {
-	return nil
-}
-
-func (s *CpuStorage[T]) ScatterAddSet(layout *spark.Layout, indices spark.BackendStorage[T], indicesLayout *spark.Layout, values spark.BackendStorage[T], valuesLayout *spark.Layout, dim int) error {
-	return nil
-}
-
-func (s *CpuStorage[T]) IndexSelect(indices spark.BackendStorage[T], indicesLayout, layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) IndexAdd(layout *spark.Layout, indices spark.BackendStorage[T], indicesLayout *spark.Layout, values spark.BackendStorage[T], valuesLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) Matmul(rhs spark.BackendStorage[T], dims [4]int, lhsLayout, rhsLayout *spark.Layout) (spark.BackendStorage[T], error) {
-	return nil, nil
-}
-
-func (s *CpuStorage[T]) CopyStridedSrc(dst spark.BackendStorage[T], dstOffset int, srcLayout *spark.Layout) error {
-	return nil
-}
-
-func (s *CpuStorage[T]) Copy2D(dst spark.BackendStorage[T], d1, d2, srcStride1, dstStride1, srcOffset, dstOffset int) error {
-	return nil
-}
-
-func (s *CpuStorage[T]) ConstSet(scalar interface{}, layout *spark.Layout) error {
-	return nil
+	return result, nil
 }
