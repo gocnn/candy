@@ -22,35 +22,35 @@ func FillF64(numel int, val float64, dst []float64) {
 }
 
 // FillStrided fills the destination array with a constant value for strided memory
-func FillStrided[T D](numel, numDims int, dims, strides []int, val T, dst []T) {
-	if IsContiguous(numDims, dims, strides) {
+func FillStrided[T D](numel, ndims int, dims, strides []int, val T, dst []T) {
+	if IsContiguous(ndims, dims, strides) {
 		Fill(numel, val, dst)
 		return
 	}
 	for i := range numel {
-		dst[GetStridedIndex(i, numDims, dims, strides)] = val
+		dst[GetStridedIndex(i, ndims, dims, strides)] = val
 	}
 }
 
 // FillStridedF32 fills the destination array with a constant float32 value for strided memory
-func FillStridedF32(numel, numDims int, dims, strides []int, val float32, dst []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func FillStridedF32(numel, ndims int, dims, strides []int, val float32, dst []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		FillF32(numel, val, dst)
 		return
 	}
 	for i := range numel {
-		dst[GetStridedIndex(i, numDims, dims, strides)] = val
+		dst[GetStridedIndex(i, ndims, dims, strides)] = val
 	}
 }
 
 // FillStridedF64 fills the destination array with a constant float64 value for strided memory
-func FillStridedF64(numel, numDims int, dims, strides []int, val float64, dst []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func FillStridedF64(numel, ndims int, dims, strides []int, val float64, dst []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		FillF64(numel, val, dst)
 		return
 	}
 	for i := range numel {
-		dst[GetStridedIndex(i, numDims, dims, strides)] = val
+		dst[GetStridedIndex(i, ndims, dims, strides)] = val
 	}
 }
 
@@ -103,8 +103,8 @@ func ConstSetF64(numel int, val float64, ids []int, dst []float64) {
 }
 
 // ConstSetStrided sets a constant value at specified indices for strided memory
-func ConstSetStrided[T D](numel, numDims int, dims, strides []int, val T, ids []int, dst []T) {
-	if IsContiguous(numDims, dims, strides) {
+func ConstSetStrided[T D](numel, ndims int, dims, strides []int, val T, ids []int, dst []T) {
+	if IsContiguous(ndims, dims, strides) {
 		ConstSet(numel, val, ids, dst)
 		return
 	}
@@ -114,8 +114,8 @@ func ConstSetStrided[T D](numel, numDims int, dims, strides []int, val T, ids []
 }
 
 // ConstSetStridedF32 sets a constant float32 value at specified indices for strided memory
-func ConstSetStridedF32(numel, numDims int, dims, strides []int, val float32, ids []int, dst []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ConstSetStridedF32(numel, ndims int, dims, strides []int, val float32, ids []int, dst []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ConstSetF32(numel, val, ids, dst)
 		return
 	}
@@ -125,8 +125,8 @@ func ConstSetStridedF32(numel, numDims int, dims, strides []int, val float32, id
 }
 
 // ConstSetStridedF64 sets a constant float64 value at specified indices for strided memory
-func ConstSetStridedF64(numel, numDims int, dims, strides []int, val float64, ids []int, dst []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ConstSetStridedF64(numel, ndims int, dims, strides []int, val float64, ids []int, dst []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ConstSetF64(numel, val, ids, dst)
 		return
 	}

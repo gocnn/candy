@@ -8,7 +8,7 @@ import (
 
 func TestIsContiguous(t *testing.T) {
 	tests := []struct {
-		numDims int
+		ndims   int
 		dims    []int
 		strides []int
 		want    bool
@@ -26,7 +26,7 @@ func TestIsContiguous(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := kernels.IsContiguous(tt.numDims, tt.dims, tt.strides)
+		got := kernels.IsContiguous(tt.ndims, tt.dims, tt.strides)
 		if got != tt.want {
 			t.Errorf("got %v, want %v", got, tt.want)
 		}
@@ -36,7 +36,7 @@ func TestIsContiguous(t *testing.T) {
 func TestGetStridedIndex(t *testing.T) {
 	tests := []struct {
 		linearIdx int
-		numDims   int
+		ndims     int
 		dims      []int
 		strides   []int
 		want      int
@@ -86,7 +86,7 @@ func TestGetStridedIndex(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := kernels.GetStridedIndex(tt.linearIdx, tt.numDims, tt.dims, tt.strides)
+		got := kernels.GetStridedIndex(tt.linearIdx, tt.ndims, tt.dims, tt.strides)
 		if got != tt.want {
 			t.Errorf("got %v, want %v", got, tt.want)
 		}

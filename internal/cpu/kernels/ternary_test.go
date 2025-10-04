@@ -337,7 +337,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -350,7 +350,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -363,7 +363,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2}, // ids stored with stride 2
 			stridesT: []int{1},
@@ -376,7 +376,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2}, // t stored with stride 2
@@ -389,7 +389,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -404,7 +404,7 @@ func TestWhereStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.WhereStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -416,7 +416,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -429,7 +429,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -442,7 +442,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2},
 			stridesT: []int{1},
@@ -455,7 +455,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2},
@@ -468,7 +468,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -483,7 +483,7 @@ func TestWhereStridedI64F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.WhereStridedI64F64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedI64F64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -495,7 +495,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -508,7 +508,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -521,7 +521,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2},
 			stridesT: []int{1},
@@ -534,7 +534,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2},
@@ -547,7 +547,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -562,7 +562,7 @@ func TestWhereStridedU32F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.WhereStridedU32F32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedU32F32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -574,7 +574,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -587,7 +587,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -600,7 +600,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2},
 			stridesT: []int{1},
@@ -613,7 +613,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2},
@@ -626,7 +626,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -641,7 +641,7 @@ func TestWhereStridedU32F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.WhereStridedU32F64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedU32F64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -653,7 +653,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -666,7 +666,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -679,7 +679,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2},
 			stridesT: []int{1},
@@ -692,7 +692,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2},
@@ -705,7 +705,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -720,7 +720,7 @@ func TestWhereStridedU8F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.WhereStridedU8F32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedU8F32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -732,7 +732,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 	tests := []struct {
 		name     string
 		numel    int
-		numDims  int
+		ndims    int
 		dims     []int
 		strides  []int
 		stridesT []int
@@ -745,7 +745,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 		{
 			name:     "Contiguous",
 			numel:    5,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{5},
 			strides:  []int{1},
 			stridesT: []int{1},
@@ -758,7 +758,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 		{
 			name:     "Non-contiguous strides",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{2},
 			stridesT: []int{1},
@@ -771,7 +771,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 		{
 			name:     "Non-contiguous t and f",
 			numel:    3,
-			numDims:  1,
+			ndims:    1,
 			dims:     []int{3},
 			strides:  []int{1},
 			stridesT: []int{2},
@@ -784,7 +784,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 		{
 			name:     "Empty",
 			numel:    0,
-			numDims:  0,
+			ndims:    0,
 			dims:     []int{},
 			strides:  []int{},
 			stridesT: []int{},
@@ -799,7 +799,7 @@ func TestWhereStridedU8F64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.WhereStridedU8F64(tt.numel, tt.numDims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
+			kernels.WhereStridedU8F64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.stridesT, tt.stridesF, tt.ids, tt.t, tt.f, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}

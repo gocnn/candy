@@ -61,7 +61,7 @@ func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	result := New(make([]T, resultLayout.ElemCount()))
 	kernels.BAddStrided(
 		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // numDims
+		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims
 		lhsLayout.Stride(),    // stridesX1
 		rhsLayout.Stride(),    // stridesX2
@@ -92,7 +92,7 @@ func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	result := New(make([]T, resultLayout.ElemCount()))
 	kernels.BMulStrided(
 		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // numDims
+		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims
 		lhsLayout.Stride(),    // stridesX1
 		rhsLayout.Stride(),    // stridesX2
