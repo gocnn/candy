@@ -5,7 +5,7 @@ import "github.com/gocnn/spark"
 type D interface {
 	spark.D
 
-	~float32 | ~float64
+	~float32 | ~float64 | ~uint8 | ~uint32 | ~int64
 }
 
 type I interface {

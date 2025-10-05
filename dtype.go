@@ -2,7 +2,7 @@ package spark
 
 // D is the type constraint for matrices defined in this package.
 type D interface {
-	float32 | float64
+	float32 | float64 | uint8 | uint32 | int64
 }
 
 type DType int
@@ -46,6 +46,12 @@ func DTypeOf[T D]() DType {
 		return F32
 	case float64:
 		return F64
+	case uint8:
+		return U8
+	case uint32:
+		return U32
+	case int64:
+		return I64
 	default:
 		// This should never happen due to type constraint
 		panic("unsupported type for DTypeOf")

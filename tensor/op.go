@@ -288,3 +288,54 @@ func DivBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tens
 	gb := NewFromStorage(gbStorage, outputGrad.layout, outputGrad.dtype, outputGrad.device)
 	return []*Tensor[T]{ga, gb}, nil
 }
+
+// BroadcastAddForward computes the broadcasted addition: result = broadcast(a) + broadcast(b).
+func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("invalid input count: expected 2, got %d", len(inputs))
+	}
+
+	a, b := inputs[0], inputs[1]
+
+	// Compute broadcasted shape
+	bcastShape, err := a.layout.Shape().BroadcastShapeBinaryOp(b.layout.Shape())
+	if err != nil {
+		return nil, fmt.Errorf("compute broadcast shape: %w", err)
+	}
+
+	// Broadcast input tensors
+	aBcast, err := a.BroadcastAs(bcastShape)
+	if err != nil {
+		return nil, fmt.Errorf("broadcast a: %w", err)
+	}
+	bBcast, err := b.BroadcastAs(bcastShape)
+	if err != nil {
+		return nil, fmt.Errorf("broadcast b: %w", err)
+	}
+
+	// Create result layout
+	resultLayout := spark.Contiguous(bcastShape)
+
+	// Perform addition
+	result, err := aBcast.storage.Add(bBcast.storage, aBcast.layout, bBcast.layout, resultLayout)
+	if err != nil {
+		return nil, fmt.Errorf("add: %w", err)
+	}
+
+	return NewFromStorage(result, resultLayout, a.dtype, a.device), nil
+}
+
+// BroadcastAddBackward computes gradients for broadcasted addition: ∂(a+b)/∂a = 1, ∂(a+b)/∂b = 1
+func BroadcastAddBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("BroadcastAddBackward expects 2 inputs, got %d", len(inputs))
+	}
+
+	// ∂(a+b)/∂a = outputGrad * 1 = outputGrad
+	ga := outputGrad
+
+	// ∂(a+b)/∂b = outputGrad * 1 = outputGrad
+	gb := outputGrad
+
+	return []*Tensor[T]{ga, gb}, nil
+}

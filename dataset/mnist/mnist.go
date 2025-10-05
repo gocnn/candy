@@ -184,33 +184,3 @@ func readLabels(path string) ([]uint8, error) {
 	}
 	return labels, nil
 }
-
-// PrintImage displays a 28x28 MNIST image as ASCII art in the terminal.
-//
-// Parameters:
-//
-//	pixels []float32: A slice of 784 float32 values representing the pixel intensities
-//	of a 28x28 MNIST image. Each value should be in the range [0, 1].
-//
-// Behavior:
-//
-//	The function maps pixel intensity values to different ASCII characters to
-//	visually represent the image. Higher intensity pixels are shown as "██",
-//	medium as "▓▓" or "░░", and low intensity as spaces.
-func PrintImage[T spark.D](pixels []T) {
-	for i := range MNISTImageSize {
-		for j := range MNISTImageSize {
-			pixel := pixels[i*MNISTImageSize+j]
-			if pixel > 0.5 {
-				fmt.Print("██")
-			} else if pixel > 0.3 {
-				fmt.Print("▓▓")
-			} else if pixel > 0.1 {
-				fmt.Print("░░")
-			} else {
-				fmt.Print("  ")
-			}
-		}
-		fmt.Println()
-	}
-}

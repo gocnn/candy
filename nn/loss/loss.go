@@ -4,6 +4,7 @@ package loss
 // 	"fmt"
 
 // 	"github.com/gocnn/spark"
+// 	"github.com/gocnn/spark/tensor"
 // )
 
 // // NLL computes the negative log likelihood loss.
@@ -14,7 +15,7 @@ package loss
 // //   - target: Ground truth labels as tensor of uint32 of dimension [N].
 // //
 // // Returns a scalar tensor containing the average value over the batch.
-// func NLL[T spark.D](inp, target *spark.Tensor[T]) (*spark.Tensor[T], error) {
+// func NLL[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 // 	inpShape := inp.Layout().Shape()
 // 	targetShape := target.Layout().Shape()
 
@@ -68,7 +69,7 @@ package loss
 // //   - target: Ground truth labels as tensor of uint32 of dimension [N].
 // //
 // // Returns a scalar tensor containing the average value over the batch.
-// func CrossEntropy[T spark.D](inp, target *spark.Tensor[T]) (*spark.Tensor[T], error) {
+// func CrossEntropy[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 // 	if inp.Layout().Shape().Rank() != 2 {
 // 		return nil, fmt.Errorf("cross_entropy expects an input tensor of rank 2, got %d",
 // 			inp.Layout().Shape().Rank())

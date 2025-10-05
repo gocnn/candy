@@ -77,6 +77,105 @@ func WhereU8F64(numel int, ids []uint8, t, f, dst []float64) {
 	}
 }
 
+// WhereI64U8 selects elements from t or f based on int64 indices for uint8
+func WhereI64U8(numel int, ids []int64, t, f, dst []uint8) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereI64U32 selects elements from t or f based on int64 indices for uint32
+func WhereI64U32(numel int, ids []int64, t, f, dst []uint32) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereI64I64 selects elements from t or f based on int64 indices for int64
+func WhereI64I64(numel int, ids []int64, t, f, dst []int64) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU32U8 selects elements from t or f based on uint32 indices for uint8
+func WhereU32U8(numel int, ids []uint32, t, f, dst []uint8) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU32U32 selects elements from t or f based on uint32 indices for uint32
+func WhereU32U32(numel int, ids []uint32, t, f, dst []uint32) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU32I64 selects elements from t or f based on uint32 indices for int64
+func WhereU32I64(numel int, ids []uint32, t, f, dst []int64) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU8U8 selects elements from t or f based on uint8 indices for uint8
+func WhereU8U8(numel int, ids []uint8, t, f, dst []uint8) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU8U32 selects elements from t or f based on uint8 indices for uint32
+func WhereU8U32(numel int, ids []uint8, t, f, dst []uint32) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
+// WhereU8I64 selects elements from t or f based on uint8 indices for int64
+func WhereU8I64(numel int, ids []uint8, t, f, dst []int64) {
+	for i := range numel {
+		if ids[i] != 0 {
+			dst[i] = t[i]
+		} else {
+			dst[i] = f[i]
+		}
+	}
+}
+
 // WhereStrided selects elements from t or f based on indices of type I for data of type T with strided memory
 func WhereStrided[U I, T D](numel, ndims int, dims, strides, stridesT, stridesF []int, ids []U, t, f, dst []T) {
 	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
@@ -171,6 +270,141 @@ func WhereStridedU8F32(numel, ndims int, dims, strides, stridesT, stridesF []int
 func WhereStridedU8F64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []float64) {
 	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
 		WhereU8F64(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedI64U8 selects elements from t or f based on int64 indices for uint8 with strided memory
+func WhereStridedI64U8(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []uint8) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereI64U8(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedI64U32 selects elements from t or f based on int64 indices for uint32 with strided memory
+func WhereStridedI64U32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereI64U32(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedI64I64 selects elements from t or f based on int64 indices for int64 with strided memory
+func WhereStridedI64I64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []int64, t, f, dst []int64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereI64I64(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU32U8 selects elements from t or f based on uint32 indices for uint8 with strided memory
+func WhereStridedU32U8(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []uint8) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU32U8(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU32U32 selects elements from t or f based on uint32 indices for uint32 with strided memory
+func WhereStridedU32U32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU32U32(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU32I64 selects elements from t or f based on uint32 indices for int64 with strided memory
+func WhereStridedU32I64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint32, t, f, dst []int64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU32I64(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU8U8 selects elements from t or f based on uint8 indices for uint8 with strided memory
+func WhereStridedU8U8(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []uint8) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU8U8(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU8U32 selects elements from t or f based on uint8 indices for uint32 with strided memory
+func WhereStridedU8U32(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU8U32(numel, ids, t, f, dst)
+		return
+	}
+	for i := range numel {
+		if ids[GetStridedIndex(i, ndims, dims, strides)] != 0 {
+			dst[i] = t[GetStridedIndex(i, ndims, dims, stridesT)]
+		} else {
+			dst[i] = f[GetStridedIndex(i, ndims, dims, stridesF)]
+		}
+	}
+}
+
+// WhereStridedU8I64 selects elements from t or f based on uint8 indices for int64 with strided memory
+func WhereStridedU8I64(numel, ndims int, dims, strides, stridesT, stridesF []int, ids []uint8, t, f, dst []int64) {
+	if IsContiguous(ndims, dims, strides) && IsContiguous(ndims, dims, stridesT) && IsContiguous(ndims, dims, stridesF) {
+		WhereU8I64(numel, ids, t, f, dst)
 		return
 	}
 	for i := range numel {

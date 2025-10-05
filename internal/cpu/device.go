@@ -12,6 +12,9 @@ import (
 
 var _ spark.BackendDevice[float32] = (*CpuDevice[float32])(nil)
 var _ spark.BackendDevice[float64] = (*CpuDevice[float64])(nil)
+var _ spark.BackendDevice[uint8] = (*CpuDevice[uint8])(nil)
+var _ spark.BackendDevice[uint32] = (*CpuDevice[uint32])(nil)
+var _ spark.BackendDevice[int64] = (*CpuDevice[int64])(nil)
 
 // CpuDevice is a CPU-based implementation of the BackendDevice interface.
 type CpuDevice[T kernels.D] struct{}
@@ -42,7 +45,7 @@ func (c *CpuDevice[T]) StorageFromCpuStorage(s *CpuStorage[T]) (spark.BackendSto
 	return s.TryClone()
 }
 
-// SetSeed is unsupported for CPU RNG.
+// SetSeed is unsupported for CPU RNG (no global seed in math/rand/v2).
 func (c *CpuDevice[T]) SetSeed(seed uint64) error {
 	return errors.New("CPU RNG seeding unsupported")
 }
@@ -61,6 +64,35 @@ func (c *CpuDevice[T]) RandUniform(shape *spark.Shape, dtype spark.DType, min, m
 		for i := range data {
 			data[i] = any(min + rand.Float64()*(max-min)).(T)
 		}
+	case spark.U8:
+		minU8, maxU8 := uint8(min), uint8(max)
+		if min < 0 || max > math.MaxUint8 || max < min {
+			return nil, errors.New("invalid range for uint8")
+		}
+		rangeSize := uint32(maxU8 - minU8 + 1)
+		for i := range data {
+			data[i] = any(minU8 + uint8(rand.Uint32N(rangeSize))).(T)
+		}
+	case spark.U32:
+		minU32, maxU32 := uint32(min), uint32(max)
+		if min < 0 || max > math.MaxUint32 || max < min {
+			return nil, errors.New("invalid range for uint32")
+		}
+		rangeSize := maxU32 - minU32 + 1
+		for i := range data {
+			data[i] = any(minU32 + rand.Uint32N(rangeSize)).(T)
+		}
+	case spark.I64:
+		minI64, maxI64 := int64(min), int64(max)
+		if max < min {
+			return nil, errors.New("invalid range for int64")
+		}
+		rangeSize := maxI64 - minI64 + 1
+		for i := range data {
+			data[i] = any(minI64 + rand.Int64N(rangeSize)).(T)
+		}
+	default:
+		return nil, errors.New("unsupported dtype")
 	}
 	return storage, nil
 }
@@ -72,25 +104,48 @@ func (c *CpuDevice[T]) RandNormal(shape *spark.Shape, dtype spark.DType, mean, s
 
 	switch dtype {
 	case spark.F32:
-		for i := 0; i < len(data); i += 2 {
-			u1, u2 := rand.Float64(), rand.Float64()
-			z0 := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
-			data[i] = any(float32(mean + std*z0)).(T)
-			if i+1 < len(data) {
-				z1 := math.Sqrt(-2*math.Log(u1)) * math.Sin(2*math.Pi*u2)
-				data[i+1] = any(float32(mean + std*z1)).(T)
-			}
+		for i := range data {
+			val := mean + std*rand.NormFloat64()
+			data[i] = any(float32(val)).(T)
 		}
 	case spark.F64:
-		for i := 0; i < len(data); i += 2 {
-			u1, u2 := rand.Float64(), rand.Float64()
-			z0 := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
-			data[i] = any(mean + std*z0).(T)
-			if i+1 < len(data) {
-				z1 := math.Sqrt(-2*math.Log(u1)) * math.Sin(2*math.Pi*u2)
-				data[i+1] = any(mean + std*z1).(T)
-			}
+		for i := range data {
+			val := mean + std*rand.NormFloat64()
+			data[i] = any(val).(T)
 		}
+	case spark.U8:
+		for i := range data {
+			val := mean + std*rand.NormFloat64()
+			if val < 0 {
+				val = 0 // Clamp for unsigned.
+			} else if val > math.MaxUint8 {
+				val = math.MaxUint8
+			}
+			data[i] = any(uint8(val)).(T)
+		}
+	case spark.U32:
+		for i := range data {
+			val := mean + std*rand.NormFloat64()
+			if val < 0 {
+				val = 0 // Clamp for unsigned.
+			} else if val > math.MaxUint32 {
+				val = math.MaxUint32
+			}
+			data[i] = any(uint32(val)).(T)
+		}
+	case spark.I64:
+		for i := range data {
+			val := mean + std*rand.NormFloat64()
+			// Check for int64 overflow (rare but possible).
+			if val < math.MinInt64 {
+				val = math.MinInt64
+			} else if val > math.MaxInt64 {
+				val = math.MaxInt64
+			}
+			data[i] = any(int64(val)).(T)
+		}
+	default:
+		return nil, errors.New("unsupported dtype")
 	}
 	return storage, nil
 }
@@ -118,6 +173,20 @@ func (c *CpuDevice[T]) Ones(shape *spark.Shape, dtype spark.DType) (spark.Backen
 		for i := range data {
 			data[i] = any(1.0).(T)
 		}
+	case spark.U8:
+		for i := range data {
+			data[i] = any(uint8(1)).(T)
+		}
+	case spark.U32:
+		for i := range data {
+			data[i] = any(uint32(1)).(T)
+		}
+	case spark.I64:
+		for i := range data {
+			data[i] = any(int64(1)).(T)
+		}
+	default:
+		return nil, errors.New("unsupported dtype")
 	}
 	return storage, nil
 }
@@ -135,6 +204,29 @@ func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value float64
 		for i := range data {
 			data[i] = any(value).(T)
 		}
+	case spark.U8:
+		if value < 0 || value > math.MaxUint8 || value != math.Floor(value) {
+			return nil, errors.New("invalid value for uint8")
+		}
+		for i := range data {
+			data[i] = any(uint8(value)).(T)
+		}
+	case spark.U32:
+		if value < 0 || value > math.MaxUint32 || value != math.Floor(value) {
+			return nil, errors.New("invalid value for uint32")
+		}
+		for i := range data {
+			data[i] = any(uint32(value)).(T)
+		}
+	case spark.I64:
+		if value < math.MinInt64 || value > math.MaxInt64 || value != math.Floor(value) {
+			return nil, errors.New("invalid value for int64")
+		}
+		for i := range data {
+			data[i] = any(int64(value)).(T)
+		}
+	default:
+		return nil, errors.New("unsupported dtype")
 	}
 	return storage, nil
 }

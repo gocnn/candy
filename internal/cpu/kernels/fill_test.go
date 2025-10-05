@@ -229,68 +229,80 @@ func TestFillStridedF64(t *testing.T) {
 	}
 }
 
-func TestCopy2dF32(t *testing.T) {
+func TestCopy2dStridedF32(t *testing.T) {
 	tests := []struct {
-		name string
-		rows int
-		cols int
-		lda  int // src leading dimension
-		ldc  int // dst leading dimension
-		src  []float32
-		want []float32
+		name      string
+		rows      int
+		cols      int
+		lda       int // src leading dimension
+		ldc       int // dst leading dimension
+		srcOffset int
+		dstOffset int
+		src       []float32
+		want      []float32
 	}{
 		{
-			name: "Contiguous copy",
-			rows: 2,
-			cols: 3,
-			lda:  3,
-			ldc:  3,
-			src:  []float32{1, 2, 3, 4, 5, 6},
-			want: []float32{1, 2, 3, 4, 5, 6},
+			name:      "Src with padding (lda > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       2,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float32{1, 2, 0, 3, 4, 0},
+			want:      []float32{1, 2, 3, 4},
 		},
 		{
-			name: "Src with padding (lda > cols)",
-			rows: 2,
-			cols: 2,
-			lda:  3,
-			ldc:  2,
-			src:  []float32{1, 2, 0, 3, 4, 0},
-			want: []float32{1, 2, 3, 4},
+			name:      "Dst with padding (ldc > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       2,
+			ldc:       3,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float32{1, 2, 3, 4},
+			want:      []float32{1, 2, 0, 3, 4, 0},
 		},
 		{
-			name: "Dst with padding (ldc > cols)",
-			rows: 2,
-			cols: 2,
-			lda:  2,
-			ldc:  3,
-			src:  []float32{1, 2, 3, 4},
-			want: []float32{1, 2, 0, 3, 4, 0},
+			name:      "Strided with offsets",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 1,
+			src:       []float32{0, 1, 2, 0, 3, 4, 0},
+			want:      []float32{0, 1, 2, 0, 3, 4, 0},
 		},
 		{
-			name: "Empty",
-			rows: 0,
-			cols: 0,
-			lda:  0,
-			ldc:  0,
-			src:  []float32{},
-			want: []float32{},
+			name:      "Empty",
+			rows:      0,
+			cols:      0,
+			lda:       0,
+			ldc:       0,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float32{},
+			want:      []float32{},
 		},
 		{
-			name: "Single row",
-			rows: 1,
-			cols: 4,
-			lda:  4,
-			ldc:  4,
-			src:  []float32{1, 2, 3, 4},
-			want: []float32{1, 2, 3, 4},
+			name:      "Single row with padding",
+			rows:      1,
+			cols:      3,
+			lda:       4,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 0,
+			src:       []float32{0, 1, 2, 3},
+			want:      []float32{1, 2, 3},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dstSize := tt.rows * tt.ldc
+			dstSize := tt.dstOffset + tt.rows*tt.ldc
 			dst := make([]float32, dstSize)
-			kernels.Copy2dF32(tt.rows, tt.cols, tt.lda, tt.ldc, tt.src, dst)
+			kernels.Copy2dF32(tt.rows, tt.cols, tt.lda, tt.ldc, tt.srcOffset, tt.dstOffset, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -298,68 +310,301 @@ func TestCopy2dF32(t *testing.T) {
 	}
 }
 
-func TestCopy2dF64(t *testing.T) {
+func TestCopy2dStridedF64(t *testing.T) {
 	tests := []struct {
-		name string
-		rows int
-		cols int
-		lda  int // src leading dimension
-		ldc  int // dst leading dimension
-		src  []float64
-		want []float64
+		name      string
+		rows      int
+		cols      int
+		lda       int // src leading dimension
+		ldc       int // dst leading dimension
+		srcOffset int
+		dstOffset int
+		src       []float64
+		want      []float64
 	}{
 		{
-			name: "Contiguous copy",
-			rows: 2,
-			cols: 3,
-			lda:  3,
-			ldc:  3,
-			src:  []float64{1, 2, 3, 4, 5, 6},
-			want: []float64{1, 2, 3, 4, 5, 6},
+			name:      "Src with padding (lda > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       2,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float64{1, 2, 0, 3, 4, 0},
+			want:      []float64{1, 2, 3, 4},
 		},
 		{
-			name: "Src with padding (lda > cols)",
-			rows: 2,
-			cols: 2,
-			lda:  3,
-			ldc:  2,
-			src:  []float64{1, 2, 0, 3, 4, 0},
-			want: []float64{1, 2, 3, 4},
+			name:      "Dst with padding (ldc > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       2,
+			ldc:       3,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float64{1, 2, 3, 4},
+			want:      []float64{1, 2, 0, 3, 4, 0},
 		},
 		{
-			name: "Dst with padding (ldc > cols)",
-			rows: 2,
-			cols: 2,
-			lda:  2,
-			ldc:  3,
-			src:  []float64{1, 2, 3, 4},
-			want: []float64{1, 2, 0, 3, 4, 0},
+			name:      "Strided with offsets",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 1,
+			src:       []float64{0, 1, 2, 0, 3, 4, 0},
+			want:      []float64{0, 1, 2, 0, 3, 4, 0},
 		},
 		{
-			name: "Empty",
-			rows: 0,
-			cols: 0,
-			lda:  0,
-			ldc:  0,
-			src:  []float64{},
-			want: []float64{},
+			name:      "Empty",
+			rows:      0,
+			cols:      0,
+			lda:       0,
+			ldc:       0,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []float64{},
+			want:      []float64{},
 		},
 		{
-			name: "Single row",
-			rows: 1,
-			cols: 4,
-			lda:  4,
-			ldc:  4,
-			src:  []float64{1, 2, 3, 4},
-			want: []float64{1, 2, 3, 4},
+			name:      "Single row with padding",
+			rows:      1,
+			cols:      3,
+			lda:       4,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 0,
+			src:       []float64{0, 1, 2, 3},
+			want:      []float64{1, 2, 3},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dstSize := tt.rows * tt.ldc
+			dstSize := tt.dstOffset + tt.rows*tt.ldc
 			dst := make([]float64, dstSize)
-			kernels.Copy2dF64(tt.rows, tt.cols, tt.lda, tt.ldc, tt.src, dst)
+			kernels.Copy2dF64(tt.rows, tt.cols, tt.lda, tt.ldc, tt.srcOffset, tt.dstOffset, tt.src, dst)
+			if !slices.Equal(dst, tt.want) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestCopy2dStridedU8(t *testing.T) {
+	tests := []struct {
+		name      string
+		rows      int
+		cols      int
+		lda       int // src leading dimension
+		ldc       int // dst leading dimension
+		srcOffset int
+		dstOffset int
+		src       []uint8
+		want      []uint8
+	}{
+		{
+			name:      "Src with padding (lda > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       2,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint8{1, 2, 0, 3, 4, 0},
+			want:      []uint8{1, 2, 3, 4},
+		},
+		{
+			name:      "Dst with padding (ldc > cols)",
+			rows:      2,
+			cols:      2,
+			lda:       2,
+			ldc:       3,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint8{1, 2, 3, 4},
+			want:      []uint8{1, 2, 0, 3, 4, 0},
+		},
+		{
+			name:      "Strided with offsets",
+			rows:      2,
+			cols:      2,
+			lda:       3,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 1,
+			src:       []uint8{0, 1, 2, 0, 3, 4, 0},
+			want:      []uint8{0, 1, 2, 0, 3, 4, 0},
+		},
+		{
+			name:      "Empty",
+			rows:      0,
+			cols:      0,
+			lda:       0,
+			ldc:       0,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint8{},
+			want:      []uint8{},
+		},
+		{
+			name:      "Single row with padding",
+			rows:      1,
+			cols:      3,
+			lda:       4,
+			ldc:       3,
+			srcOffset: 1,
+			dstOffset: 0,
+			src:       []uint8{0, 1, 2, 3},
+			want:      []uint8{1, 2, 3},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dstSize := tt.dstOffset + tt.rows*tt.ldc
+			dst := make([]uint8, dstSize)
+			kernels.Copy2dU8(tt.rows, tt.cols, tt.lda, tt.ldc, tt.srcOffset, tt.dstOffset, tt.src, dst)
+			if !slices.Equal(dst, tt.want) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestCopy2dU32(t *testing.T) {
+	tests := []struct {
+		name      string
+		rows      int
+		cols      int
+		lda       int // src leading dimension
+		ldc       int // dst leading dimension
+		srcOffset int
+		dstOffset int
+		src       []uint32
+		want      []uint32
+	}{
+		{
+			name:      "Contiguous copy",
+			rows:      2,
+			cols:      3,
+			lda:       3,
+			ldc:       3,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint32{1, 2, 3, 4, 5, 6},
+			want:      []uint32{1, 2, 3, 4, 5, 6},
+		},
+		{
+			name:      "Contiguous with offsets",
+			rows:      2,
+			cols:      2,
+			lda:       2,
+			ldc:       2,
+			srcOffset: 2,
+			dstOffset: 1,
+			src:       []uint32{0, 0, 1, 2, 3, 4},
+			want:      []uint32{0, 1, 2, 3, 4},
+		},
+		{
+			name:      "Empty",
+			rows:      0,
+			cols:      0,
+			lda:       0,
+			ldc:       0,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint32{},
+			want:      []uint32{},
+		},
+		{
+			name:      "Single row",
+			rows:      1,
+			cols:      4,
+			lda:       4,
+			ldc:       4,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []uint32{1, 2, 3, 4},
+			want:      []uint32{1, 2, 3, 4},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dstSize := tt.dstOffset + tt.rows*tt.ldc
+			dst := make([]uint32, dstSize)
+			kernels.Copy2dU32(tt.rows, tt.cols, tt.lda, tt.ldc, tt.srcOffset, tt.dstOffset, tt.src, dst)
+			if !slices.Equal(dst, tt.want) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestCopy2dI64(t *testing.T) {
+	tests := []struct {
+		name      string
+		rows      int
+		cols      int
+		lda       int // src leading dimension
+		ldc       int // dst leading dimension
+		srcOffset int
+		dstOffset int
+		src       []int64
+		want      []int64
+	}{
+		{
+			name:      "Contiguous copy",
+			rows:      2,
+			cols:      3,
+			lda:       3,
+			ldc:       3,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []int64{1, 2, 3, 4, 5, 6},
+			want:      []int64{1, 2, 3, 4, 5, 6},
+		},
+		{
+			name:      "Contiguous with offsets",
+			rows:      2,
+			cols:      2,
+			lda:       2,
+			ldc:       2,
+			srcOffset: 2,
+			dstOffset: 1,
+			src:       []int64{0, 0, 1, 2, 3, 4},
+			want:      []int64{0, 1, 2, 3, 4},
+		},
+		{
+			name:      "Empty",
+			rows:      0,
+			cols:      0,
+			lda:       0,
+			ldc:       0,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []int64{},
+			want:      []int64{},
+		},
+		{
+			name:      "Single row",
+			rows:      1,
+			cols:      4,
+			lda:       4,
+			ldc:       4,
+			srcOffset: 0,
+			dstOffset: 0,
+			src:       []int64{1, 2, 3, 4},
+			want:      []int64{1, 2, 3, 4},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dstSize := tt.dstOffset + tt.rows*tt.ldc
+			dst := make([]int64, dstSize)
+			kernels.Copy2dI64(tt.rows, tt.cols, tt.lda, tt.ldc, tt.srcOffset, tt.dstOffset, tt.src, dst)
 			if !slices.Equal(dst, tt.want) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -506,7 +751,7 @@ func TestConstSetStridedF32(t *testing.T) {
 			strides: []int{1, 2},
 			val:     10,
 			ids:     []int{0, 2},
-			want:    []float32{10, 0, 10},
+			want:    []float32{10, 10, 0},
 		},
 		{
 			name:    "Empty",
@@ -566,7 +811,7 @@ func TestConstSetStridedF64(t *testing.T) {
 			strides: []int{1, 2},
 			val:     10,
 			ids:     []int{0, 2},
-			want:    []float64{10, 0, 10},
+			want:    []float64{10, 10, 0},
 		},
 		{
 			name:    "Empty",

@@ -71,6 +71,79 @@ func NaiveConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation 
 	}
 }
 
+// NaiveConv1dU8 performs 1D convolution for uint8 using direct loop
+func NaiveConv1dU8(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []uint8) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							sum += int64(src[b*cIn*lIn+ci*lIn+li]) * int64(kernel[co*cIn*kSize+ci*kSize+k])
+						}
+					}
+				}
+				if sum > math.MaxUint8 {
+					sum = math.MaxUint8
+				} else if sum < 0 {
+					sum = 0
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = uint8(sum)
+			}
+		}
+	}
+}
+
+// NaiveConv1dU32 performs 1D convolution for uint32 using direct loop
+func NaiveConv1dU32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []uint32) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							sum += int64(src[b*cIn*lIn+ci*lIn+li]) * int64(kernel[co*cIn*kSize+ci*kSize+k])
+						}
+					}
+				}
+				if sum > math.MaxUint32 {
+					sum = math.MaxUint32
+				} else if sum < 0 {
+					sum = 0
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = uint32(sum)
+			}
+		}
+	}
+}
+
+// NaiveConv1dI64 performs 1D convolution for int64 using direct loop
+func NaiveConv1dI64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []int64) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							sum += src[b*cIn*lIn+ci*lIn+li] * kernel[co*cIn*kSize+ci*kSize+k]
+						}
+					}
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = sum
+			}
+		}
+	}
+}
+
 // NaiveConv1dStrided performs 1D convolution for any supported numeric type using direct loop with support for non-contiguous memory
 func NaiveConv1dStrided[T D](bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []T, srcStrides, kernelStrides, dstStrides []int) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
@@ -143,52 +216,104 @@ func NaiveConv1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, di
 	}
 }
 
-// Im2colConv1d performs 1D convolution for any supported numeric type using im2col + manual gemm
-//
-// GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
-// Layout: Optimized for maximum performance with minimal memory reshaping
-func Im2colConv1d[T D](bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []T) {
+// NaiveConv1dStridedU8 performs 1D convolution for uint8 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedU8(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []uint8, srcStrides, kernelStrides, dstStrides []int) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
-	colSize := bSize * lOut * cIn * kSize
-	col := make([]T, colSize)
-	Im2col1d(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
-	// Manual GEMM: dst = col * kernel^T (col: (b*lOut, cIn*kSize), kernel: (cOut, cIn*kSize), dst: (b*lOut, cOut))
-	m, n, k := bSize*lOut, cOut, cIn*kSize
-	for i := range m {
-		for j := range n {
-			sum := T(0)
-			for l := range k {
-				sum += col[i*k+l] * kernel[j*k+l]
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+						}
+					}
+				}
+				if sum > math.MaxUint8 {
+					sum = math.MaxUint8
+				} else if sum < 0 {
+					sum = 0
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = uint8(sum)
 			}
-			dst[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveConv1dStridedU32 performs 1D convolution for uint32 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedU32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []uint32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+						}
+					}
+				}
+				if sum > math.MaxUint32 {
+					sum = math.MaxUint32
+				} else if sum < 0 {
+					sum = 0
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = uint32(sum)
+			}
+		}
+	}
+}
+
+// NaiveConv1dStridedI64 performs 1D convolution for int64 using direct loop with support for non-contiguous memory
+func NaiveConv1dStridedI64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []int64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						li := lo*stride + k*dilation - padding
+						if li >= 0 && li < lIn {
+							srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+							kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + k*kernelStrides[2]
+							sum += src[srcIdx] * kernel[kernelIdx]
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
 		}
 	}
 }
 
 // Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
-//
-// GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
-// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
 	colSize := bSize * lOut * cIn * kSize
 	col := make([]float32, colSize)
 	Im2col1dF32(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
-	// GEMM: dst = col * kernel^T (col: (b*lOut, cIn*kSize), kernel: (cOut, cIn*kSize), dst: (b*lOut, cOut))
 	m, n, k := bSize*lOut, cOut, cIn*kSize
 	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
 
 // Im2colConv1dF64 performs 1D convolution for float64 using im2col + gemm with direct BLAS Gemm call
-//
-// GEMM Configuration: col:(b*lOut, cIn*kSize) × kernel^T:(cIn*kSize, cOut) = dst:(b*lOut, cOut)
-// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
 	colSize := bSize * lOut * cIn * kSize
 	col := make([]float64, colSize)
 	Im2col1dF64(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
-	// GEMM: dst = col * kernel^T (col: (b*lOut, cIn*kSize), kernel: (cOut, cIn*kSize), dst: (b*lOut, cOut))
 	m, n, k := bSize*lOut, cOut, cIn*kSize
 	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
@@ -203,12 +328,12 @@ func NaiveConv2d[T D](bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, d
 				for wo := range wOut {
 					var sum T
 					for ci := range cIn {
-						for kh := range hK {
-							for kw := range wK {
-								hi := ho*stride + kh*dilation - padding
-								wi := wo*stride + kw*dilation - padding
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
 								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
-									sum += src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi] * kernel[co*cIn*hK*wK+ci*hK*wK+kh*wK+kw]
+									sum += src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi] * kernel[co*cIn*hK*wK+ci*hK*wK+hk*wK+wk]
 								}
 							}
 						}
@@ -256,6 +381,97 @@ func NaiveConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dil
 			for ho := range hOut {
 				for wo := range wOut {
 					sum := float64(0)
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									sum += src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi] * kernel[co*cIn*hK*wK+ci*hK*wK+hk*wK+wk]
+								}
+							}
+						}
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = sum
+				}
+			}
+		}
+	}
+}
+
+// NaiveConv2dU8 performs 2D convolution for uint8 using direct loop
+func NaiveConv2dU8(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []uint8) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									sum += int64(src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]) * int64(kernel[co*cIn*hK*wK+ci*hK*wK+hk*wK+wk])
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint8 {
+						sum = math.MaxUint8
+					} else if sum < 0 {
+						sum = 0
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = uint8(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConv2dU32 performs 2D convolution for uint32 using direct loop
+func NaiveConv2dU32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []uint32) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									sum += int64(src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]) * int64(kernel[co*cIn*hK*wK+ci*hK*wK+hk*wK+wk])
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint32 {
+						sum = math.MaxUint32
+					} else if sum < 0 {
+						sum = 0
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = uint32(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConv2dI64 performs 2D convolution for int64 using direct loop
+func NaiveConv2dI64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []int64) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
 					for ci := range cIn {
 						for hk := range hK {
 							for wk := range wK {
@@ -364,55 +580,124 @@ func NaiveConv2dStridedF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, paddi
 	}
 }
 
-// Im2colConv2d performs 2D convolution for any supported numeric type using im2col + manual gemm
-//
-// GEMM Configuration: col:(b*hOut*wOut, cIn*hK*wK) × kernel^T:(cIn*hK*wK, cOut) = dst:(b*hOut*wOut, cOut)
-// Layout: Optimized for maximum performance with minimal memory reshaping
-func Im2colConv2d[T D](bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []T) {
+// NaiveConv2dStridedU8 performs 2D convolution for uint8 using direct loop with support for non-contiguous memory
+func NaiveConv2dStridedU8(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []uint8, srcStrides, kernelStrides, dstStrides []int) {
 	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
 	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
-	colSize := bSize * hOut * wOut * cIn * hK * wK
-	col := make([]T, colSize)
-	Im2col[T](bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
-	// Manual GEMM: dst = col * kernel^T (col: (b*hOut*wOut, cIn*hK*wK), kernel: (cOut, cIn*hK*wK), dst: (b*hOut*wOut, cOut))
-	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
-	for i := range m {
-		for j := range n {
-			sum := T(0)
-			for l := range k {
-				sum += col[i*k+l] * kernel[j*k+l]
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+									kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+									sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint8 {
+						sum = math.MaxUint8
+					} else if sum < 0 {
+						sum = 0
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint8(sum)
+				}
 			}
-			dst[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveConv2dStridedU32 performs 2D convolution for uint32 using direct loop with support for non-contiguous memory
+func NaiveConv2dStridedU32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []uint32, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+									kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+									sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint32 {
+						sum = math.MaxUint32
+					} else if sum < 0 {
+						sum = 0
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint32(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConv2dStridedI64 performs 2D convolution for int64 using direct loop with support for non-contiguous memory
+func NaiveConv2dStridedI64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []int64, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hi := ho*stride + hk*dilation - padding
+								wi := wo*stride + wk*dilation - padding
+								if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+									srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+									kernelIdx := co*kernelStrides[0] + ci*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+									sum += src[srcIdx] * kernel[kernelIdx]
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum
+				}
+			}
 		}
 	}
 }
 
 // Im2colConv2dF32 performs 2D convolution for float32 using im2col + gemm with direct BLAS Gemm call
-//
-// GEMM Configuration: col:(b*hOut*wOut, cIn*hK*wK) × kernel^T:(cIn*hK*wK, cOut) = dst:(b*hOut*wOut, cOut)
-// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float32) {
 	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
 	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
 	colSize := bSize * hOut * wOut * cIn * hK * wK
 	col := make([]float32, colSize)
 	Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
-	// GEMM: dst = col * kernel^T (col: (b*hOut*wOut, cIn*hK*wK), kernel: (cOut, cIn*hK*wK), dst: (b*hOut*wOut, cOut))
 	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
 	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
 
 // Im2colConv2dF64 performs 2D convolution for float64 using im2col + gemm with direct BLAS Gemm call
-//
-// GEMM Configuration: col:(b*hOut*wOut, cIn*hK*wK) × kernel^T:(cIn*hK*wK, cOut) = dst:(b*hOut*wOut, cOut)
-// Layout: Optimized for maximum BLAS performance with minimal memory reshaping
 func Im2colConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float64) {
 	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
 	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
 	colSize := bSize * hOut * wOut * cIn * hK * wK
 	col := make([]float64, colSize)
 	Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
-	// GEMM: dst = col * kernel^T (col: (b*hOut*wOut, cIn*hK*wK), kernel: (cOut, cIn*hK*wK), dst: (b*hOut*wOut, cOut))
 	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
 	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
@@ -489,6 +774,260 @@ func NaiveConvTranspose1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, 
 	}
 }
 
+// NaiveConvTranspose1dU8 performs 1D transpose convolution for uint8 using direct loop
+func NaiveConvTranspose1dU8(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []uint8) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								sum += int64(src[b*cIn*lIn+ci*lIn+li]) * int64(kernel[ci*cOut*kSize+co*kSize+k])
+							}
+						}
+					}
+				}
+				if sum > math.MaxUint8 {
+					sum = math.MaxUint8
+				} else if sum < 0 {
+					sum = 0
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = uint8(sum)
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dU32 performs 1D transpose convolution for uint32 using direct loop
+func NaiveConvTranspose1dU32(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []uint32) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								sum += int64(src[b*cIn*lIn+ci*lIn+li]) * int64(kernel[ci*cOut*kSize+co*kSize+k])
+							}
+						}
+					}
+				}
+				if sum > math.MaxUint32 {
+					sum = math.MaxUint32
+				} else if sum < 0 {
+					sum = 0
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = uint32(sum)
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dI64 performs 1D transpose convolution for int64 using direct loop
+func NaiveConvTranspose1dI64(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []int64) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								sum += src[b*cIn*lIn+ci*lIn+li] * kernel[ci*cOut*kSize+co*kSize+k]
+							}
+						}
+					}
+				}
+				dst[b*cOut*lOut+co*lOut+lo] = sum
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStrided performs 1D transpose convolution for any supported numeric type using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStrided[T D](bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []T, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum T
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedF32 performs 1D transpose convolution for float32 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float32(0)
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedF64 performs 1D transpose convolution for float64 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				sum := float64(0)
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedU8 performs 1D transpose convolution for uint8 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedU8(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []uint8, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+							}
+						}
+					}
+				}
+				if sum > math.MaxUint8 {
+					sum = math.MaxUint8
+				} else if sum < 0 {
+					sum = 0
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = uint8(sum)
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedU32 performs 1D transpose convolution for uint32 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedU32(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []uint32, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+							}
+						}
+					}
+				}
+				if sum > math.MaxUint32 {
+					sum = math.MaxUint32
+				} else if sum < 0 {
+					sum = 0
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = uint32(sum)
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose1dStridedI64 performs 1D transpose convolution for int64 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose1dStridedI64(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []int64, srcStrides, kernelStrides, dstStrides []int) {
+	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for lo := range lOut {
+				var sum int64
+				for ci := range cIn {
+					for k := range kSize {
+						liStride := lo + padding - k*dilation
+						if liStride%stride == 0 {
+							li := liStride / stride
+							if li >= 0 && li < lIn {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
+								sum += src[srcIdx] * kernel[kernelIdx]
+							}
+						}
+					}
+				}
+				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
+				dst[dstIdx] = sum
+			}
+		}
+	}
+}
+
 // NaiveConvTranspose2d performs 2D transpose convolution for any supported numeric type using direct loop
 func NaiveConvTranspose2d[T D](bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []T) {
 	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
@@ -551,87 +1090,6 @@ func NaiveConvTranspose2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, pad
 	}
 }
 
-// NaiveConvTranspose1dStrided performs 1D transpose convolution for any supported numeric type using direct loop with support for non-contiguous memory
-func NaiveConvTranspose1dStrided[T D](bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []T, srcStrides, kernelStrides, dstStrides []int) {
-	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
-	for b := range bSize {
-		for co := range cOut {
-			for lo := range lOut {
-				var sum T
-				for ci := range cIn {
-					for k := range kSize {
-						liStride := lo + padding - k*dilation
-						if liStride%stride == 0 {
-							li := liStride / stride
-							if li >= 0 && li < lIn {
-								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
-								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
-								sum += src[srcIdx] * kernel[kernelIdx]
-							}
-						}
-					}
-				}
-				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
-				dst[dstIdx] = sum
-			}
-		}
-	}
-}
-
-// NaiveConvTranspose1dStridedF32 performs 1D transpose convolution for float32 using direct loop with support for non-contiguous memory
-func NaiveConvTranspose1dStridedF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float32, srcStrides, kernelStrides, dstStrides []int) {
-	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
-	for b := 0; b < bSize; b++ {
-		for co := 0; co < cOut; co++ {
-			for lo := 0; lo < lOut; lo++ {
-				sum := float32(0)
-				for ci := 0; ci < cIn; ci++ {
-					for k := 0; k < kSize; k++ {
-						liStride := lo + padding - k*dilation
-						if liStride%stride == 0 {
-							li := liStride / stride
-							if li >= 0 && li < lIn {
-								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
-								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
-								sum += src[srcIdx] * kernel[kernelIdx]
-							}
-						}
-					}
-				}
-				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
-				dst[dstIdx] = sum
-			}
-		}
-	}
-}
-
-// NaiveConvTranspose1dStridedF64 performs 1D transpose convolution for float64 using direct loop with support for non-contiguous memory
-func NaiveConvTranspose1dStridedF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, outPadding, dilation int, src, kernel, dst []float64, srcStrides, kernelStrides, dstStrides []int) {
-	lOut := (lIn-1)*stride + dilation*(kSize-1) + outPadding - 2*padding + 1
-	for b := 0; b < bSize; b++ {
-		for co := 0; co < cOut; co++ {
-			for lo := 0; lo < lOut; lo++ {
-				sum := float64(0)
-				for ci := 0; ci < cIn; ci++ {
-					for k := 0; k < kSize; k++ {
-						liStride := lo + padding - k*dilation
-						if liStride%stride == 0 {
-							li := liStride / stride
-							if li >= 0 && li < lIn {
-								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
-								kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + k*kernelStrides[2]
-								sum += src[srcIdx] * kernel[kernelIdx]
-							}
-						}
-					}
-				}
-				dstIdx := b*dstStrides[0] + co*dstStrides[1] + lo*dstStrides[2]
-				dst[dstIdx] = sum
-			}
-		}
-	}
-}
-
 // NaiveConvTranspose2dF64 performs 2D transpose convolution for float64 using direct loop
 func NaiveConvTranspose2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []float64) {
 	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
@@ -641,6 +1099,109 @@ func NaiveConvTranspose2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, pad
 			for ho := range hOut {
 				for wo := range wOut {
 					sum := float64(0)
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										sum += src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi] * kernel[ci*cOut*hK*wK+co*hK*wK+hk*wK+wk]
+									}
+								}
+							}
+						}
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = sum
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dU8 performs 2D transpose convolution for uint8 using direct loop
+func NaiveConvTranspose2dU8(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []uint8) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										sum += int64(src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]) * int64(kernel[ci*cOut*hK*wK+co*hK*wK+hk*wK+wk])
+									}
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint8 {
+						sum = math.MaxUint8
+					} else if sum < 0 {
+						sum = 0
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = uint8(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dU32 performs 2D transpose convolution for uint32 using direct loop
+func NaiveConvTranspose2dU32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []uint32) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										sum += int64(src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]) * int64(kernel[ci*cOut*hK*wK+co*hK*wK+hk*wK+wk])
+									}
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint32 {
+						sum = math.MaxUint32
+					} else if sum < 0 {
+						sum = 0
+					}
+					dst[b*cOut*hOut*wOut+co*hOut*wOut+ho*wOut+wo] = uint32(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dI64 performs 2D transpose convolution for int64 using direct loop
+func NaiveConvTranspose2dI64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []int64) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
 					for ci := range cIn {
 						for hk := range hK {
 							for wk := range wK {
@@ -765,6 +1326,118 @@ func NaiveConvTranspose2dStridedF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stri
 	}
 }
 
+// NaiveConvTranspose2dStridedU8 performs 2D transpose convolution for uint8 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose2dStridedU8(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []uint8, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+										kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+										sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+									}
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint8 {
+						sum = math.MaxUint8
+					} else if sum < 0 {
+						sum = 0
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint8(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dStridedU32 performs 2D transpose convolution for uint32 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose2dStridedU32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []uint32, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+										kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+										sum += int64(src[srcIdx]) * int64(kernel[kernelIdx])
+									}
+								}
+							}
+						}
+					}
+					if sum > math.MaxUint32 {
+						sum = math.MaxUint32
+					} else if sum < 0 {
+						sum = 0
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint32(sum)
+				}
+			}
+		}
+	}
+}
+
+// NaiveConvTranspose2dStridedI64 performs 2D transpose convolution for int64 using direct loop with support for non-contiguous memory
+func NaiveConvTranspose2dStridedI64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, outPadding, dilation int, src, kernel, dst []int64, srcStrides, kernelStrides, dstStrides []int) {
+	hOut := (hIn-1)*stride + dilation*(hK-1) + outPadding - 2*padding + 1
+	wOut := (wIn-1)*stride + dilation*(wK-1) + outPadding - 2*padding + 1
+	for b := range bSize {
+		for co := range cOut {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					for ci := range cIn {
+						for hk := range hK {
+							for wk := range wK {
+								hiStride := ho + padding - hk*dilation
+								wiStride := wo + padding - wk*dilation
+								if hiStride%stride == 0 && wiStride%stride == 0 {
+									hi := hiStride / stride
+									wi := wiStride / stride
+									if hi >= 0 && hi < hIn && wi >= 0 && wi < wIn {
+										srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+										kernelIdx := ci*kernelStrides[0] + co*kernelStrides[1] + hk*kernelStrides[2] + wk*kernelStrides[3]
+										sum += src[srcIdx] * kernel[kernelIdx]
+									}
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + co*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum
+				}
+			}
+		}
+	}
+}
+
 // AvgPool2d performs 2D average pooling for any supported numeric type
 func AvgPool2d[T D](bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []T) {
 	hOut := (hIn-hK)/hStride + 1
@@ -840,6 +1513,95 @@ func AvgPool2dF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []f
 						}
 					}
 					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = sum / float64(count)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dU8 performs 2D average pooling for uint8
+func AvgPool2dU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint8) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								sum += int64(src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi])
+								count++
+							}
+						}
+					}
+					avg := sum / int64(count)
+					if avg > math.MaxUint8 {
+						avg = math.MaxUint8
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = uint8(avg)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dU32 performs 2D average pooling for uint32
+func AvgPool2dU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint32) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								sum += int64(src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi])
+								count++
+							}
+						}
+					}
+					avg := sum / int64(count)
+					if avg > math.MaxUint32 {
+						avg = math.MaxUint32
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = uint32(avg)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dI64 performs 2D average pooling for int64
+func AvgPool2dI64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []int64) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								sum += src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+								count++
+							}
+						}
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = sum / int64(count)
 				}
 			}
 		}
@@ -933,6 +1695,101 @@ func AvgPool2dStridedF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, 
 	}
 }
 
+// AvgPool2dStridedU8 performs 2D average pooling for uint8 with support for non-contiguous memory
+func AvgPool2dStridedU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint8, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								sum += int64(src[srcIdx])
+								count++
+							}
+						}
+					}
+					avg := sum / int64(count)
+					if avg > math.MaxUint8 {
+						avg = math.MaxUint8
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint8(avg)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dStridedU32 performs 2D average pooling for uint32 with support for non-contiguous memory
+func AvgPool2dStridedU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint32, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								sum += int64(src[srcIdx])
+								count++
+							}
+						}
+					}
+					avg := sum / int64(count)
+					if avg > math.MaxUint32 {
+						avg = math.MaxUint32
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = uint32(avg)
+				}
+			}
+		}
+	}
+}
+
+// AvgPool2dStridedI64 performs 2D average pooling for int64 with support for non-contiguous memory
+func AvgPool2dStridedI64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []int64, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var sum int64
+					count := 0
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								sum += src[srcIdx]
+								count++
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = sum / int64(count)
+				}
+			}
+		}
+	}
+}
+
 // MaxPool2d performs 2D max pooling for any supported numeric type
 func MaxPool2d[T D](bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []T) {
 	hOut := (hIn-hK)/hStride + 1
@@ -1009,6 +1866,102 @@ func MaxPool2dF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []f
 							if hi < hIn && wi < wIn {
 								val := src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
 								if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dU8 performs 2D max pooling for uint8
+func MaxPool2dU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint8) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal uint8
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								val := src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dU32 performs 2D max pooling for uint32
+func MaxPool2dU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint32) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal uint32
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								val := src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dI64 performs 2D max pooling for int64
+func MaxPool2dI64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []int64) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal int64
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								val := src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
 									maxVal = val
 								}
 							}
@@ -1115,10 +2068,109 @@ func MaxPool2dStridedF64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, 
 	}
 }
 
+// MaxPool2dStridedU8 performs 2D max pooling for uint8 with support for non-contiguous memory
+func MaxPool2dStridedU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint8, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal uint8
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								val := src[srcIdx]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dStridedU32 performs 2D max pooling for uint32 with support for non-contiguous memory
+func MaxPool2dStridedU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []uint32, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal uint32
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								val := src[srcIdx]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = maxVal
+				}
+			}
+		}
+	}
+}
+
+// MaxPool2dStridedI64 performs 2D max pooling for int64 with support for non-contiguous memory
+func MaxPool2dStridedI64(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []int64, srcStrides, dstStrides []int) {
+	hOut := (hIn-hK)/hStride + 1
+	wOut := (wIn-wK)/wStride + 1
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					var maxVal int64
+					first := true
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*hStride + hk
+							wi := wo*wStride + wk
+							if hi < hIn && wi < wIn {
+								srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								val := src[srcIdx]
+								if first {
+									maxVal = val
+									first = false
+								} else if val > maxVal {
+									maxVal = val
+								}
+							}
+						}
+					}
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = maxVal
+				}
+			}
+		}
+	}
+}
+
 // UpsampleNearest2d performs 2D nearest neighbor upsampling for any supported numeric type
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
 func UpsampleNearest2d[T D](bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []T) {
 	for b := range bSize {
 		for ch := range c {
@@ -1140,9 +2192,6 @@ func UpsampleNearest2d[T D](bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale f
 }
 
 // UpsampleNearest2dF32 performs 2D nearest neighbor upsampling for float32
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
 func UpsampleNearest2dF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float32) {
 	for b := range bSize {
 		for ch := range c {
@@ -1164,9 +2213,6 @@ func UpsampleNearest2dF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 }
 
 // UpsampleNearest2dF64 performs 2D nearest neighbor upsampling for float64
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
 func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float64) {
 	for b := range bSize {
 		for ch := range c {
@@ -1187,12 +2233,70 @@ func UpsampleNearest2dF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale flo
 	}
 }
 
+// UpsampleNearest2dU8 performs 2D nearest neighbor upsampling for uint8
+func UpsampleNearest2dU8(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []uint8) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dU32 performs 2D nearest neighbor upsampling for uint32
+func UpsampleNearest2dU32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []uint32) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dI64 performs 2D nearest neighbor upsampling for int64
+func UpsampleNearest2dI64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []int64) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = src[b*c*hIn*wIn+ch*hIn*wIn+hi*wIn+wi]
+				}
+			}
+		}
+	}
+}
+
 // UpsampleNearest2dStrided performs 2D nearest neighbor upsampling for any supported numeric type with support for non-contiguous memory
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
-// srcStrides: [batch_stride, channel_stride, hIn_stride, wIn_stride]
-// dstStrides: [batch_stride, channel_stride, hOut_stride, wOut_stride]
 func UpsampleNearest2dStrided[T D](bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []T, srcStrides, dstStrides []int) {
 	for b := range bSize {
 		for ch := range c {
@@ -1216,11 +2320,6 @@ func UpsampleNearest2dStrided[T D](bSize, c, hIn, wIn, hOut, wOut int, hScale, w
 }
 
 // UpsampleNearest2dStridedF32 performs 2D nearest neighbor upsampling for float32 with support for non-contiguous memory
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
-// srcStrides: [batch_stride, channel_stride, hIn_stride, wIn_stride]
-// dstStrides: [batch_stride, channel_stride, hOut_stride, wOut_stride]
 func UpsampleNearest2dStridedF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float32, srcStrides, dstStrides []int) {
 	for b := range bSize {
 		for ch := range c {
@@ -1244,11 +2343,6 @@ func UpsampleNearest2dStridedF32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wSc
 }
 
 // UpsampleNearest2dStridedF64 performs 2D nearest neighbor upsampling for float64 with support for non-contiguous memory
-//
-// Algorithm: Standard nearest neighbor interpolation with (ho+0.5)*hIn/hOut mapping
-// Compatibility: Fully compatible with PyTorch F.interpolate(mode='nearest')
-// srcStrides: [batch_stride, channel_stride, hIn_stride, wIn_stride]
-// dstStrides: [batch_stride, channel_stride, hOut_stride, wOut_stride]
 func UpsampleNearest2dStridedF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []float64, srcStrides, dstStrides []int) {
 	for b := range bSize {
 		for ch := range c {
@@ -1271,13 +2365,76 @@ func UpsampleNearest2dStridedF64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wSc
 	}
 }
 
+// UpsampleNearest2dStridedU8 performs 2D nearest neighbor upsampling for uint8 with support for non-contiguous memory
+func UpsampleNearest2dStridedU8(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []uint8, srcStrides, dstStrides []int) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = src[srcIdx]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dStridedU32 performs 2D nearest neighbor upsampling for uint32 with support for non-contiguous memory
+func UpsampleNearest2dStridedU32(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []uint32, srcStrides, dstStrides []int) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = src[srcIdx]
+				}
+			}
+		}
+	}
+}
+
+// UpsampleNearest2dStridedI64 performs 2D nearest neighbor upsampling for int64 with support for non-contiguous memory
+func UpsampleNearest2dStridedI64(bSize, c, hIn, wIn, hOut, wOut int, hScale, wScale float64, src, dst []int64, srcStrides, dstStrides []int) {
+	for b := range bSize {
+		for ch := range c {
+			for ho := range hOut {
+				for wo := range wOut {
+					hi := int(math.Floor((float64(ho) + 0.5) * float64(hIn) / float64(hOut)))
+					wi := int(math.Floor((float64(wo) + 0.5) * float64(wIn) / float64(wOut)))
+					if hi >= hIn {
+						hi = hIn - 1
+					}
+					if wi >= wIn {
+						wi = wIn - 1
+					}
+					srcIdx := b*srcStrides[0] + ch*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
+					dst[dstIdx] = src[srcIdx]
+				}
+			}
+		}
+	}
+}
+
 // Im2col extracts columns for 2D convolution (im2col) for any supported numeric type
-//
-// Memory Layout: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance
-// PyTorch Layout: (batch, cIn, hK, wK, hOut, wOut) - standard unfold output
-//
-// Note: Layout difference does not affect algorithm correctness but impacts
-// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2col[T D](bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []T) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -1301,12 +2458,6 @@ func Im2col[T D](bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, 
 }
 
 // Im2colF32 extracts columns for 2D convolution (im2col) for float32
-//
-// Memory Layout: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance
-// PyTorch Layout: (batch, cIn, hK, wK, hOut, wOut) - standard unfold output
-//
-// Note: Layout difference does not affect algorithm correctness but impacts
-// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float32) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -1330,12 +2481,6 @@ func Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, di
 }
 
 // Im2colF64 extracts columns for 2D convolution (im2col) for float64
-//
-// Memory Layout: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance
-// PyTorch Layout: (batch, cIn, hK, wK, hOut, wOut) - standard unfold output
-//
-// Note: Layout difference does not affect algorithm correctness but impacts
-// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float64) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -1358,10 +2503,76 @@ func Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, di
 	}
 }
 
+// Im2colU8 extracts columns for 2D convolution (im2col) for uint8
+func Im2colU8(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []uint8) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = 0
+							} else {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colU32 extracts columns for 2D convolution (im2col) for uint32
+func Im2colU32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []uint32) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = 0
+							} else {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colI64 extracts columns for 2D convolution (im2col) for int64
+func Im2colI64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []int64) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = 0
+							} else {
+								col[b*hOut*wOut*cIn*hK*wK+ho*wOut*cIn*hK*wK+wo*cIn*hK*wK+ci*hK*wK+hk*wK+wk] = src[b*cIn*hIn*wIn+ci*hIn*wIn+hi*wIn+wi]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // Im2colStrided extracts columns for 2D convolution (im2col) for any supported numeric type with support for non-contiguous src
-//
-// Memory Layout for col: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance, assumed contiguous
-// srcStrides: [batch_stride, cIn_stride, hIn_stride, wIn_stride]
 func Im2colStrided[T D](bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []T, srcStrides []int) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -1387,9 +2598,6 @@ func Im2colStrided[T D](bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, pa
 }
 
 // Im2colStridedF32 extracts columns for 2D convolution (im2col) for float32 with support for non-contiguous src
-//
-// Memory Layout for col: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance, assumed contiguous
-// srcStrides: [batch_stride, cIn_stride, hIn_stride, wIn_stride]
 func Im2colStridedF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float32, srcStrides []int) {
 	for b := range bSize {
 		for ho := range hOut {
@@ -1415,10 +2623,82 @@ func Im2colStridedF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padd
 }
 
 // Im2colStridedF64 extracts columns for 2D convolution (im2col) for float64 with support for non-contiguous src
-//
-// Memory Layout for col: (batch, hOut, wOut, cIn, hK, wK) - optimized for GEMM performance, assumed contiguous
-// srcStrides: [batch_stride, cIn_stride, hIn_stride, wIn_stride]
 func Im2colStridedF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []float64, srcStrides []int) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							colIdx := b*hOut*wOut*cIn*hK*wK + ho*wOut*cIn*hK*wK + wo*cIn*hK*wK + ci*hK*wK + hk*wK + wk
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[colIdx] = 0
+							} else {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								col[colIdx] = src[srcIdx]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colStridedU8 extracts columns for 2D convolution (im2col) for uint8 with support for non-contiguous src
+func Im2colStridedU8(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []uint8, srcStrides []int) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							colIdx := b*hOut*wOut*cIn*hK*wK + ho*wOut*cIn*hK*wK + wo*cIn*hK*wK + ci*hK*wK + hk*wK + wk
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[colIdx] = 0
+							} else {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								col[colIdx] = src[srcIdx]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colStridedU32 extracts columns for 2D convolution (im2col) for uint32 with support for non-contiguous src
+func Im2colStridedU32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []uint32, srcStrides []int) {
+	for b := range bSize {
+		for ho := range hOut {
+			for wo := range wOut {
+				for ci := range cIn {
+					for hk := range hK {
+						for wk := range wK {
+							hi := ho*stride + hk*dilation - padding
+							wi := wo*stride + wk*dilation - padding
+							colIdx := b*hOut*wOut*cIn*hK*wK + ho*wOut*cIn*hK*wK + wo*cIn*hK*wK + ci*hK*wK + hk*wK + wk
+							if hi < 0 || hi >= hIn || wi < 0 || wi >= wIn {
+								col[colIdx] = 0
+							} else {
+								srcIdx := b*srcStrides[0] + ci*srcStrides[1] + hi*srcStrides[2] + wi*srcStrides[3]
+								col[colIdx] = src[srcIdx]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2colStridedI64 extracts columns for 2D convolution (im2col) for int64 with support for non-contiguous src
+func Im2colStridedI64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK int, stride, padding, dilation int, src, col []int64, srcStrides []int) {
 	for b := range bSize {
 		for ho := range hOut {
 			for wo := range wOut {
@@ -1461,12 +2741,6 @@ func Im2col1d[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation i
 }
 
 // Im2col1dF32 extracts columns for 1D convolution (im2col) for float32
-//
-// Memory Layout: (batch, lOut, cIn, kSize) - optimized for GEMM performance
-// PyTorch Layout: (batch, cIn, kSize, lOut) - standard unfold output
-//
-// Note: Layout difference does not affect algorithm correctness but impacts
-// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2col1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float32) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -1485,12 +2759,6 @@ func Im2col1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 }
 
 // Im2col1dF64 extracts columns for 1D convolution (im2col) for float64
-//
-// Memory Layout: (batch, lOut, cIn, kSize) - optimized for GEMM performance
-// PyTorch Layout: (batch, cIn, kSize, lOut) - standard unfold output
-//
-// Note: Layout difference does not affect algorithm correctness but impacts
-// direct data exchange with PyTorch. Current layout optimizes GEMM operations.
 func Im2col1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float64) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -1508,10 +2776,61 @@ func Im2col1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 	}
 }
 
+// Im2col1dU8 extracts columns for 1D convolution (im2col) for uint8
+func Im2col1dU8(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []uint8) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li < 0 || li >= lIn {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = 0
+					} else {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = src[b*cIn*lIn+ci*lIn+li]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2col1dU32 extracts columns for 1D convolution (im2col) for uint32
+func Im2col1dU32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []uint32) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li < 0 || li >= lIn {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = 0
+					} else {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = src[b*cIn*lIn+ci*lIn+li]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2col1dI64 extracts columns for 1D convolution (im2col) for int64
+func Im2col1dI64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []int64) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li < 0 || li >= lIn {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = 0
+					} else {
+						col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k] = src[b*cIn*lIn+ci*lIn+li]
+					}
+				}
+			}
+		}
+	}
+}
+
 // Im2col1dStrided performs im2col transformation for any supported numeric type with support for non-contiguous src
-//
-// Memory Layout for col: (batch, lOut, cIn, kSize) - optimized for GEMM performance, assumed contiguous
-// srcStrides: [batch_stride, cIn_stride, lIn_stride]
 func Im2col1dStrided[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []T, srcStrides []int) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -1532,9 +2851,6 @@ func Im2col1dStrided[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dil
 }
 
 // Im2col1dStridedF32 extracts columns for 1D convolution (im2col) for float32 with support for non-contiguous src
-//
-// Memory Layout for col: (batch, lOut, cIn, kSize) - optimized for GEMM performance, assumed contiguous
-// srcStrides: [batch_stride, cIn_stride, lIn_stride]
 func Im2col1dStridedF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []float32, srcStrides []int) {
 	for b := range bSize {
 		for lo := range lOut {
@@ -1574,19 +2890,68 @@ func Im2col1dStridedF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilat
 	}
 }
 
-// Col2im1d performs standard 1D col2im for any supported numeric type (e.g., for conv backward data)
-//
-// Input Layout: (batch, lOut, cIn, kSize) - matches Im2col1d output
-// Output Layout: (batch, cIn, lIn) - standard tensor format
-//
-// Note: This is the inverse operation of Im2col1d with proper accumulation
-// for overlapping regions during the reconstruction process.
-func Col2im1d[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []T) {
-	// Clear im to zero first
-	for i := range im {
-		im[i] = 0
+// Im2col1dStridedU8 extracts columns for 1D convolution (im2col) for uint8 with support for non-contiguous src
+func Im2col1dStridedU8(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []uint8, srcStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+					if li < 0 || li >= lIn {
+						col[colIdx] = 0
+					} else {
+						srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+						col[colIdx] = src[srcIdx]
+					}
+				}
+			}
+		}
 	}
+}
 
+// Im2col1dStridedU32 extracts columns for 1D convolution (im2col) for uint32 with support for non-contiguous src
+func Im2col1dStridedU32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []uint32, srcStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+					if li < 0 || li >= lIn {
+						col[colIdx] = 0
+					} else {
+						srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+						col[colIdx] = src[srcIdx]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Im2col1dStridedI64 extracts columns for 1D convolution (im2col) for int64 with support for non-contiguous src
+func Im2col1dStridedI64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, src, col []int64, srcStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+					if li < 0 || li >= lIn {
+						col[colIdx] = 0
+					} else {
+						srcIdx := b*srcStrides[0] + ci*srcStrides[1] + li*srcStrides[2]
+						col[colIdx] = src[srcIdx]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1d performs standard 1D col2im for any supported numeric type (e.g., for conv backward data)
+func Col2im1d[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []T) {
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {
@@ -1602,18 +2967,7 @@ func Col2im1d[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation i
 }
 
 // Col2im1dF32 performs standard 1D col2im for float32 (e.g., for conv backward data)
-//
-// Input Layout: (batch, lOut, cIn, kSize) - matches Im2col1d output
-// Output Layout: (batch, cIn, lIn) - standard tensor format
-//
-// Note: This is the inverse operation of Im2col1d with proper accumulation
-// for overlapping regions during the reconstruction process.
 func Col2im1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float32) {
-	// Clear im to zero first
-	for i := range im {
-		im[i] = 0
-	}
-
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {
@@ -1629,18 +2983,7 @@ func Col2im1dF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 }
 
 // Col2im1dF64 performs standard 1D col2im for float64 (e.g., for conv backward data)
-//
-// Input Layout: (batch, lOut, cIn, kSize) - matches Im2col1d output
-// Output Layout: (batch, cIn, lIn) - standard tensor format
-//
-// Note: This is the inverse operation of Im2col1d with proper accumulation
-// for overlapping regions during the reconstruction process.
 func Col2im1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float64) {
-	// Clear im to zero first
-	for i := range im {
-		im[i] = 0
-	}
-
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {
@@ -1655,25 +2998,64 @@ func Col2im1dF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int
 	}
 }
 
-// Col2im1dStrided performs standard 1D col2im for any supported numeric type (e.g., for conv backward data) with support for non-contiguous im
-//
-// Input Layout: col:(batch, lOut, cIn, kSize) - assumed contiguous, matches Im2col1dStrided output
-// Output Layout: im:(batch, cIn, lIn) - supports non-contiguous via imStrides
-// imStrides: [batch_stride, cIn_stride, lIn_stride]
-//
-// Note: This is the inverse operation of Im2col1dStrided with proper accumulation
-// for overlapping regions during the reconstruction process. Clears im to zero first.
+// Col2im1dU8 performs standard 1D col2im for uint8 (e.g., for conv backward data)
+func Col2im1dU8(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []uint8) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						sum := int64(im[b*cIn*lIn+ci*lIn+li]) + int64(col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k])
+						if sum > math.MaxUint8 {
+							sum = math.MaxUint8
+						}
+						im[b*cIn*lIn+ci*lIn+li] = uint8(sum)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dU32 performs standard 1D col2im for uint32 (e.g., for conv backward data)
+func Col2im1dU32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []uint32) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						sum := int64(im[b*cIn*lIn+ci*lIn+li]) + int64(col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k])
+						if sum > math.MaxUint32 {
+							sum = math.MaxUint32
+						}
+						im[b*cIn*lIn+ci*lIn+li] = uint32(sum)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dI64 performs standard 1D col2im for int64 (e.g., for conv backward data)
+func Col2im1dI64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []int64) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						im[b*cIn*lIn+ci*lIn+li] += col[b*lOut*cIn*kSize+lo*cIn*kSize+ci*kSize+k]
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dStrided performs standard 1D col2im for any supported numeric type with support for non-contiguous im
 func Col2im1dStrided[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []T, imStrides []int) {
-	// Clear im to zero first (works even if im is non-contiguous view, as it's the underlying slice)
-	for b := range bSize {
-		for ci := range cIn {
-			for li := range lIn {
-				imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
-				im[imIdx] = 0
-			}
-		}
-	}
-
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {
@@ -1690,25 +3072,8 @@ func Col2im1dStrided[T D](bSize, cIn, lIn, lOut, kSize int, stride, padding, dil
 	}
 }
 
-// Col2im1dStridedF32 performs standard 1D col2im for float32 (e.g., for conv backward data) with support for non-contiguous im
-//
-// Input Layout: col:(batch, lOut, cIn, kSize) - assumed contiguous, matches Im2col1dStrided output
-// Output Layout: im:(batch, cIn, lIn) - supports non-contiguous via imStrides
-// imStrides: [batch_stride, cIn_stride, lIn_stride]
-//
-// Note: This is the inverse operation of Im2col1dStrided with proper accumulation
-// for overlapping regions during the reconstruction process. Clears im to zero first.
+// Col2im1dStridedF32 performs standard 1D col2im for float32 with support for non-contiguous im
 func Col2im1dStridedF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float32, imStrides []int) {
-	// Clear im to zero first (works even if im is non-contiguous view, as it's the underlying slice)
-	for b := range bSize {
-		for ci := range cIn {
-			for li := range lIn {
-				imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
-				im[imIdx] = 0
-			}
-		}
-	}
-
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {
@@ -1725,25 +3090,70 @@ func Col2im1dStridedF32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilat
 	}
 }
 
-// Col2im1dStridedF64 performs standard 1D col2im for float64 (e.g., for conv backward data) with support for non-contiguous im
-//
-// Input Layout: col:(batch, lOut, cIn, kSize) - assumed contiguous, matches Im2col1dStrided output
-// Output Layout: im:(batch, cIn, lIn) - supports non-contiguous via imStrides
-// imStrides: [batch_stride, cIn_stride, lIn_stride]
-//
-// Note: This is the inverse operation of Im2col1dStrided with proper accumulation
-// for overlapping regions during the reconstruction process. Clears im to zero first.
+// Col2im1dStridedF64 performs standard 1D col2im for float64 with support for non-contiguous im
 func Col2im1dStridedF64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []float64, imStrides []int) {
-	// Clear im to zero first (works even if im is non-contiguous view, as it's the underlying slice)
 	for b := range bSize {
-		for ci := range cIn {
-			for li := range lIn {
-				imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
-				im[imIdx] = 0
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+						imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+						im[imIdx] += col[colIdx]
+					}
+				}
 			}
 		}
 	}
+}
 
+// Col2im1dStridedU8 performs standard 1D col2im for uint8 with support for non-contiguous im
+func Col2im1dStridedU8(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []uint8, imStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+						imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+						sum := int64(im[imIdx]) + int64(col[colIdx])
+						if sum > math.MaxUint8 {
+							sum = math.MaxUint8
+						}
+						im[imIdx] = uint8(sum)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dStridedU32 performs standard 1D col2im for uint32 with support for non-contiguous im
+func Col2im1dStridedU32(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []uint32, imStrides []int) {
+	for b := range bSize {
+		for lo := range lOut {
+			for ci := range cIn {
+				for k := range kSize {
+					li := lo*stride + k*dilation - padding
+					if li >= 0 && li < lIn {
+						colIdx := b*lOut*cIn*kSize + lo*cIn*kSize + ci*kSize + k
+						imIdx := b*imStrides[0] + ci*imStrides[1] + li*imStrides[2]
+						sum := int64(im[imIdx]) + int64(col[colIdx])
+						if sum > math.MaxUint32 {
+							sum = math.MaxUint32
+						}
+						im[imIdx] = uint32(sum)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Col2im1dStridedI64 performs standard 1D col2im for int64 with support for non-contiguous im
+func Col2im1dStridedI64(bSize, cIn, lIn, lOut, kSize int, stride, padding, dilation int, col, im []int64, imStrides []int) {
 	for b := range bSize {
 		for lo := range lOut {
 			for ci := range cIn {

@@ -163,7 +163,7 @@ func (s *Shape) Extend(add ...int) *Shape {
 //	[3, 1, 4] + [2, 4] -> [3, 2, 4]  (missing dim treated as 1)
 //	[5, 1, 3] * [1, 4, 1] -> [5, 4, 3]  (1s broadcast to larger dims)
 //	[3, 4] + [2, 5] -> panic (incompatible: 4≠5 and neither is 1)
-func (s *Shape) BroadcastShapeBinaryOp(rhs *Shape, op string) (*Shape, error) {
+func (s *Shape) BroadcastShapeBinaryOp(rhs *Shape) (*Shape, error) {
 	lhsDims := s.dims
 	rhsDims := rhs.dims
 	lhsN := len(lhsDims)
@@ -188,7 +188,7 @@ func (s *Shape) BroadcastShapeBinaryOp(rhs *Shape, op string) (*Shape, error) {
 		} else if r == 1 {
 			b = l
 		} else {
-			return nil, fmt.Errorf("shape mismatch in binary op '%s': lhs %v, rhs %v", op, s, rhs)
+			return nil, fmt.Errorf("shape mismatch in binary op: lhs %v, rhs %v", s, rhs)
 		}
 		bcastDims[maxN-1-i] = b
 	}
@@ -213,7 +213,7 @@ func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
 
 	lhsBatch := &Shape{lhsDims[:len(lhsDims)-2]}
 	rhsBatch := &Shape{rhsDims[:len(rhsDims)-2]}
-	bcastBatch, err := lhsBatch.BroadcastShapeBinaryOp(rhsBatch, "broadcast_matmul")
+	bcastBatch, err := lhsBatch.BroadcastShapeBinaryOp(rhsBatch)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +225,7 @@ func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
 
 // ResolveAxes resolves a list of axis indices, supporting negative indices.
 // It checks for duplicates and out-of-range values.
-func ResolveAxes(axes []int, s *Shape, op string) ([]int, error) {
+func ResolveAxes(axes []int, s *Shape) ([]int, error) {
 	res := make([]int, len(axes))
 	seen := make(map[int]bool)
 	for i, ax := range axes {
@@ -233,10 +233,10 @@ func ResolveAxes(axes []int, s *Shape, op string) ([]int, error) {
 			ax += s.Rank()
 		}
 		if ax < 0 || ax >= s.Rank() {
-			return nil, fmt.Errorf("axis out of range: shape %v, axis %d, op: %s", s, ax, op)
+			return nil, fmt.Errorf("axis out of range: shape %v, axis %d", s, ax)
 		}
 		if seen[ax] {
-			return nil, fmt.Errorf("duplicate axis: shape %v, axes %v, op: %s", s, axes, op)
+			return nil, fmt.Errorf("duplicate axis: shape %v, axes %v", s, axes)
 		}
 		seen[ax] = true
 		res[i] = ax

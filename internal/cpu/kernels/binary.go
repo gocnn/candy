@@ -21,6 +21,27 @@ func BAddF64(numel int, x1, x2, y []float64) {
 	}
 }
 
+// BAddU8 performs y = x1 + x2 for uint8
+func BAddU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		y[i] = x1[i] + x2[i]
+	}
+}
+
+// BAddU32 performs y = x1 + x2 for uint32
+func BAddU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		y[i] = x1[i] + x2[i]
+	}
+}
+
+// BAddI64 performs y = x1 + x2 for int64
+func BAddI64(numel int, x1, x2, y []int64) {
+	for i := range numel {
+		y[i] = x1[i] + x2[i]
+	}
+}
+
 // BAddStrided performs y = x1 + x2 for any supported numeric type with strided memory
 func BAddStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
@@ -60,6 +81,45 @@ func BAddStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 	}
 }
 
+// BAddStridedU8 performs y = x1 + x2 for uint8 with strided memory
+func BAddStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BAddU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] + x2[idx2]
+	}
+}
+
+// BAddStridedU32 performs y = x1 + x2 for uint32 with strided memory
+func BAddStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BAddU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] + x2[idx2]
+	}
+}
+
+// BAddStridedI64 performs y = x1 + x2 for int64 with strided memory
+func BAddStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BAddI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] + x2[idx2]
+	}
+}
+
 // BSub performs y = x1 - x2 for any supported numeric type
 func BSub[T D](numel int, x1, x2, y []T) {
 	for i := range numel {
@@ -76,6 +136,27 @@ func BSubF32(numel int, x1, x2, y []float32) {
 
 // BSubF64 performs y = x1 - x2 for float64
 func BSubF64(numel int, x1, x2, y []float64) {
+	for i := range numel {
+		y[i] = x1[i] - x2[i]
+	}
+}
+
+// BSubU8 performs y = x1 - x2 for uint8
+func BSubU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		y[i] = x1[i] - x2[i]
+	}
+}
+
+// BSubU32 performs y = x1 - x2 for uint32
+func BSubU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		y[i] = x1[i] - x2[i]
+	}
+}
+
+// BSubI64 performs y = x1 - x2 for int64
+func BSubI64(numel int, x1, x2, y []int64) {
 	for i := range numel {
 		y[i] = x1[i] - x2[i]
 	}
@@ -120,6 +201,45 @@ func BSubStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 	}
 }
 
+// BSubStridedU8 performs y = x1 - x2 for uint8 with strided memory
+func BSubStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BSubU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] - x2[idx2]
+	}
+}
+
+// BSubStridedU32 performs y = x1 - x2 for uint32 with strided memory
+func BSubStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BSubU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] - x2[idx2]
+	}
+}
+
+// BSubStridedI64 performs y = x1 - x2 for int64 with strided memory
+func BSubStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BSubI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] - x2[idx2]
+	}
+}
+
 // BMul performs y = x1 * x2 for any supported numeric type
 func BMul[T D](numel int, x1, x2, y []T) {
 	for i := range numel {
@@ -136,6 +256,27 @@ func BMulF32(numel int, x1, x2, y []float32) {
 
 // BMulF64 performs y = x1 * x2 for float64
 func BMulF64(numel int, x1, x2, y []float64) {
+	for i := range numel {
+		y[i] = x1[i] * x2[i]
+	}
+}
+
+// BMulU8 performs y = x1 * x2 for uint8
+func BMulU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		y[i] = x1[i] * x2[i]
+	}
+}
+
+// BMulU32 performs y = x1 * x2 for uint32
+func BMulU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		y[i] = x1[i] * x2[i]
+	}
+}
+
+// BMulI64 performs y = x1 * x2 for int64
+func BMulI64(numel int, x1, x2, y []int64) {
 	for i := range numel {
 		y[i] = x1[i] * x2[i]
 	}
@@ -180,24 +321,108 @@ func BMulStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 	}
 }
 
+// BMulStridedU8 performs y = x1 * x2 for uint8 with strided memory
+func BMulStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMulU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] * x2[idx2]
+	}
+}
+
+// BMulStridedU32 performs y = x1 * x2 for uint32 with strided memory
+func BMulStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMulU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] * x2[idx2]
+	}
+}
+
+// BMulStridedI64 performs y = x1 * x2 for int64 with strided memory
+func BMulStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMulI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] * x2[idx2]
+	}
+}
+
 // BDiv performs y = x1 / x2 for any supported numeric type
 func BDiv[T D](numel int, x1, x2, y []T) {
 	for i := range numel {
-		y[i] = x1[i] / x2[i]
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
 	}
 }
 
 // BDivF32 performs y = x1 / x2 for float32
 func BDivF32(numel int, x1, x2, y []float32) {
 	for i := range numel {
-		y[i] = x1[i] / x2[i]
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
 	}
 }
 
 // BDivF64 performs y = x1 / x2 for float64
 func BDivF64(numel int, x1, x2, y []float64) {
 	for i := range numel {
-		y[i] = x1[i] / x2[i]
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivU8 performs y = x1 / x2 for uint8
+func BDivU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivU32 performs y = x1 / x2 for uint32
+func BDivU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivI64 performs y = x1 / x2 for int64
+func BDivI64(numel int, x1, x2, y []int64) {
+	for i := range numel {
+		if x2[i] != 0 {
+			y[i] = x1[i] / x2[i]
+		} else {
+			y[i] = 0 // Handle division by zero
+		}
 	}
 }
 
@@ -210,7 +435,11 @@ func BDivStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []i
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
 	}
 }
 
@@ -223,7 +452,11 @@ func BDivStridedF32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
 	}
 }
 
@@ -236,7 +469,62 @@ func BDivStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivStridedU8 performs y = x1 / x2 for uint8 with strided memory
+func BDivStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BDivU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivStridedU32 performs y = x1 / x2 for uint32 with strided memory
+func BDivStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BDivU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
+	}
+}
+
+// BDivStridedI64 performs y = x1 / x2 for int64 with strided memory
+func BDivStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BDivI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x2[idx2] != 0 {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1] / x2[idx2]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0 // Handle division by zero
+		}
 	}
 }
 
@@ -273,6 +561,27 @@ func BMaximumF64(numel int, x1, x2, y []float64) {
 	}
 }
 
+// BMaximumU8 performs y = max(x1, x2) for uint8
+func BMaximumU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		y[i] = max(x1[i], x2[i])
+	}
+}
+
+// BMaximumU32 performs y = max(x1, x2) for uint32
+func BMaximumU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		y[i] = max(x1[i], x2[i])
+	}
+}
+
+// BMaximumI64 performs y = max(x1, x2) for int64
+func BMaximumI64(numel int, x1, x2, y []int64) {
+	for i := range numel {
+		y[i] = max(x1[i], x2[i])
+	}
+}
+
 // BMaxStrided performs y = max(x1, x2) for any supported numeric type with strided memory
 func BMaxStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
@@ -282,12 +591,10 @@ func BMaxStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []i
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		val1 := x1[idx1]
-		val2 := x2[idx2]
-		if val1 > val2 {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = val1
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
 		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = val2
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
 		}
 	}
 }
@@ -313,6 +620,57 @@ func BMaximumStridedF32(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 func BMaximumStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []float64) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
 		BMaximumF64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
+// BMaximumStridedU8 performs y = max(x1, x2) for uint8 with strided memory
+func BMaximumStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMaximumU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
+// BMaximumStridedU32 performs y = max(x1, x2) for uint32 with strided memory
+func BMaximumStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMaximumU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
+// BMaximumStridedI64 performs y = max(x1, x2) for int64 with strided memory
+func BMaximumStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMaximumI64(numel, x1, x2, y)
 		return
 	}
 	for i := range numel {
@@ -359,6 +717,39 @@ func BMinimumF64(numel int, x1, x2, y []float64) {
 	}
 }
 
+// BMinimumU8 performs y = min(x1, x2) for uint8
+func BMinimumU8(numel int, x1, x2, y []uint8) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = x1[i]
+		} else {
+			y[i] = x2[i]
+		}
+	}
+}
+
+// BMinimumU32 performs y = min(x1, x2) for uint32
+func BMinimumU32(numel int, x1, x2, y []uint32) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = x1[i]
+		} else {
+			y[i] = x2[i]
+		}
+	}
+}
+
+// BMinimumI64 performs y = min(x1, x2) for int64
+func BMinimumI64(numel int, x1, x2, y []int64) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = x1[i]
+		} else {
+			y[i] = x2[i]
+		}
+	}
+}
+
 // BMinStrided performs y = min(x1, x2) for any supported numeric type with strided memory
 func BMinStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
@@ -368,12 +759,10 @@ func BMinStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []i
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		val1 := x1[idx1]
-		val2 := x2[idx2]
-		if val1 < val2 {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = val1
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
 		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = val2
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
 		}
 	}
 }
@@ -412,6 +801,57 @@ func BMinimumStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	}
 }
 
+// BMinimumStridedU8 performs y = min(x1, x2) for uint8 with strided memory
+func BMinimumStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMinimumU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
+// BMinimumStridedU32 performs y = min(x1, x2) for uint32 with strided memory
+func BMinimumStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []uint32) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMinimumU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
+// BMinimumStridedI64 performs y = min(x1, x2) for int64 with strided memory
+func BMinimumStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []int64) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		BMinimumI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
+		}
+	}
+}
+
 // Eq performs y = (x1 == x2) ? 1 : 0 for any supported numeric type
 func Eq[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -436,6 +876,39 @@ func EqF32(numel int, x1, x2 []float32, y []uint8) {
 
 // EqF64 performs y = (x1 == x2) ? 1 : 0 for float64
 func EqF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] == x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// EqU8 performs y = (x1 == x2) ? 1 : 0 for uint8
+func EqU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] == x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// EqU32 performs y = (x1 == x2) ? 1 : 0 for uint32
+func EqU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] == x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// EqI64 performs y = (x1 == x2) ? 1 : 0 for int64
+func EqI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] == x2[i] {
 			y[i] = 1
@@ -496,6 +969,57 @@ func EqStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 	}
 }
 
+// EqStridedU8 performs y = (x1 == x2) ? 1 : 0 for uint8 with strided memory
+func EqStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		EqU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] == x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// EqStridedU32 performs y = (x1 == x2) ? 1 : 0 for uint32 with strided memory
+func EqStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		EqU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] == x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// EqStridedI64 performs y = (x1 == x2) ? 1 : 0 for int64 with strided memory
+func EqStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		EqI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] == x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
 // Ne performs y = (x1 != x2) ? 1 : 0 for any supported numeric type
 func Ne[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -520,6 +1044,39 @@ func NeF32(numel int, x1, x2 []float32, y []uint8) {
 
 // NeF64 performs y = (x1 != x2) ? 1 : 0 for float64
 func NeF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] != x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// NeU8 performs y = (x1 != x2) ? 1 : 0 for uint8
+func NeU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] != x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// NeU32 performs y = (x1 != x2) ? 1 : 0 for uint32
+func NeU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] != x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// NeI64 performs y = (x1 != x2) ? 1 : 0 for int64
+func NeI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] != x2[i] {
 			y[i] = 1
@@ -580,6 +1137,57 @@ func NeStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 	}
 }
 
+// NeStridedU8 performs y = (x1 != x2) ? 1 : 0 for uint8 with strided memory
+func NeStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		NeU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] != x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// NeStridedU32 performs y = (x1 != x2) ? 1 : 0 for uint32 with strided memory
+func NeStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		NeU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] != x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// NeStridedI64 performs y = (x1 != x2) ? 1 : 0 for int64 with strided memory
+func NeStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		NeI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] != x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
 // Lt performs y = (x1 < x2) ? 1 : 0 for any supported numeric type
 func Lt[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -604,6 +1212,39 @@ func LtF32(numel int, x1, x2 []float32, y []uint8) {
 
 // LtF64 performs y = (x1 < x2) ? 1 : 0 for float64
 func LtF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LtU8 performs y = (x1 < x2) ? 1 : 0 for uint8
+func LtU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LtU32 performs y = (x1 < x2) ? 1 : 0 for uint32
+func LtU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] < x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LtI64 performs y = (x1 < x2) ? 1 : 0 for int64
+func LtI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] < x2[i] {
 			y[i] = 1
@@ -664,6 +1305,57 @@ func LtStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 	}
 }
 
+// LtStridedU8 performs y = (x1 < x2) ? 1 : 0 for uint8 with strided memory
+func LtStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LtU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// LtStridedU32 performs y = (x1 < x2) ? 1 : 0 for uint32 with strided memory
+func LtStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LtU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// LtStridedI64 performs y = (x1 < x2) ? 1 : 0 for int64 with strided memory
+func LtStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LtI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] < x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
 // Le performs y = (x1 <= x2) ? 1 : 0 for any supported numeric type
 func Le[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -688,6 +1380,39 @@ func LeF32(numel int, x1, x2 []float32, y []uint8) {
 
 // LeF64 performs y = (x1 <= x2) ? 1 : 0 for float64
 func LeF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] <= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LeU8 performs y = (x1 <= x2) ? 1 : 0 for uint8
+func LeU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] <= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LeU32 performs y = (x1 <= x2) ? 1 : 0 for uint32
+func LeU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] <= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// LeI64 performs y = (x1 <= x2) ? 1 : 0 for int64
+func LeI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] <= x2[i] {
 			y[i] = 1
@@ -748,6 +1473,57 @@ func LeStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 	}
 }
 
+// LeStridedU8 performs y = (x1 <= x2) ? 1 : 0 for uint8 with strided memory
+func LeStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LeU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] <= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// LeStridedU32 performs y = (x1 <= x2) ? 1 : 0 for uint32 with strided memory
+func LeStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LeU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] <= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// LeStridedI64 performs y = (x1 <= x2) ? 1 : 0 for int64 with strided memory
+func LeStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		LeI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] <= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
 // Gt performs y = (x1 > x2) ? 1 : 0 for any supported numeric type
 func Gt[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -772,6 +1548,39 @@ func GtF32(numel int, x1, x2 []float32, y []uint8) {
 
 // GtF64 performs y = (x1 > x2) ? 1 : 0 for float64
 func GtF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] > x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GtU8 performs y = (x1 > x2) ? 1 : 0 for uint8
+func GtU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] > x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GtU32 performs y = (x1 > x2) ? 1 : 0 for uint32
+func GtU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] > x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GtI64 performs y = (x1 > x2) ? 1 : 0 for int64
+func GtI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] > x2[i] {
 			y[i] = 1
@@ -832,6 +1641,57 @@ func GtStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 	}
 }
 
+// GtStridedU8 performs y = (x1 > x2) ? 1 : 0 for uint8 with strided memory
+func GtStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GtU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// GtStridedU32 performs y = (x1 > x2) ? 1 : 0 for uint32 with strided memory
+func GtStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GtU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// GtStridedI64 performs y = (x1 > x2) ? 1 : 0 for int64 with strided memory
+func GtStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GtI64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] > x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
 // Ge performs y = (x1 >= x2) ? 1 : 0 for any supported numeric type
 func Ge[T D](numel int, x1, x2 []T, y []uint8) {
 	for i := range numel {
@@ -856,6 +1716,39 @@ func GeF32(numel int, x1, x2 []float32, y []uint8) {
 
 // GeF64 performs y = (x1 >= x2) ? 1 : 0 for float64
 func GeF64(numel int, x1, x2 []float64, y []uint8) {
+	for i := range numel {
+		if x1[i] >= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GeU8 performs y = (x1 >= x2) ? 1 : 0 for uint8
+func GeU8(numel int, x1, x2 []uint8, y []uint8) {
+	for i := range numel {
+		if x1[i] >= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GeU32 performs y = (x1 >= x2) ? 1 : 0 for uint32
+func GeU32(numel int, x1, x2 []uint32, y []uint8) {
+	for i := range numel {
+		if x1[i] >= x2[i] {
+			y[i] = 1
+		} else {
+			y[i] = 0
+		}
+	}
+}
+
+// GeI64 performs y = (x1 >= x2) ? 1 : 0 for int64
+func GeI64(numel int, x1, x2 []int64, y []uint8) {
 	for i := range numel {
 		if x1[i] >= x2[i] {
 			y[i] = 1
@@ -903,6 +1796,57 @@ func GeStridedF32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, 
 func GeStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []float64, y []uint8) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
 		GeF64(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] >= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// GeStridedU8 performs y = (x1 >= x2) ? 1 : 0 for uint8 with strided memory
+func GeStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint8, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GeU8(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] >= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// GeStridedU32 performs y = (x1 >= x2) ? 1 : 0 for uint32 with strided memory
+func GeStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []uint32, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GeU32(numel, x1, x2, y)
+		return
+	}
+	for i := range numel {
+		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
+		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
+		if x1[idx1] >= x2[idx2] {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 1
+		} else {
+			y[GetStridedIndex(i, ndims, dims, stridesY)] = 0
+		}
+	}
+}
+
+// GeStridedI64 performs y = (x1 >= x2) ? 1 : 0 for int64 with strided memory
+func GeStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2 []int64, y []uint8) {
+	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
+		GeI64(numel, x1, x2, y)
 		return
 	}
 	for i := range numel {
