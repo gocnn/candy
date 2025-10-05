@@ -340,6 +340,12 @@ func UNegStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // URecip performs element-wise reciprocal for type T (contiguous memory)
 func URecip[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("urecip: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(1) / out[i]
@@ -394,6 +400,12 @@ func URecipI64(numel int, inp, out []int64) {
 
 // URecipStrided performs element-wise reciprocal for type T (strided memory)
 func URecipStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("urecip: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		URecip(numel, inp, out)
 		return
@@ -475,6 +487,12 @@ func URecipStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UExp performs element-wise exponential for type T (contiguous memory)
 func UExp[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uexp: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Exp(float64(out[i])))
@@ -529,6 +547,12 @@ func UExpI64(numel int, inp, out []int64) {
 
 // UExpStrided performs element-wise exponential for type T (strided memory)
 func UExpStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uexp: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UExp(numel, inp, out)
 		return
@@ -610,6 +634,12 @@ func UExpStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // ULog performs element-wise logarithm for type T (contiguous memory)
 func ULog[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ulog: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Log(float64(out[i])))
@@ -664,6 +694,12 @@ func ULogI64(numel int, inp, out []int64) {
 
 // ULogStrided performs element-wise logarithm for type T (strided memory)
 func ULogStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ulog: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		ULog(numel, inp, out)
 		return
@@ -745,6 +781,12 @@ func ULogStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // USin performs element-wise sine for type T (contiguous memory)
 func USin[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usin: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Sin(float64(out[i])))
@@ -799,6 +841,12 @@ func USinI64(numel int, inp, out []int64) {
 
 // USinStrided performs element-wise sine for type T (strided memory)
 func USinStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usin: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		USin(numel, inp, out)
 		return
@@ -880,6 +928,12 @@ func USinStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UCos performs element-wise cosine for type T (contiguous memory)
 func UCos[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ucos: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Cos(float64(out[i])))
@@ -934,6 +988,12 @@ func UCosI64(numel int, inp, out []int64) {
 
 // UCosStrided performs element-wise cosine for type T (strided memory)
 func UCosStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ucos: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UCos(numel, inp, out)
 		return
@@ -1015,6 +1075,12 @@ func UCosStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UTanh performs element-wise tanh for type T (contiguous memory)
 func UTanh[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("utanh: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Tanh(float64(out[i])))
@@ -1069,6 +1135,12 @@ func UTanhI64(numel int, inp, out []int64) {
 
 // UTanhStrided performs element-wise tanh for type T (strided memory)
 func UTanhStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("utanh: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UTanh(numel, inp, out)
 		return
@@ -1150,6 +1222,12 @@ func UTanhStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UErf performs element-wise erf for type T (contiguous memory)
 func UErf[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uerf: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Erf(float64(out[i])))
@@ -1204,6 +1282,12 @@ func UErfI64(numel int, inp, out []int64) {
 
 // UErfStrided performs element-wise erf for type T (strided memory)
 func UErfStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uerf: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UErf(numel, inp, out)
 		return
@@ -2334,6 +2418,12 @@ func USqrStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // USqrt performs element-wise square root for type T (contiguous memory)
 func USqrt[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usqrt: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Sqrt(float64(out[i])))
@@ -2388,6 +2478,12 @@ func USqrtI64(numel int, inp, out []int64) {
 
 // USqrtStrided performs element-wise square root for type T (strided memory)
 func USqrtStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usqrt: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		USqrt(numel, inp, out)
 		return
@@ -2469,6 +2565,12 @@ func USqrtStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UGelu performs element-wise GELU for type T (contiguous memory)
 func UGelu[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ugelu: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -2547,6 +2649,12 @@ func UGeluI64(numel int, inp, out []int64) {
 
 // UGeluStrided performs element-wise GELU for type T (strided memory)
 func UGeluStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ugelu: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UGelu(numel, inp, out)
 		return
@@ -2652,6 +2760,12 @@ func UGeluStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UGeluErf performs element-wise GELU (ERF-based) for type T (contiguous memory)
 func UGeluErf[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ugelu: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -2712,6 +2826,12 @@ func UGeluErfI64(numel int, inp, out []int64) {
 
 // UGeluErfStrided performs element-wise GELU (ERF-based) for type T (strided memory)
 func UGeluErfStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("ugelu: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UGeluErf(numel, inp, out)
 		return
@@ -3015,6 +3135,12 @@ func UReluStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UElu performs element-wise ELU for type T with parameter alpha (contiguous memory)
 func UElu[T D](alpha T, numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uelu: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			x := out[i]
@@ -3093,6 +3219,12 @@ func UEluI64(alpha int64, numel int, inp, out []int64) {
 
 // UEluStrided performs element-wise ELU for type T with parameter alpha (strided memory)
 func UEluStrided[T D](numel, ndims int, dims, strides []int, alpha T, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("uelu: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UElu(alpha, numel, inp, out)
 		return
@@ -3198,6 +3330,12 @@ func UEluStridedI64(numel, ndims int, dims, strides []int, alpha int64, inp, out
 
 // USilu performs element-wise SiLU for type T (contiguous memory)
 func USilu[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usilu: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -3258,6 +3396,12 @@ func USiluI64(numel int, inp, out []int64) {
 
 // USiluStrided performs element-wise SiLU for type T (strided memory)
 func USiluStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usilu: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		USilu(numel, inp, out)
 		return
@@ -3345,6 +3489,12 @@ func USiluStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // UPowf performs element-wise power for type T with parameter param (contiguous memory)
 func UPowf[T D](param T, numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("upowf: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			out[i] = T(math.Pow(float64(out[i]), float64(param)))
@@ -3399,6 +3549,12 @@ func UPowfI64(param int64, numel int, inp, out []int64) {
 
 // UPowfStrided performs element-wise power for type T with parameter param (strided memory)
 func UPowfStrided[T D](numel, ndims int, dims, strides []int, param T, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("upowf: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		UPowf(param, numel, inp, out)
 		return
@@ -3759,6 +3915,12 @@ func USignStridedI64(numel, ndims int, dims, strides []int, inp, out []int64) {
 
 // USigmoid performs element-wise sigmoid for type T (contiguous memory)
 func USigmoid[T D](numel int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usigmoid: unsupported type")
+	}
 	if inp == nil {
 		for i := range numel {
 			x := float64(out[i])
@@ -3819,6 +3981,12 @@ func USigmoidI64(numel int, inp, out []int64) {
 
 // USigmoidStrided performs element-wise sigmoid for type T (strided memory)
 func USigmoidStrided[T D](numel, ndims int, dims, strides []int, inp, out []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("usigmoid: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		USigmoid(numel, inp, out)
 		return
