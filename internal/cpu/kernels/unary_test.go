@@ -4071,7 +4071,7 @@ func TestUEluStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UEluStridedF32(tt.alpha, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UEluStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.alpha, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4188,7 +4188,7 @@ func TestUEluStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UEluStridedF64(tt.alpha, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UEluStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.alpha, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4521,7 +4521,7 @@ func TestUPowfStridedF32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float32, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UPowfStridedF32(tt.param, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UPowfStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.param, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}
@@ -4638,7 +4638,7 @@ func TestUPowfStridedF64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			outCopy := make([]float64, len(tt.out))
 			copy(outCopy, tt.out)
-			kernels.UPowfStridedF64(tt.param, tt.numel, tt.ndims, tt.dims, tt.strides, tt.inp, outCopy)
+			kernels.UPowfStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.param, tt.inp, outCopy)
 			if !slices.EqualFunc(outCopy, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", outCopy, tt.want)
 			}

@@ -181,10 +181,10 @@ func (l *Layout) BroadcastAs(target *Shape) (*Layout, error) {
 	}
 	addedDims := tgtRank - srcRank
 	newStride := make([]int, tgtRank)
-	for i := 0; i < addedDims; i++ {
+	for i := range addedDims {
 		newStride[i] = 0
 	}
-	for i := 0; i < srcRank; i++ {
+	for i := range srcRank {
 		srcDim := l.Dims()[i]
 		tgtDim := target.Dims()[addedDims+i]
 		switch srcDim {

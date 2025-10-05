@@ -351,6 +351,20 @@ func (t *Tensor[T]) MustSqrt() *Tensor[T] {
 	return t
 }
 
+// BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
+func (a *Tensor[T]) BroadcastAdd(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T], BroadcastAddBackward[T])
+}
+
+// MustBroadcastAdd performs broadcasted addition, panicking on error.
+func (a *Tensor[T]) MustBroadcastAdd(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastAdd(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // AddScalar adds a scalar value to the tensor.
 func (t *Tensor[T]) AddScalar(scalar float64) (*Tensor[T], error) {
 	// TODO: Implement scalar addition
@@ -362,6 +376,45 @@ func (t *Tensor[T]) MulScalar(scalar float64) (*Tensor[T], error) {
 	// TODO: Implement scalar multiplication
 	return nil, nil
 }
+
+// BroadcastAs broadcasts the tensor to the target shape.
+func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
+	if t.layout.Shape().Equal(shape) {
+		return t, nil
+	}
+
+	newLayout, err := t.layout.BroadcastAs(shape)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tensor[T]{
+		id:      NewId(),
+		storage: t.storage,
+		layout:  newLayout,
+		op:      nil,
+		isVar:   false,
+		dtype:   t.dtype,
+		device:  t.device,
+	}, nil
+}
+
+// Expand broadcasts the tensor to the target shape.
+func (t *Tensor[T]) Expand(shape *spark.Shape) (*Tensor[T], error) {
+	return t.BroadcastAs(shape)
+}
+
+// func (t *Tensor[T]) SumToShape(target *spark.Shape) (*Tensor[T], error) {
+// 	newLayout, err := t.layout.SumTo(target)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	storage, err := t.storage.Sum(t.layout, newLayout) // Assume BackendStorage has Sum(inputLayout, outputLayout)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return NewFromStorage(storage, newLayout, t.dtype, t.device), nil
+// }
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.
 // Returns the gradient store containing all computed gradients.

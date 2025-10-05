@@ -178,7 +178,7 @@ func TestShapeExtend(t *testing.T) {
 func TestShapeBroadcastShapeBinaryOp(t *testing.T) {
 	s1 := spark.NewShape(3, 1, 4)
 	s2 := spark.NewShape(2, 4)
-	result, err := s1.BroadcastShapeBinaryOp(s2, "+")
+	result, err := s1.BroadcastShapeBinaryOp(s2)
 	if err != nil {
 		t.Errorf("BroadcastShapeBinaryOp failed: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestShapeBroadcastShapeBinaryOp(t *testing.T) {
 func TestShapeBroadcastShapeBinaryOpError(t *testing.T) {
 	s1 := spark.NewShape(3, 4)
 	s2 := spark.NewShape(2, 5)
-	_, err := s1.BroadcastShapeBinaryOp(s2, "+")
+	_, err := s1.BroadcastShapeBinaryOp(s2)
 	if err == nil {
 		t.Errorf("BroadcastShapeBinaryOp([3 4], [2 5]) did not error")
 	}
@@ -219,7 +219,7 @@ func TestShapeBroadcastShapeMatmulError(t *testing.T) {
 
 func TestShapeResolveAxes(t *testing.T) {
 	s := spark.NewShape(2, 3, 4)
-	axes, err := spark.ResolveAxes([]int{0, -1}, s, "test")
+	axes, err := spark.ResolveAxes([]int{0, -1}, s)
 	if err != nil {
 		t.Errorf("ResolveAxes([0, -1]) failed: %v", err)
 	}
@@ -230,7 +230,7 @@ func TestShapeResolveAxes(t *testing.T) {
 
 func TestShapeResolveAxesError(t *testing.T) {
 	s := spark.NewShape(2, 3)
-	_, err := spark.ResolveAxes([]int{0, 0}, s, "test")
+	_, err := spark.ResolveAxes([]int{0, 0}, s)
 	if err == nil {
 		t.Errorf("ResolveAxes([0, 0]) did not error")
 	}
