@@ -258,6 +258,58 @@ func SqrtBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Ten
 	return []*Tensor[T]{inputGrad}, nil
 }
 
+// SumForward computes the sum along the specified dimensions
+func SumForward[T spark.D](dims []int) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("SumForward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0]
+
+		dims, err := spark.ResolveAxes(dims, input.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("sum dimensions: %w", err)
+		}
+
+		outputDims := make([]int, len(input.Dims()))
+		copy(outputDims, input.Dims())
+		for _, dim := range dims {
+			outputDims[dim] = 1
+		}
+		outputShape := spark.NewShapeFrom(outputDims)
+		outputLayout := spark.Contiguous(outputShape)
+
+		resStorage, err := input.storage.Sum(input.layout, dims)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewFrom(resStorage, outputLayout, input.dtype, input.device), nil
+	}
+}
+
+// SumBackward computes gradients for sum operation
+func SumBackward[T spark.D](dims []int) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("SumBackward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0].Detach()
+
+		// For sum operation, gradient flows back unchanged to all elements
+		// that contributed to each sum. This means we need to broadcast
+		// the output gradient back to the input shape.
+		inputGrad, err := outputGrad.BroadcastAs(input.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("sum backward broadcast: %w", err)
+		}
+
+		return []*Tensor[T]{inputGrad}, nil
+	}
+}
+
 // BroadcastAddForward computes the broadcasted addition: result = broadcast(a) + broadcast(b).
 func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	if len(inputs) != 2 {
@@ -266,13 +318,11 @@ func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 
 	a, b := inputs[0], inputs[1]
 
-	// Compute broadcasted shape
 	bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
 	if err != nil {
 		return nil, fmt.Errorf("compute broadcast shape: %w", err)
 	}
 
-	// Broadcast input tensors
 	aBcast, err := a.BroadcastAs(bcastShape)
 	if err != nil {
 		return nil, fmt.Errorf("broadcast a: %w", err)
@@ -282,10 +332,7 @@ func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, fmt.Errorf("broadcast b: %w", err)
 	}
 
-	// Create result layout
 	resultLayout := spark.Contiguous(bcastShape)
-
-	// Perform addition
 	result, err := aBcast.storage.Add(bBcast.storage, aBcast.layout, bBcast.layout, resultLayout)
 	if err != nil {
 		return nil, fmt.Errorf("add: %w", err)
