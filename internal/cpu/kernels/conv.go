@@ -1539,10 +1539,7 @@ func AvgPool2dU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []ui
 							}
 						}
 					}
-					avg := sum / int64(count)
-					if avg > math.MaxUint8 {
-						avg = math.MaxUint8
-					}
+					avg := min(sum/int64(count), math.MaxUint8)
 					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = uint8(avg)
 				}
 			}
@@ -1570,10 +1567,7 @@ func AvgPool2dU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, dst []u
 							}
 						}
 					}
-					avg := sum / int64(count)
-					if avg > math.MaxUint32 {
-						avg = math.MaxUint32
-					}
+					avg := min(sum/int64(count), math.MaxUint32)
 					dst[b*c*hOut*wOut+ch*hOut*wOut+ho*wOut+wo] = uint32(avg)
 				}
 			}
@@ -1716,10 +1710,7 @@ func AvgPool2dStridedU8(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, d
 							}
 						}
 					}
-					avg := sum / int64(count)
-					if avg > math.MaxUint8 {
-						avg = math.MaxUint8
-					}
+					avg := min(sum/int64(count), math.MaxUint8)
 					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
 					dst[dstIdx] = uint8(avg)
 				}
@@ -1749,10 +1740,7 @@ func AvgPool2dStridedU32(bSize, c, hIn, wIn, hK, wK, hStride, wStride int, src, 
 							}
 						}
 					}
-					avg := sum / int64(count)
-					if avg > math.MaxUint32 {
-						avg = math.MaxUint32
-					}
+					avg := min(sum/int64(count), math.MaxUint32)
 					dstIdx := b*dstStrides[0] + ch*dstStrides[1] + ho*dstStrides[2] + wo*dstStrides[3]
 					dst[dstIdx] = uint32(avg)
 				}

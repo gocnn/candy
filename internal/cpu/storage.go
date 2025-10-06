@@ -1056,6 +1056,7 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 		return nil, errors.New("invalid pooling parameters: output dimensions <= 0")
 	}
 
+	dstStrides := []int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1}
 	result := New(make([]T, params.Batch*params.Ch*hOut*wOut))
 
 	switch any(s.data).(type) {
@@ -1086,7 +1087,7 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []float64:
@@ -1116,7 +1117,7 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []uint8, []uint32, []int64:
@@ -1146,7 +1147,7 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				s.data,
 				result.data,
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	default:
@@ -1171,6 +1172,7 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 		return nil, errors.New("invalid pooling parameters: output dimensions <= 0")
 	}
 
+	dstStrides := []int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1}
 	result := New(make([]T, params.Batch*params.Ch*hOut*wOut))
 
 	switch any(s.data).(type) {
@@ -1201,7 +1203,7 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []float64:
@@ -1231,7 +1233,7 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []uint8, []uint32, []int64:
@@ -1261,7 +1263,7 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				s.data,
 				result.data,
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	default:
@@ -1286,6 +1288,7 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 		return nil, errors.New("invalid upsampling parameters: output dimensions <= 0")
 	}
 
+	dstStrides := []int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1}
 	result := New(make([]T, params.Batch*params.Ch*hOut*wOut))
 
 	switch any(s.data).(type) {
@@ -1316,7 +1319,7 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []float64:
@@ -1346,7 +1349,7 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	case []uint8, []uint32, []int64:
@@ -1376,7 +1379,7 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				s.data,
 				result.data,
 				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
+				dstStrides,
 			)
 		}
 	default:
