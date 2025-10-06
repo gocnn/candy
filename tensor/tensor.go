@@ -28,27 +28,9 @@ type Tensor[T spark.D] struct {
 	device  spark.Device
 }
 
-func New[T spark.D](array []T, shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	switch device {
-	case spark.CPU:
-		storage = cpu.New(array)
-	default:
-		panic("device not supported")
-	}
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
-}
-
-// NewFromStorage creates a new tensor from existing storage and layout.
+// NewFrom creates a new tensor from existing storage and layout.
 // This is useful for creating tensors in backward passes without adding to computation graph.
-func NewFromStorage[T spark.D](storage spark.BackendStorage[T], layout *spark.Layout, dtype spark.DType, device spark.Device) *Tensor[T] {
+func NewFrom[T spark.D](storage spark.BackendStorage[T], layout *spark.Layout, dtype spark.DType, device spark.Device) *Tensor[T] {
 	return &Tensor[T]{
 		id:      NewId(),
 		storage: storage,
@@ -57,6 +39,17 @@ func NewFromStorage[T spark.D](storage spark.BackendStorage[T], layout *spark.La
 		dtype:   dtype,
 		device:  device,
 	}
+}
+
+func New[T spark.D](array []T, shape *spark.Shape, device spark.Device) *Tensor[T] {
+	var storage spark.BackendStorage[T]
+	switch device {
+	case spark.CPU:
+		storage = cpu.New(array)
+	default:
+		panic("device not supported")
+	}
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 func Ones[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
@@ -74,7 +67,7 @@ func Ones[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
 		panic("device not supported")
 	}
 
-	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 func Zeros[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
@@ -92,7 +85,7 @@ func Zeros[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
 		panic("device not supported")
 	}
 
-	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // Rand creates a new tensor initialized with values sampled uniformly between lo and up.
@@ -111,7 +104,7 @@ func Rand[T spark.D](lo, up float64, shape *spark.Shape, device spark.Device) *T
 		panic("device not supported")
 	}
 
-	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // RandN creates a new tensor initialized with values sampled from a normal distribution.
@@ -130,7 +123,7 @@ func RandN[T spark.D](mean, std float64, shape *spark.Shape, device spark.Device
 		panic("device not supported")
 	}
 
-	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
@@ -148,7 +141,7 @@ func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Te
 		panic("device not supported")
 	}
 
-	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // ZerosLike creates a new tensor with the same shape as the input tensor, filled with zeros.
@@ -282,7 +275,7 @@ func (t *Tensor[T]) RequiresGrad() *Tensor[T] {
 }
 
 func (t *Tensor[T]) Detach() *Tensor[T] {
-	return NewFromStorage(t.storage, t.layout, t.dtype, t.device)
+	return NewFrom(t.storage, t.layout, t.dtype, t.device)
 }
 
 // Add performs element-wise addition of two tensors.
@@ -392,7 +385,7 @@ func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(t.storage, newLayout, t.dtype, t.device), nil
+	return NewFrom(t.storage, newLayout, t.dtype, t.device), nil
 }
 
 // Expand broadcasts the tensor to the target shape.
