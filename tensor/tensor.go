@@ -52,7 +52,7 @@ func NewFromStorage[T spark.D](storage spark.BackendStorage[T], layout *spark.La
 	return &Tensor[T]{
 		id:      NewId(),
 		storage: storage,
-		layout:  layout.Clone(),
+		layout:  layout,
 		isVar:   false, // Gradient tensors should not be variables by default
 		dtype:   dtype,
 		device:  device,
