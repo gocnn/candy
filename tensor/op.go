@@ -73,7 +73,7 @@ func AddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(resStorage, resLayout, a.dtype, a.device), nil
+	return NewFrom(resStorage, resLayout, a.dtype, a.device), nil
 }
 
 // AddBackward computes gradients for addition: ∂(a+b)/∂a = 1, ∂(a+b)/∂b = 1
@@ -97,7 +97,7 @@ func SubForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(resStorage, resLayout, a.dtype, a.device), nil
+	return NewFrom(resStorage, resLayout, a.dtype, a.device), nil
 }
 
 // SubBackward computes gradients for subtraction: ∂(a-b)/∂a = 1, ∂(a-b)/∂b = -1
@@ -132,7 +132,7 @@ func MulForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(resStorage, resLayout, a.dtype, a.device), nil
+	return NewFrom(resStorage, resLayout, a.dtype, a.device), nil
 }
 
 // MulBackward computes gradients for multiplication: ∂(a*b)/∂a = outputGrad*b, ∂(a*b)/∂b = outputGrad*a
@@ -171,7 +171,7 @@ func DivForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(resStorage, resLayout, a.dtype, a.device), nil
+	return NewFrom(resStorage, resLayout, a.dtype, a.device), nil
 }
 
 // DivBackward computes gradients for division: ∂(a/b)/∂a = 1/b, ∂(a/b)/∂b = -a/(b²)
@@ -225,7 +225,7 @@ func SqrtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFromStorage(resStorage, a.layout.Clone(), a.dtype, a.device), nil
+	return NewFrom(resStorage, a.layout.Clone(), a.dtype, a.device), nil
 }
 
 // SqrtBackward computes gradients for square root: ∂sqrt(a)/∂a = 1/(2*sqrt(a))
@@ -291,7 +291,7 @@ func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 		return nil, fmt.Errorf("add: %w", err)
 	}
 
-	return NewFromStorage(result, resultLayout, a.dtype, a.device), nil
+	return NewFrom(result, resultLayout, a.dtype, a.device), nil
 }
 
 // BroadcastAddBackward computes gradients for broadcasted addition: ∂(a+b)/∂a = 1, ∂(a+b)/∂b = 1
@@ -336,7 +336,7 @@ func SqueezeForward[T spark.D](dim int) ForwardFunc[T] {
 		newShape := spark.NewShapeFrom(newDims)
 		newLayout := spark.NewLayout(newShape, newStrides, input.layout.StartOffset())
 
-		return NewFromStorage(input.storage, newLayout, input.dtype, input.device), nil
+		return NewFrom(input.storage, newLayout, input.dtype, input.device), nil
 	}
 }
 
@@ -402,7 +402,7 @@ func UnsqueezeForward[T spark.D](dim int) ForwardFunc[T] {
 		newShape := spark.NewShapeFrom(newDims)
 		newLayout := spark.NewLayout(newShape, newStrides, input.layout.StartOffset())
 
-		return NewFromStorage(input.storage, newLayout, input.dtype, input.device), nil
+		return NewFrom(input.storage, newLayout, input.dtype, input.device), nil
 	}
 }
 
