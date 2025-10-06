@@ -8,7 +8,7 @@
 ## Install
 
 ```bash
-go get github.com/qntx/spark
+go get github.com/gocnn/spark
 ```
 
 ## License

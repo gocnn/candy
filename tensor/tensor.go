@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/gocnn/spark"
@@ -334,6 +335,34 @@ func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
 	return t
 }
 
+// Conv1d performs 1D convolution.
+func (t *Tensor[T]) Conv1d(kernel *Tensor[T], params *spark.Conv1DParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, kernel}, Conv1dForward[T](params), Conv1dBackward[T](params))
+}
+
+// MustConv1d performs 1D convolution, panicking on error.
+func (t *Tensor[T]) MustConv1d(kernel *Tensor[T], params *spark.Conv1DParams) *Tensor[T] {
+	result, err := t.Conv1d(kernel, params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// ConvTranspose1d performs 1D transposed convolution (deconvolution).
+func (t *Tensor[T]) ConvTranspose1d(kernel *Tensor[T], params *spark.ConvT1DParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, kernel}, ConvTranspose1dForward[T](params), ConvTranspose1dBackward[T](params))
+}
+
+// MustConvTranspose1d performs 1D transposed convolution, panicking on error.
+func (t *Tensor[T]) MustConvTranspose1d(kernel *Tensor[T], params *spark.ConvT1DParams) *Tensor[T] {
+	result, err := t.ConvTranspose1d(kernel, params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Sqrt computes the square root of each element.
 func (t *Tensor[T]) Sqrt() (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, SqrtForward[T], SqrtBackward[T])
@@ -388,6 +417,39 @@ func (t *Tensor[T]) AddScalar(scalar float64) (*Tensor[T], error) {
 func (t *Tensor[T]) MulScalar(scalar float64) (*Tensor[T], error) {
 	// TODO: Implement scalar multiplication
 	return nil, nil
+}
+
+// Transpose returns a tensor that is a transposed version of the input.
+func (t *Tensor[T]) Transpose(dim1, dim2 int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, TransposeForward[T](dim1, dim2), TransposeBackward[T](dim1, dim2))
+}
+
+// MustTranspose performs transpose, panicking on error.
+func (t *Tensor[T]) MustTranspose(dim1, dim2 int) *Tensor[T] {
+	result, err := t.Transpose(dim1, dim2)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// T is a convenient alias for transposing the last two dimensions.
+// This is commonly used for matrix transpose operations.
+func (t *Tensor[T]) T() (*Tensor[T], error) {
+	rank := t.Rank()
+	if rank < 2 {
+		return nil, fmt.Errorf("tensor must have at least 2 dimensions for T(), got %d", rank)
+	}
+	return t.Transpose(rank-2, rank-1)
+}
+
+// MustT performs matrix transpose, panicking on error.
+func (t *Tensor[T]) MustT() *Tensor[T] {
+	result, err := t.T()
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // BroadcastAs broadcasts the tensor to the target shape.
