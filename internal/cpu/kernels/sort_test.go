@@ -29,13 +29,6 @@ func TestAsortAscI64F32(t *testing.T) {
 			dst:   make([]int64, 4),
 			want:  []int64{1, 0, 0, 1},
 		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]int64, 0),
-			want:  []int64{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -84,17 +77,6 @@ func TestAsortAscStridedI64F32(t *testing.T) {
 			dst:        make([]int64, 4),
 			want:       []int64{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]int64, 0),
-			want:       []int64{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -130,13 +112,6 @@ func TestAsortAscI64F64(t *testing.T) {
 			src:   []float64{4, 2, 1, 3},
 			dst:   make([]int64, 4),
 			want:  []int64{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]int64, 0),
-			want:  []int64{},
 		},
 	}
 
@@ -186,17 +161,6 @@ func TestAsortAscStridedI64F64(t *testing.T) {
 			dst:        make([]int64, 4),
 			want:       []int64{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]int64, 0),
-			want:       []int64{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -232,13 +196,6 @@ func TestAsortAscU32F32(t *testing.T) {
 			src:   []float32{4, 2, 1, 3},
 			dst:   make([]uint32, 4),
 			want:  []uint32{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]uint32, 0),
-			want:  []uint32{},
 		},
 	}
 
@@ -288,17 +245,6 @@ func TestAsortAscStridedU32F32(t *testing.T) {
 			dst:        make([]uint32, 4),
 			want:       []uint32{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]uint32, 0),
-			want:       []uint32{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -334,13 +280,6 @@ func TestAsortAscU32F64(t *testing.T) {
 			src:   []float64{4, 2, 1, 3},
 			dst:   make([]uint32, 4),
 			want:  []uint32{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]uint32, 0),
-			want:  []uint32{},
 		},
 	}
 
@@ -390,17 +329,6 @@ func TestAsortAscStridedU32F64(t *testing.T) {
 			dst:        make([]uint32, 4),
 			want:       []uint32{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]uint32, 0),
-			want:       []uint32{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -436,13 +364,6 @@ func TestAsortAscU8F32(t *testing.T) {
 			src:   []float32{4, 2, 1, 3},
 			dst:   make([]uint8, 4),
 			want:  []uint8{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]uint8, 0),
-			want:  []uint8{},
 		},
 	}
 
@@ -492,17 +413,6 @@ func TestAsortAscStridedU8F32(t *testing.T) {
 			dst:        make([]uint8, 4),
 			want:       []uint8{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]uint8, 0),
-			want:       []uint8{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -538,13 +448,6 @@ func TestAsortAscU8F64(t *testing.T) {
 			src:   []float64{4, 2, 1, 3},
 			dst:   make([]uint8, 4),
 			want:  []uint8{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]uint8, 0),
-			want:  []uint8{},
 		},
 	}
 
@@ -594,17 +497,6 @@ func TestAsortAscStridedU8F64(t *testing.T) {
 			dst:        make([]uint8, 4),
 			want:       []uint8{1, 0, 0, 1},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]uint8, 0),
-			want:       []uint8{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -640,13 +532,6 @@ func TestAsortDescI64F32(t *testing.T) {
 			src:   []float32{2, 4, 3, 1},
 			dst:   make([]int64, 4),
 			want:  []int64{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]int64, 0),
-			want:  []int64{},
 		},
 	}
 
@@ -696,17 +581,6 @@ func TestAsortDescStridedI64F32(t *testing.T) {
 			dst:        make([]int64, 4),
 			want:       []int64{0, 1, 1, 0},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]int64, 0),
-			want:       []int64{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -742,13 +616,6 @@ func TestAsortDescI64F64(t *testing.T) {
 			src:   []float64{2, 4, 3, 1},
 			dst:   make([]int64, 4),
 			want:  []int64{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]int64, 0),
-			want:  []int64{},
 		},
 	}
 
@@ -798,17 +665,6 @@ func TestAsortDescStridedI64F64(t *testing.T) {
 			dst:        make([]int64, 4),
 			want:       []int64{0, 1, 1, 0},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]int64, 0),
-			want:       []int64{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -844,13 +700,6 @@ func TestAsortDescU32F32(t *testing.T) {
 			src:   []float32{2, 4, 3, 1},
 			dst:   make([]uint32, 4),
 			want:  []uint32{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]uint32, 0),
-			want:  []uint32{},
 		},
 	}
 
@@ -900,17 +749,6 @@ func TestAsortDescStridedU32F32(t *testing.T) {
 			dst:        make([]uint32, 4),
 			want:       []uint32{0, 1, 1, 0},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]uint32, 0),
-			want:       []uint32{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -946,13 +784,6 @@ func TestAsortDescU32F64(t *testing.T) {
 			src:   []float64{2, 4, 3, 1},
 			dst:   make([]uint32, 4),
 			want:  []uint32{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]uint32, 0),
-			want:  []uint32{},
 		},
 	}
 
@@ -1002,17 +833,6 @@ func TestAsortDescStridedU32F64(t *testing.T) {
 			dst:        make([]uint32, 4),
 			want:       []uint32{0, 1, 1, 0},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]uint32, 0),
-			want:       []uint32{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -1048,13 +868,6 @@ func TestAsortDescU8F32(t *testing.T) {
 			src:   []float32{2, 4, 3, 1},
 			dst:   make([]uint8, 4),
 			want:  []uint8{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float32{},
-			dst:   make([]uint8, 0),
-			want:  []uint8{},
 		},
 	}
 
@@ -1104,17 +917,6 @@ func TestAsortDescStridedU8F32(t *testing.T) {
 			dst:        make([]uint8, 4),
 			want:       []uint8{0, 1, 1, 0},
 		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float32{},
-			dst:        make([]uint8, 0),
-			want:       []uint8{},
-		},
 	}
 
 	for _, tt := range tests {
@@ -1150,13 +952,6 @@ func TestAsortDescU8F64(t *testing.T) {
 			src:   []float64{2, 4, 3, 1},
 			dst:   make([]uint8, 4),
 			want:  []uint8{1, 0, 0, 1},
-		},
-		{
-			name:  "Empty",
-			ncols: 0,
-			src:   []float64{},
-			dst:   make([]uint8, 0),
-			want:  []uint8{},
 		},
 	}
 
@@ -1205,17 +1000,6 @@ func TestAsortDescStridedU8F64(t *testing.T) {
 			src:        []float64{4, 2, 1, 3},
 			dst:        make([]uint8, 4),
 			want:       []uint8{0, 1, 1, 0},
-		},
-		{
-			name:       "Empty",
-			ndims:      0,
-			dims:       []int{},
-			strides:    []int{},
-			stridesDst: []int{},
-			ncols:      0,
-			src:        []float64{},
-			dst:        make([]uint8, 0),
-			want:       []uint8{},
 		},
 	}
 

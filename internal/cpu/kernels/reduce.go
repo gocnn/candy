@@ -201,10 +201,10 @@ func FastSumStridedI64(numel, ndims int, dims, strides []int, src, dst []int64) 
 func FastMin[T D](numel, ndims int, dims []int, src, dst []T) {
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var minVal T
 		startIdx := i * dims[ndims-1]
+		minVal := src[startIdx] // init minVal to first element
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
 			}
@@ -296,17 +296,17 @@ func FastMinI64(numel, ndims int, dims []int, src, dst []int64) {
 // FastMinStrided computes the minimum over the last dimension for type T with strided memory
 func FastMinStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 	if IsContiguous(ndims, dims, strides) {
-		FastMin[T](numel, ndims, dims, src, dst)
+		FastMin(numel, ndims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var minVal T
 		startIdx := i * dims[ndims-1]
+		minVal := src[GetStridedIndex(startIdx, ndims, dims, strides)]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, ndims, dims, strides)]
-			if j == startIdx || val < minVal {
+			if val < minVal {
 				minVal = val
 			}
 		}
@@ -423,10 +423,10 @@ func FastMinStridedI64(numel, ndims int, dims, strides []int, src, dst []int64) 
 func FastMax[T D](numel, ndims int, dims []int, src, dst []T) {
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var maxVal T
 		startIdx := i * dims[ndims-1]
+		maxVal := src[startIdx]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
 			}
@@ -518,15 +518,15 @@ func FastMaxI64(numel, ndims int, dims []int, src, dst []int64) {
 // FastMaxStrided computes the maximum over the last dimension for type T with strided memory
 func FastMaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 	if IsContiguous(ndims, dims, strides) {
-		FastMax[T](numel, ndims, dims, src, dst)
+		FastMax(numel, ndims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var maxVal T
 		startIdx := i * dims[ndims-1]
+		maxVal := src[GetStridedIndex(startIdx, ndims, dims, strides)]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, ndims, dims, strides)]
 			if val > maxVal {
 				maxVal = val
@@ -582,11 +582,11 @@ func FastMaxStridedF64(numel, ndims int, dims, strides []int, src, dst []float64
 func FastArgmin[T D](numel, ndims int, dims []int, src []T, dst []uint32) {
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var minVal T
 		minIdx := uint32(0)
 		startIdx := i * dims[ndims-1]
+		minVal := src[startIdx]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			if src[j] < minVal {
 				minVal = src[j]
 				minIdx = uint32(j % dims[ndims-1])
@@ -689,16 +689,16 @@ func FastArgminI64(numel, ndims int, dims []int, src []int64, dst []uint32) {
 // FastArgminStrided computes the index of the minimum over the last dimension for type T with strided memory
 func FastArgminStrided[T D](numel, ndims int, dims, strides []int, src []T, dst []uint32) {
 	if IsContiguous(ndims, dims, strides) {
-		FastArgmin[T](numel, ndims, dims, src, dst)
+		FastArgmin(numel, ndims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var minVal T
 		minIdx := uint32(0)
 		startIdx := i * dims[ndims-1]
+		minVal := src[GetStridedIndex(startIdx, ndims, dims, strides)]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, ndims, dims, strides)]
 			if val < minVal {
 				minVal = val
@@ -828,11 +828,11 @@ func FastArgminStridedI64(numel, ndims int, dims, strides []int, src []int64, ds
 func FastArgmax[T D](numel, ndims int, dims []int, src []T, dst []uint32) {
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var maxVal T
 		maxIdx := uint32(0)
 		startIdx := i * dims[ndims-1]
+		maxVal := src[startIdx]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			if src[j] > maxVal {
 				maxVal = src[j]
 				maxIdx = uint32(j % dims[ndims-1])
@@ -935,16 +935,16 @@ func FastArgmaxI64(numel, ndims int, dims []int, src []int64, dst []uint32) {
 // FastArgmaxStrided computes the index of the maximum over the last dimension for type T with strided memory
 func FastArgmaxStrided[T D](numel, ndims int, dims, strides []int, src []T, dst []uint32) {
 	if IsContiguous(ndims, dims, strides) {
-		FastArgmax[T](numel, ndims, dims, src, dst)
+		FastArgmax(numel, ndims, dims, src, dst)
 		return
 	}
 	dstSize := numel / dims[ndims-1]
 	for i := range dstSize {
-		var maxVal T
 		maxIdx := uint32(0)
 		startIdx := i * dims[ndims-1]
+		maxVal := src[GetStridedIndex(startIdx, ndims, dims, strides)]
 		stopIdx := min(startIdx+dims[ndims-1], numel)
-		for j := startIdx; j < stopIdx; j++ {
+		for j := startIdx + 1; j < stopIdx; j++ {
 			val := src[GetStridedIndex(j, ndims, dims, strides)]
 			if val > maxVal {
 				maxVal = val
@@ -1330,13 +1330,16 @@ func SumStridedI64(numel, ndims int, dims, strides, sumDims []int, inp, out []in
 
 // Softmax performs softmax along the last dimension for type T (contiguous memory)
 func Softmax[T D](numel, ndims int, dims []int, src, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("softmax: unsupported type")
+	}
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
-		var maxVal T
-		if row*ncols < numel {
-			maxVal = src[row*ncols]
-		}
+		maxVal := src[row*ncols]
 		for col := range ncols {
 			i := row*ncols + col
 			if src[i] > maxVal {
@@ -1429,6 +1432,12 @@ func SoftmaxI64(numel, ndims int, dims []int, src, dst []int64) {
 
 // SoftmaxStrided performs strided softmax along the last dimension for type T
 func SoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("softmax_strided: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
 		Softmax(numel, ndims, dims, src, dst)
 		return
@@ -1436,11 +1445,7 @@ func SoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
-		var maxVal T
-		logicalI := row * ncols
-		if logicalI < numel {
-			maxVal = src[GetStridedIndex(logicalI, ndims, dims, strides)]
-		}
+		maxVal := src[GetStridedIndex(row*ncols, ndims, dims, strides)]
 		for col := range ncols {
 			logicalI := row*ncols + col
 			stridedI := GetStridedIndex(logicalI, ndims, dims, strides)
@@ -2079,7 +2084,7 @@ func LayerNormI64(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst
 // LayerNormStrided performs strided Layer normalization along the last dimension for type T
 func LayerNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, beta, x, dst []T) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNorm[T](numel, ndims, dims, eps, alpha, beta, x, dst)
+		LayerNorm(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2306,6 +2311,12 @@ func LayerNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alp
 
 // RopeI performs rotary position embedding (rope_i variant) for type T (contiguous memory)
 func RopeI[T D](bh, td, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope_i: unsupported type")
+	}
 	numPairs := bh * td / 2
 	for idx := range numPairs {
 		ropeIdx := idx % (td / 2)
@@ -2369,8 +2380,14 @@ func RopeII64(bh int, td int, strideB int, src, cos, sin, dst []int64) {
 
 // RopeIStrided performs strided rotary position embedding (rope_i variant) for type T
 func RopeIStrided[T D](ndims int, dims, strides []int, bh, td, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope_is: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
-		RopeI[T](bh, td, strideB, src, cos, sin, dst)
+		RopeI(bh, td, strideB, src, cos, sin, dst)
 		return
 	}
 	numPairs := bh * td / 2
@@ -2450,6 +2467,12 @@ func RopeIStridedI64(ndims int, dims, strides []int, bh int, td int, strideB int
 
 // Rope performs rotary position embedding (rope variant) for type T (contiguous memory)
 func Rope[T D](bh, td, d, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope: unsupported type")
+	}
 	numPairs := bh * td / 2
 	for idx := range numPairs {
 		iBh := idx / (td / 2)
@@ -2531,8 +2554,14 @@ func RopeI64(bh, td, d, strideB int, src, cos, sin, dst []int64) {
 
 // RopeStrided performs strided rotary position embedding (rope variant) for type T
 func RopeStrided[T D](ndims int, dims, strides []int, bh, td, d, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope_strided: unsupported type")
+	}
 	if IsContiguous(ndims, dims, strides) {
-		Rope[T](bh, td, d, strideB, src, cos, sin, dst)
+		Rope(bh, td, d, strideB, src, cos, sin, dst)
 		return
 	}
 	numPairs := bh * td / 2
@@ -2630,6 +2659,12 @@ func RopeStridedI64(ndims int, dims, strides []int, bh, td, d, strideB int, src,
 
 // RopeThd performs rotary position embedding (rope_thd variant) for float32 (contiguous memory)
 func RopeThd[T D](b int, t int, h int, d int, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope_thd: unsupported type")
+	}
 	numPairs := b * t * h * d / 2
 	for idx := range numPairs {
 		iBth := idx / (d / 2)
@@ -2708,8 +2743,15 @@ func RopeThdI64(b int, t int, h int, d int, strideB int, src, cos, sin, dst []in
 
 // RopeThdStrided performs strided rotary position embedding (rope_thd variant) for type T
 func RopeThdStrided[T D](ndims int, dims, strides []int, b int, t int, h int, d int, strideB int, src, cos, sin, dst []T) {
+	var zero T
+	switch any(zero).(type) {
+	case float32, float64:
+	default:
+		panic("rope_thd: unsupported type")
+	}
+
 	if IsContiguous(ndims, dims, strides) {
-		RopeThd[T](b, t, h, d, strideB, src, cos, sin, dst)
+		RopeThd(b, t, h, d, strideB, src, cos, sin, dst)
 		return
 	}
 	numPairs := b * t * h * d / 2

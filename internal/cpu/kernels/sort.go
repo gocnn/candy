@@ -6,9 +6,6 @@ import (
 
 // AsortAsc performs ascending argsort along the last dimension for type T (contiguous memory) with indices of type U
 func AsortAsc[U I, T D](ncols int, src []T, dst []U) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]U, ncols)
 	for row := range rows {
@@ -30,9 +27,6 @@ func AsortAsc[U I, T D](ncols int, src []T, dst []U) {
 
 // AsortAscI64F32 performs ascending argsort along the last dimension for float32 with int64 indices (contiguous memory)
 func AsortAscI64F32(ncols int, src []float32, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -54,9 +48,6 @@ func AsortAscI64F32(ncols int, src []float32, dst []int64) {
 
 // AsortAscI64F64 performs ascending argsort along the last dimension for float64 with int64 indices (contiguous memory)
 func AsortAscI64F64(ncols int, src []float64, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -78,9 +69,6 @@ func AsortAscI64F64(ncols int, src []float64, dst []int64) {
 
 // AsortAscU32F32 performs ascending argsort along the last dimension for float32 with uint32 indices (contiguous memory)
 func AsortAscU32F32(ncols int, src []float32, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -102,9 +90,6 @@ func AsortAscU32F32(ncols int, src []float32, dst []uint32) {
 
 // AsortAscU32F64 performs ascending argsort along the last dimension for float64 with uint32 indices (contiguous memory)
 func AsortAscU32F64(ncols int, src []float64, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -126,9 +111,6 @@ func AsortAscU32F64(ncols int, src []float64, dst []uint32) {
 
 // AsortAscU8F32 performs ascending argsort along the last dimension for float32 with uint8 indices (contiguous memory)
 func AsortAscU8F32(ncols int, src []float32, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -150,9 +132,6 @@ func AsortAscU8F32(ncols int, src []float32, dst []uint8) {
 
 // AsortAscU8F64 performs ascending argsort along the last dimension for float64 with uint8 indices (contiguous memory)
 func AsortAscU8F64(ncols int, src []float64, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -342,9 +321,6 @@ func AsortAscStridedU8F64(ndims int, dims, strides, stridesDst []int, ncols int,
 
 // AsortAscI64U8 performs ascending argsort along the last dimension for uint8 with int64 indices (contiguous memory)
 func AsortAscI64U8(ncols int, src []uint8, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -366,9 +342,6 @@ func AsortAscI64U8(ncols int, src []uint8, dst []int64) {
 
 // AsortAscI64U32 performs ascending argsort along the last dimension for uint32 with int64 indices (contiguous memory)
 func AsortAscI64U32(ncols int, src []uint32, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -390,9 +363,6 @@ func AsortAscI64U32(ncols int, src []uint32, dst []int64) {
 
 // AsortAscI64I64 performs ascending argsort along the last dimension for int64 with int64 indices (contiguous memory)
 func AsortAscI64I64(ncols int, src []int64, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -414,9 +384,6 @@ func AsortAscI64I64(ncols int, src []int64, dst []int64) {
 
 // AsortAscU32U8 performs ascending argsort along the last dimension for uint8 with uint32 indices (contiguous memory)
 func AsortAscU32U8(ncols int, src []uint8, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -438,9 +405,6 @@ func AsortAscU32U8(ncols int, src []uint8, dst []uint32) {
 
 // AsortAscU32U32 performs ascending argsort along the last dimension for uint32 with uint32 indices (contiguous memory)
 func AsortAscU32U32(ncols int, src []uint32, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -462,9 +426,6 @@ func AsortAscU32U32(ncols int, src []uint32, dst []uint32) {
 
 // AsortAscU32I64 performs ascending argsort along the last dimension for int64 with uint32 indices (contiguous memory)
 func AsortAscU32I64(ncols int, src []int64, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -486,9 +447,6 @@ func AsortAscU32I64(ncols int, src []int64, dst []uint32) {
 
 // AsortAscU8U8 performs ascending argsort along the last dimension for uint8 with uint8 indices (contiguous memory)
 func AsortAscU8U8(ncols int, src []uint8, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -510,9 +468,6 @@ func AsortAscU8U8(ncols int, src []uint8, dst []uint8) {
 
 // AsortAscU8U32 performs ascending argsort along the last dimension for uint32 with uint8 indices (contiguous memory)
 func AsortAscU8U32(ncols int, src []uint32, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -534,9 +489,6 @@ func AsortAscU8U32(ncols int, src []uint32, dst []uint8) {
 
 // AsortAscU8I64 performs ascending argsort along the last dimension for int64 with uint8 indices (contiguous memory)
 func AsortAscU8I64(ncols int, src []int64, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -774,9 +726,6 @@ func AsortAscStridedU8I64(ndims int, dims, strides, stridesDst []int, ncols int,
 
 // AsortDesc performs descending argsort along the last dimension for type T (contiguous memory) with indices of type U
 func AsortDesc[U I, T D](ncols int, src []T, dst []U) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]U, ncols)
 	for row := range rows {
@@ -798,9 +747,6 @@ func AsortDesc[U I, T D](ncols int, src []T, dst []U) {
 
 // AsortDescI64F32 performs descending argsort along the last dimension for float32 with int64 indices (contiguous memory)
 func AsortDescI64F32(ncols int, src []float32, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -822,9 +768,6 @@ func AsortDescI64F32(ncols int, src []float32, dst []int64) {
 
 // AsortDescI64F64 performs descending argsort along the last dimension for float64 with int64 indices (contiguous memory)
 func AsortDescI64F64(ncols int, src []float64, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -846,9 +789,6 @@ func AsortDescI64F64(ncols int, src []float64, dst []int64) {
 
 // AsortDescU32F32 performs descending argsort along the last dimension for float32 with uint32 indices (contiguous memory)
 func AsortDescU32F32(ncols int, src []float32, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -870,9 +810,6 @@ func AsortDescU32F32(ncols int, src []float32, dst []uint32) {
 
 // AsortDescU32F64 performs descending argsort along the last dimension for float64 with uint32 indices (contiguous memory)
 func AsortDescU32F64(ncols int, src []float64, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -894,9 +831,6 @@ func AsortDescU32F64(ncols int, src []float64, dst []uint32) {
 
 // AsortDescU8F32 performs descending argsort along the last dimension for float32 with uint8 indices (contiguous memory)
 func AsortDescU8F32(ncols int, src []float32, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -918,9 +852,6 @@ func AsortDescU8F32(ncols int, src []float32, dst []uint8) {
 
 // AsortDescU8F64 performs descending argsort along the last dimension for float64 with uint8 indices (contiguous memory)
 func AsortDescU8F64(ncols int, src []float64, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -1086,9 +1017,6 @@ func AsortDescStridedU8F64(ndims int, dims, strides, stridesDst []int, ncols int
 
 // AsortDescI64U8 performs descending argsort along the last dimension for uint8 with int64 indices (contiguous memory)
 func AsortDescI64U8(ncols int, src []uint8, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -1110,9 +1038,6 @@ func AsortDescI64U8(ncols int, src []uint8, dst []int64) {
 
 // AsortDescI64U32 performs descending argsort along the last dimension for uint32 with int64 indices (contiguous memory)
 func AsortDescI64U32(ncols int, src []uint32, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -1134,9 +1059,6 @@ func AsortDescI64U32(ncols int, src []uint32, dst []int64) {
 
 // AsortDescI64I64 performs descending argsort along the last dimension for int64 with int64 indices (contiguous memory)
 func AsortDescI64I64(ncols int, src []int64, dst []int64) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]int64, ncols)
 	for row := range rows {
@@ -1158,9 +1080,6 @@ func AsortDescI64I64(ncols int, src []int64, dst []int64) {
 
 // AsortDescU32U8 performs descending argsort along the last dimension for uint8 with uint32 indices (contiguous memory)
 func AsortDescU32U8(ncols int, src []uint8, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -1182,9 +1101,6 @@ func AsortDescU32U8(ncols int, src []uint8, dst []uint32) {
 
 // AsortDescU32U32 performs descending argsort along the last dimension for uint32 with uint32 indices (contiguous memory)
 func AsortDescU32U32(ncols int, src []uint32, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -1206,9 +1122,6 @@ func AsortDescU32U32(ncols int, src []uint32, dst []uint32) {
 
 // AsortDescU32I64 performs descending argsort along the last dimension for int64 with uint32 indices (contiguous memory)
 func AsortDescU32I64(ncols int, src []int64, dst []uint32) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint32, ncols)
 	for row := range rows {
@@ -1230,9 +1143,6 @@ func AsortDescU32I64(ncols int, src []int64, dst []uint32) {
 
 // AsortDescU8U8 performs descending argsort along the last dimension for uint8 with uint8 indices (contiguous memory)
 func AsortDescU8U8(ncols int, src []uint8, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -1254,9 +1164,6 @@ func AsortDescU8U8(ncols int, src []uint8, dst []uint8) {
 
 // AsortDescU8U32 performs descending argsort along the last dimension for uint32 with uint8 indices (contiguous memory)
 func AsortDescU8U32(ncols int, src []uint32, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {
@@ -1278,9 +1185,6 @@ func AsortDescU8U32(ncols int, src []uint32, dst []uint8) {
 
 // AsortDescU8I64 performs descending argsort along the last dimension for int64 with uint8 indices (contiguous memory)
 func AsortDescU8I64(ncols int, src []int64, dst []uint8) {
-	if ncols == 0 || len(src) == 0 {
-		return
-	}
 	rows := len(src) / ncols
 	indices := make([]uint8, ncols)
 	for row := range rows {

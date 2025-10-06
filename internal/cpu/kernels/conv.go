@@ -8,6 +8,48 @@ import (
 	"github.com/gocnn/gomat/blas/blas64"
 )
 
+// Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
+func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	colSize := bSize * lOut * cIn * kSize
+	col := make([]float32, colSize)
+	Im2col1dF32(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
+	m, n, k := bSize*lOut, cOut, cIn*kSize
+	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
+}
+
+// Im2colConv1dF64 performs 1D convolution for float64 using im2col + gemm with direct BLAS Gemm call
+func Im2colConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64) {
+	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
+	colSize := bSize * lOut * cIn * kSize
+	col := make([]float64, colSize)
+	Im2col1dF64(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
+	m, n, k := bSize*lOut, cOut, cIn*kSize
+	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
+}
+
+// Im2colConv2dF32 performs 2D convolution for float32 using im2col + gemm with direct BLAS Gemm call
+func Im2colConv2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float32) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	colSize := bSize * hOut * wOut * cIn * hK * wK
+	col := make([]float32, colSize)
+	Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
+	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
+	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
+}
+
+// Im2colConv2dF64 performs 2D convolution for float64 using im2col + gemm with direct BLAS Gemm call
+func Im2colConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float64) {
+	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
+	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
+	colSize := bSize * hOut * wOut * cIn * hK * wK
+	col := make([]float64, colSize)
+	Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
+	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
+	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
+}
+
 // NaiveConv1d performs 1D convolution for any supported numeric type using direct loop
 func NaiveConv1d[T D](bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []T) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
@@ -296,26 +338,6 @@ func NaiveConv1dStridedI64(bSize, cIn, lIn, cOut, kSize int, stride, padding, di
 			}
 		}
 	}
-}
-
-// Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
-func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32) {
-	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
-	colSize := bSize * lOut * cIn * kSize
-	col := make([]float32, colSize)
-	Im2col1dF32(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
-	m, n, k := bSize*lOut, cOut, cIn*kSize
-	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
-}
-
-// Im2colConv1dF64 performs 1D convolution for float64 using im2col + gemm with direct BLAS Gemm call
-func Im2colConv1dF64(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float64) {
-	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
-	colSize := bSize * lOut * cIn * kSize
-	col := make([]float64, colSize)
-	Im2col1dF64(bSize, cIn, lIn, lOut, kSize, stride, padding, dilation, src, col)
-	m, n, k := bSize*lOut, cOut, cIn*kSize
-	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
 
 // NaiveConv2d performs 2D convolution for any supported numeric type using direct loop
@@ -678,28 +700,6 @@ func NaiveConv2dStridedI64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, paddi
 			}
 		}
 	}
-}
-
-// Im2colConv2dF32 performs 2D convolution for float32 using im2col + gemm with direct BLAS Gemm call
-func Im2colConv2dF32(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float32) {
-	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
-	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
-	colSize := bSize * hOut * wOut * cIn * hK * wK
-	col := make([]float32, colSize)
-	Im2colF32(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
-	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
-	blas32.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
-}
-
-// Im2colConv2dF64 performs 2D convolution for float64 using im2col + gemm with direct BLAS Gemm call
-func Im2colConv2dF64(bSize, cIn, hIn, wIn, cOut, hK, wK int, stride, padding, dilation int, src, kernel, dst []float64) {
-	hOut := (hIn+2*padding-dilation*(hK-1)-1)/stride + 1
-	wOut := (wIn+2*padding-dilation*(wK-1)-1)/stride + 1
-	colSize := bSize * hOut * wOut * cIn * hK * wK
-	col := make([]float64, colSize)
-	Im2colF64(bSize, cIn, hIn, wIn, hOut, wOut, hK, wK, stride, padding, dilation, src, col)
-	m, n, k := bSize*hOut*wOut, cOut, cIn*hK*wK
-	blas64.Gemm(blas.NoTrans, blas.Trans, m, n, k, 1.0, col, k, kernel, k, 0.0, dst, n)
 }
 
 // NaiveConvTranspose1d performs 1D transpose convolution for any supported numeric type using direct loop
