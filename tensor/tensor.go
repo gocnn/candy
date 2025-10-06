@@ -74,14 +74,7 @@ func Ones[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
 		panic("device not supported")
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
+	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 func Zeros[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
@@ -99,14 +92,7 @@ func Zeros[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
 		panic("device not supported")
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
+	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // Rand creates a new tensor initialized with values sampled uniformly between lo and up.
@@ -125,14 +111,7 @@ func Rand[T spark.D](lo, up float64, shape *spark.Shape, device spark.Device) *T
 		panic("device not supported")
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
+	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // RandN creates a new tensor initialized with values sampled from a normal distribution.
@@ -151,14 +130,7 @@ func RandN[T spark.D](mean, std float64, shape *spark.Shape, device spark.Device
 		panic("device not supported")
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
+	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
@@ -176,14 +148,7 @@ func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Te
 		panic("device not supported")
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: storage,
-		layout:  spark.Contiguous(shape),
-		isVar:   false,
-		dtype:   spark.DTypeOf[T](),
-		device:  device,
-	}
+	return NewFromStorage(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
 // ZerosLike creates a new tensor with the same shape as the input tensor, filled with zeros.
