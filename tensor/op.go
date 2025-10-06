@@ -106,17 +106,16 @@ func SubBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tens
 		return nil, fmt.Errorf("SubBackward expects 2 inputs, got %d", len(inputs))
 	}
 
-	// ∂(a-b)/∂a = outputGrad * 1 = outputGrad
+	// ∂(a-b)/∂a = outputGrad
 	ga := outputGrad
 
-	// ∂(a-b)/∂b = outputGrad * (-1) = -outputGrad
-	negOne := Full[T](-1.0, outputGrad.layout.Shape(), outputGrad.device)
-	gbStorage, err := outputGrad.storage.Mul(negOne.storage, outputGrad.layout, negOne.layout, outputGrad.layout)
+	// ∂(a-b)/∂b = -outputGrad
+	negOne := Full[T](-1.0, outputGrad.Shape(), outputGrad.Device())
+	gb, err := negOne.Mul(outputGrad)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing gradient for b: %w", err)
 	}
 
-	gb := NewFromStorage(gbStorage, outputGrad.layout, outputGrad.dtype, outputGrad.device)
 	return []*Tensor[T]{ga, gb}, nil
 }
 
@@ -136,90 +135,27 @@ func MulForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	return NewFromStorage(resStorage, resLayout, a.dtype, a.device), nil
 }
 
-// MulBackward computes gradients for multiplication: ∂(a*b)/∂a = b, ∂(a*b)/∂b = a
+// MulBackward computes gradients for multiplication: ∂(a*b)/∂a = outputGrad*b, ∂(a*b)/∂b = outputGrad*a
 func MulBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 	if len(inputs) != 2 {
 		return nil, fmt.Errorf("MulBackward expects 2 inputs, got %d", len(inputs))
 	}
 
+	a, b := inputs[0].Detach(), inputs[1].Detach()
+
 	// ∂(a*b)/∂a = outputGrad * b
-	gas, err := outputGrad.storage.Mul(inputs[1].storage, outputGrad.layout, inputs[1].layout, outputGrad.layout)
+	ga, err := outputGrad.Mul(b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing gradient for a: %w", err)
 	}
 
 	// ∂(a*b)/∂b = outputGrad * a
-	gbs, err := outputGrad.storage.Mul(inputs[0].storage, outputGrad.layout, inputs[0].layout, outputGrad.layout)
+	gb, err := outputGrad.Mul(a)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing gradient for b: %w", err)
 	}
 
-	ga := NewFromStorage(gas, outputGrad.layout, outputGrad.dtype, outputGrad.device)
-	gb := NewFromStorage(gbs, outputGrad.layout, outputGrad.dtype, outputGrad.device)
 	return []*Tensor[T]{ga, gb}, nil
-}
-
-// SqrtForward computes element-wise square root: c = sqrt(a)
-func SqrtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 1 {
-		return nil, fmt.Errorf("SqrtForward expects 1 input, got %d", len(inputs))
-	}
-
-	a := inputs[0]
-	resStorage, err := a.storage.Sqrt(a.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewFromStorage(resStorage, a.layout.Clone(), a.dtype, a.device), nil
-}
-
-// SqrtBackward computes gradients for square root: ∂sqrt(a)/∂a = 1/(2*sqrt(a))
-func SqrtBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
-	if len(inputs) != 1 {
-		return nil, fmt.Errorf("SqrtBackward expects 1 input, got %d", len(inputs))
-	}
-
-	a := inputs[0]
-
-	// Compute sqrt(a) first
-	sqrtA, err := a.storage.Sqrt(a.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create tensor with value 2.0
-	two := Full[T](2.0, a.layout.Shape(), a.device)
-
-	// Create layout for sqrtA storage (same as input a)
-	sqrtALayout := a.layout.Clone()
-
-	// Compute 2 * sqrt(a)
-	denominator, err := two.storage.Mul(sqrtA, two.layout, sqrtALayout, two.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	// Compute 1 / (2 * sqrt(a))
-	one := Ones[T](a.layout.Shape(), a.device)
-
-	// Create layout for denominator storage (same as two.layout)
-	denominatorLayout := two.layout.Clone()
-	derivative, err := one.storage.Div(denominator, one.layout, denominatorLayout, one.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create layout for derivative storage (same as one.layout)
-	derivativeLayout := one.layout.Clone()
-
-	// Multiply by output gradient
-	gaStorage, err := outputGrad.storage.Mul(derivative, outputGrad.layout, derivativeLayout, outputGrad.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	return []*Tensor[T]{NewFromStorage(gaStorage, outputGrad.layout, outputGrad.dtype, outputGrad.device)}, nil
 }
 
 // DivForward computes element-wise division: c = a / b
@@ -244,49 +180,82 @@ func DivBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tens
 		return nil, fmt.Errorf("DivBackward expects 2 inputs, got %d", len(inputs))
 	}
 
-	a, b := inputs[0], inputs[1]
+	a, b := inputs[0].Detach(), inputs[1].Detach()
 
-	// ∂(a/b)/∂a = outputGrad * (1/b) = outputGrad / b
-	gaStorage, err := outputGrad.storage.Div(b.storage, outputGrad.layout, b.layout, outputGrad.layout)
+	// ∂(a/b)/∂a = outputGrad / b
+	ga, err := outputGrad.Div(b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing ga: %w", err)
 	}
 
-	ga := NewFromStorage(gaStorage, outputGrad.layout, outputGrad.dtype, outputGrad.device)
-
-	// ∂(a/b)/∂b = outputGrad * (-a/b²)
-	// First compute b²
-	bSquaredStorage, err := b.storage.Mul(b.storage, b.layout, b.layout, b.layout)
+	// ∂(a/b)/∂b = -outputGrad * a / b²
+	bSquared, err := b.Mul(b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing b²: %w", err)
 	}
 
-	bSquaredLayout := b.layout.Clone()
-
-	// Then compute a/b²
-	aDivBSquaredStorage, err := a.storage.Div(bSquaredStorage, a.layout, bSquaredLayout, a.layout)
+	aDivBSquared, err := a.Div(bSquared)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing a/b²: %w", err)
 	}
 
-	aDivBSquaredLayout := a.layout.Clone()
-
-	// Then multiply by -1
-	negOne := Full[T](-1.0, a.layout.Shape(), a.device)
-
-	negADivBSquaredStorage, err := aDivBSquaredStorage.Mul(negOne.storage, aDivBSquaredLayout, negOne.layout, aDivBSquaredLayout)
+	negOne := Full[T](-1.0, a.Shape(), a.Device())
+	negADivBSquared, err := negOne.Mul(aDivBSquared)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("negating a/b²: %w", err)
 	}
 
-	// Finally multiply by outputGrad
-	gbStorage, err := outputGrad.storage.Mul(negADivBSquaredStorage, outputGrad.layout, aDivBSquaredLayout, outputGrad.layout)
+	gb, err := outputGrad.Mul(negADivBSquared)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("computing gb: %w", err)
 	}
 
-	gb := NewFromStorage(gbStorage, outputGrad.layout, outputGrad.dtype, outputGrad.device)
 	return []*Tensor[T]{ga, gb}, nil
+}
+
+// SqrtForward computes element-wise square root: c = sqrt(a)
+func SqrtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("SqrtForward expects 1 input, got %d", len(inputs))
+	}
+
+	a := inputs[0]
+	resStorage, err := a.storage.Sqrt(a.layout)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFromStorage(resStorage, a.layout.Clone(), a.dtype, a.device), nil
+}
+
+// SqrtBackward computes gradients for square root: ∂sqrt(a)/∂a = 1/(2*sqrt(a))
+func SqrtBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("SqrtBackward expects 1 input, got %d", len(inputs))
+	}
+
+	a := inputs[0].Detach()
+
+	// sqrt(a)
+	sqrtA, err := a.Sqrt()
+	if err != nil {
+		return nil, err
+	}
+
+	// 2 * sqrt(a)
+	two := Full[T](2.0, a.Shape(), a.Device())
+	denominator, err := two.Mul(sqrtA)
+	if err != nil {
+		return nil, err
+	}
+
+	// outputGrad / (2 * sqrt(a))
+	inputGrad, err := outputGrad.Div(denominator)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*Tensor[T]{inputGrad}, nil
 }
 
 // BroadcastAddForward computes the broadcasted addition: result = broadcast(a) + broadcast(b).
@@ -298,7 +267,7 @@ func BroadcastAddForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
 	a, b := inputs[0], inputs[1]
 
 	// Compute broadcasted shape
-	bcastShape, err := a.layout.Shape().BroadcastShapeBinaryOp(b.layout.Shape())
+	bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
 	if err != nil {
 		return nil, fmt.Errorf("compute broadcast shape: %w", err)
 	}
@@ -331,11 +300,133 @@ func BroadcastAddBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T])
 		return nil, fmt.Errorf("BroadcastAddBackward expects 2 inputs, got %d", len(inputs))
 	}
 
-	// ∂(a+b)/∂a = outputGrad * 1 = outputGrad
-	ga := outputGrad
+	return []*Tensor[T]{outputGrad, outputGrad}, nil
+}
 
-	// ∂(a+b)/∂b = outputGrad * 1 = outputGrad
-	gb := outputGrad
+// SqueezeForward creates squeeze forward
+func SqueezeForward[T spark.D](dim int) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("SqueezeForward expects 1 input, got %d", len(inputs))
+		}
 
-	return []*Tensor[T]{ga, gb}, nil
+		input := inputs[0]
+		shape := input.Shape()
+		resolvedDim, err := spark.ResolveAxis(dim, shape.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("squeeze: %w", err)
+		}
+
+		// Return shallow copy if dimension is not 1 (PyTorch semantics)
+		if shape.Dim(resolvedDim) != 1 {
+			return input, nil
+		}
+
+		// Build new shape and stride, excluding the specified dimension
+		newDims := make([]int, 0, shape.Rank()-1)
+		newStrides := make([]int, 0, shape.Rank()-1)
+		for i, size := range shape.Dims() {
+			if i == resolvedDim {
+				continue
+			}
+			newDims = append(newDims, size)
+			newStrides = append(newStrides, input.Stride()[i])
+		}
+
+		newShape := spark.NewShapeFrom(newDims)
+		newLayout := spark.NewLayout(newShape, newStrides, input.layout.StartOffset())
+
+		return NewFromStorage(input.storage, newLayout, input.dtype, input.device), nil
+	}
+}
+
+// SqueezeBackward creates squeeze backward
+func SqueezeBackward[T spark.D](dim int) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("SqueezeBackward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0].Detach()
+		inputShape := input.Shape()
+		resolvedDim, err := spark.ResolveAxis(dim, inputShape.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("squeeze backward: %w", err)
+		}
+
+		// If the dimension is not 1, pass gradient directly
+		if inputShape.Dim(resolvedDim) != 1 {
+			return []*Tensor[T]{outputGrad}, nil
+		}
+
+		// Squeeze's backward is Unsqueeze: restore the removed dimension
+		inputGrad, err := outputGrad.Unsqueeze(resolvedDim)
+		if err != nil {
+			return nil, fmt.Errorf("squeeze backward unsqueeze: %w", err)
+		}
+
+		return []*Tensor[T]{inputGrad}, nil
+	}
+}
+
+// UnsqueezeForward creates unsqueeze forward
+func UnsqueezeForward[T spark.D](dim int) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("UnsqueezeForward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0]
+		shape := input.Shape()
+		rank := shape.Rank()
+
+		if dim < 0 {
+			dim += rank + 1
+		}
+		if dim < 0 || dim > rank {
+			return nil, fmt.Errorf("unsqueeze: dim out of range [-%d, %d], got %d", rank+1, rank, dim)
+		}
+
+		newDims := append(make([]int, 0, rank+1), shape.Dims()[:dim]...)
+		newDims = append(newDims, 1)
+		newDims = append(newDims, shape.Dims()[dim:]...)
+
+		newStrides := append(make([]int, 0, rank+1), input.Stride()[:dim]...)
+		stride := 1
+		if dim < rank {
+			stride = input.Stride()[dim]
+		}
+		newStrides = append(newStrides, stride)
+		newStrides = append(newStrides, input.Stride()[dim:]...)
+
+		newShape := spark.NewShapeFrom(newDims)
+		newLayout := spark.NewLayout(newShape, newStrides, input.layout.StartOffset())
+
+		return NewFromStorage(input.storage, newLayout, input.dtype, input.device), nil
+	}
+}
+
+// UnsqueezeBackward creates unsqueeze backward
+func UnsqueezeBackward[T spark.D](dim int) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("UnsqueezeBackward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0].Detach()
+		inputShape := input.Shape()
+		rank := inputShape.Rank()
+
+		originalDim := dim
+		if originalDim < 0 {
+			originalDim += rank + 1
+		}
+
+		inputGrad, err := outputGrad.Squeeze(originalDim)
+		if err != nil {
+			return nil, fmt.Errorf("unsqueeze backward squeeze: %w", err)
+		}
+
+		return []*Tensor[T]{inputGrad}, nil
+	}
 }
