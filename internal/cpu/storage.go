@@ -679,9 +679,6 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 	result := New(make([]T, params.Batch*params.OutCh*lOut))
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		kernelData := any(kernelC.data).([]float32)
-		dstData := any(result.data).([]float32)
 		if layout.IsContiguous() && kernelLayout.IsContiguous() {
 			kernels.Im2colConv1dF32(
 				params.Batch,
@@ -692,9 +689,9 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float32),
+				any(kernelC.data).([]float32),
+				any(result.data).([]float32),
 			)
 		} else {
 			kernels.NaiveConv1dF32(
@@ -706,15 +703,12 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float32),
+				any(kernelC.data).([]float32),
+				any(result.data).([]float32),
 			)
 		}
 	case []float64:
-		srcData := any(s.data).([]float64)
-		kernelData := any(kernelC.data).([]float64)
-		dstData := any(result.data).([]float64)
 		if layout.IsContiguous() && kernelLayout.IsContiguous() {
 			kernels.Im2colConv1dF64(
 				params.Batch,
@@ -725,9 +719,9 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float64),
+				any(kernelC.data).([]float64),
+				any(result.data).([]float64),
 			)
 		} else {
 			kernels.NaiveConv1dF64(
@@ -739,16 +733,13 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float64),
+				any(kernelC.data).([]float64),
+				any(result.data).([]float64),
 			)
 		}
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		kernelData := any(kernelC.data).([]uint8)
-		dstData := any(result.data).([]uint8)
-		kernels.NaiveConv1dU8(
+	case []uint8, []uint32, []int64:
+		kernels.NaiveConv1d(
 			params.Batch,
 			params.InCh,
 			params.InLen,
@@ -757,43 +748,9 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 			params.Stride,
 			params.Pad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		kernelData := any(kernelC.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		kernels.NaiveConv1dU32(
-			params.Batch,
-			params.InCh,
-			params.InLen,
-			params.OutCh,
-			params.KSize,
-			params.Stride,
-			params.Pad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []int64:
-		srcData := any(s.data).([]int64)
-		kernelData := any(kernelC.data).([]int64)
-		dstData := any(result.data).([]int64)
-		kernels.NaiveConv1dI64(
-			params.Batch,
-			params.InCh,
-			params.InLen,
-			params.OutCh,
-			params.KSize,
-			params.Stride,
-			params.Pad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			s.data,
+			kernelC.data,
+			result.data,
 		)
 	default:
 		return nil, errors.New("unsupported data type for conv1d")
@@ -828,9 +785,6 @@ func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.Backe
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		kernelData := any(kernelC.data).([]float32)
-		dstData := any(result.data).([]float32)
 		kernels.NaiveConvTranspose1dF32(
 			params.Batch,
 			params.InCh,
@@ -841,14 +795,11 @@ func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			any(s.data).([]float32),
+			any(kernelC.data).([]float32),
+			any(result.data).([]float32),
 		)
 	case []float64:
-		srcData := any(s.data).([]float64)
-		kernelData := any(kernelC.data).([]float64)
-		dstData := any(result.data).([]float64)
 		kernels.NaiveConvTranspose1dF64(
 			params.Batch,
 			params.InCh,
@@ -859,15 +810,12 @@ func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			any(s.data).([]float64),
+			any(kernelC.data).([]float64),
+			any(result.data).([]float64),
 		)
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		kernelData := any(kernelC.data).([]uint8)
-		dstData := any(result.data).([]uint8)
-		kernels.NaiveConvTranspose1dU8(
+	case []uint8, []uint32, []int64:
+		kernels.NaiveConvTranspose1d(
 			params.Batch,
 			params.InCh,
 			params.InLen,
@@ -877,45 +825,9 @@ func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		kernelData := any(kernelC.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		kernels.NaiveConvTranspose1dU32(
-			params.Batch,
-			params.InCh,
-			params.InLen,
-			params.OutCh,
-			params.KSize,
-			params.Stride,
-			params.Pad,
-			params.OutPad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []int64:
-		srcData := any(s.data).([]int64)
-		kernelData := any(kernelC.data).([]int64)
-		dstData := any(result.data).([]int64)
-		kernels.NaiveConvTranspose1dI64(
-			params.Batch,
-			params.InCh,
-			params.InLen,
-			params.OutCh,
-			params.KSize,
-			params.Stride,
-			params.Pad,
-			params.OutPad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			s.data,
+			kernelC.data,
+			result.data,
 		)
 	default:
 		return nil, errors.New("unsupported data type for conv_transpose1d")
@@ -953,9 +865,6 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		kernelData := any(kernelC.data).([]float32)
-		dstData := any(result.data).([]float32)
 		if layout.IsContiguous() && kernelLayout.IsContiguous() {
 			kernels.Im2colConv2dF32(
 				params.Batch,
@@ -968,9 +877,9 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float32),
+				any(kernelC.data).([]float32),
+				any(result.data).([]float32),
 			)
 		} else {
 			kernels.NaiveConv2dF32(
@@ -984,15 +893,12 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float32),
+				any(kernelC.data).([]float32),
+				any(result.data).([]float32),
 			)
 		}
 	case []float64:
-		srcData := any(s.data).([]float64)
-		kernelData := any(kernelC.data).([]float64)
-		dstData := any(result.data).([]float64)
 		if layout.IsContiguous() && kernelLayout.IsContiguous() {
 			kernels.Im2colConv2dF64(
 				params.Batch,
@@ -1005,9 +911,9 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float64),
+				any(kernelC.data).([]float64),
+				any(result.data).([]float64),
 			)
 		} else {
 			kernels.NaiveConv2dF64(
@@ -1021,16 +927,13 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 				params.Stride,
 				params.Pad,
 				params.Dilate,
-				srcData,
-				kernelData,
-				dstData,
+				any(s.data).([]float64),
+				any(kernelC.data).([]float64),
+				any(result.data).([]float64),
 			)
 		}
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		kernelData := any(kernelC.data).([]uint8)
-		dstData := any(result.data).([]uint8)
-		kernels.NaiveConv2dU8(
+	case []uint8, []uint32, []int64:
+		kernels.NaiveConv2d(
 			params.Batch,
 			params.InCh,
 			params.InH,
@@ -1041,47 +944,9 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 			params.Stride,
 			params.Pad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		kernelData := any(kernelC.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		kernels.NaiveConv2dU32(
-			params.Batch,
-			params.InCh,
-			params.InH,
-			params.InW,
-			params.OutCh,
-			params.KH,
-			params.KW,
-			params.Stride,
-			params.Pad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []int64:
-		srcData := any(s.data).([]int64)
-		kernelData := any(kernelC.data).([]int64)
-		dstData := any(result.data).([]int64)
-		kernels.NaiveConv2dI64(
-			params.Batch,
-			params.InCh,
-			params.InH,
-			params.InW,
-			params.OutCh,
-			params.KH,
-			params.KW,
-			params.Stride,
-			params.Pad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			s.data,
+			kernelC.data,
+			result.data,
 		)
 	default:
 		return nil, errors.New("unsupported data type for conv2d")
@@ -1119,9 +984,6 @@ func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.Backe
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		kernelData := any(kernelC.data).([]float32)
-		dstData := any(result.data).([]float32)
 		kernels.NaiveConvTranspose2dF32(
 			params.Batch,
 			params.InCh,
@@ -1134,14 +996,11 @@ func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			any(s.data).([]float32),
+			any(kernelC.data).([]float32),
+			any(result.data).([]float32),
 		)
 	case []float64:
-		srcData := any(s.data).([]float64)
-		kernelData := any(kernelC.data).([]float64)
-		dstData := any(result.data).([]float64)
 		kernels.NaiveConvTranspose2dF64(
 			params.Batch,
 			params.InCh,
@@ -1154,15 +1013,12 @@ func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			any(s.data).([]float64),
+			any(kernelC.data).([]float64),
+			any(result.data).([]float64),
 		)
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		kernelData := any(kernelC.data).([]uint8)
-		dstData := any(result.data).([]uint8)
-		kernels.NaiveConvTranspose2dU8(
+	case []uint8, []uint32, []int64:
+		kernels.NaiveConvTranspose2d(
 			params.Batch,
 			params.InCh,
 			params.InH,
@@ -1174,49 +1030,9 @@ func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.Backe
 			params.Pad,
 			params.OutPad,
 			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		kernelData := any(kernelC.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		kernels.NaiveConvTranspose2dU32(
-			params.Batch,
-			params.InCh,
-			params.InH,
-			params.InW,
-			params.OutCh,
-			params.KH,
-			params.KW,
-			params.Stride,
-			params.Pad,
-			params.OutPad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
-		)
-	case []int64:
-		srcData := any(s.data).([]int64)
-		kernelData := any(kernelC.data).([]int64)
-		dstData := any(result.data).([]int64)
-		kernels.NaiveConvTranspose2dI64(
-			params.Batch,
-			params.InCh,
-			params.InH,
-			params.InW,
-			params.OutCh,
-			params.KH,
-			params.KW,
-			params.Stride,
-			params.Pad,
-			params.OutPad,
-			params.Dilate,
-			srcData,
-			kernelData,
-			dstData,
+			s.data,
+			kernelC.data,
+			result.data,
 		)
 	default:
 		return nil, errors.New("unsupported data type for conv_transpose2d")
@@ -1244,8 +1060,6 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		dstData := any(result.data).([]float32)
 		if layout.IsContiguous() {
 			kernels.AvgPool2dF32(
 				params.Batch,
@@ -1256,8 +1070,8 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 			)
 		} else {
 			kernels.AvgPool2dStridedF32(
@@ -1269,15 +1083,13 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
 	case []float64:
-		srcData := any(s.data).([]float64)
-		dstData := any(result.data).([]float64)
 		if layout.IsContiguous() {
 			kernels.AvgPool2dF64(
 				params.Batch,
@@ -1288,8 +1100,8 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 			)
 		} else {
 			kernels.AvgPool2dStridedF64(
@@ -1301,17 +1113,15 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		dstData := any(result.data).([]uint8)
+	case []uint8, []uint32, []int64:
 		if layout.IsContiguous() {
-			kernels.AvgPool2dU8(
+			kernels.AvgPool2d(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1320,11 +1130,11 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 			)
 		} else {
-			kernels.AvgPool2dStridedU8(
+			kernels.AvgPool2dStrided(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1333,72 +1143,8 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, params *spark.Pool2DPara
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		if layout.IsContiguous() {
-			kernels.AvgPool2dU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.AvgPool2dStridedU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []int64:
-		srcData := any(s.data).([]int64)
-		dstData := any(result.data).([]int64)
-		if layout.IsContiguous() {
-			kernels.AvgPool2dI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.AvgPool2dStridedI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
@@ -1429,8 +1175,6 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		dstData := any(result.data).([]float32)
 		if layout.IsContiguous() {
 			kernels.MaxPool2dF32(
 				params.Batch,
@@ -1441,8 +1185,8 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 			)
 		} else {
 			kernels.MaxPool2dStridedF32(
@@ -1454,15 +1198,13 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
 	case []float64:
-		srcData := any(s.data).([]float64)
-		dstData := any(result.data).([]float64)
 		if layout.IsContiguous() {
 			kernels.MaxPool2dF64(
 				params.Batch,
@@ -1473,8 +1215,8 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 			)
 		} else {
 			kernels.MaxPool2dStridedF64(
@@ -1486,17 +1228,15 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		dstData := any(result.data).([]uint8)
+	case []uint8, []uint32, []int64:
 		if layout.IsContiguous() {
-			kernels.MaxPool2dU8(
+			kernels.MaxPool2d(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1505,11 +1245,11 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 			)
 		} else {
-			kernels.MaxPool2dStridedU8(
+			kernels.MaxPool2dStrided(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1518,72 +1258,8 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 				params.KW,
 				params.HStride,
 				params.WStride,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		if layout.IsContiguous() {
-			kernels.MaxPool2dU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.MaxPool2dStridedU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []int64:
-		srcData := any(s.data).([]int64)
-		dstData := any(result.data).([]int64)
-		if layout.IsContiguous() {
-			kernels.MaxPool2dI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.MaxPool2dStridedI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
@@ -1614,8 +1290,6 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 
 	switch any(s.data).(type) {
 	case []float32:
-		srcData := any(s.data).([]float32)
-		dstData := any(result.data).([]float32)
 		if layout.IsContiguous() {
 			kernels.UpsampleNearest2dF32(
 				params.Batch,
@@ -1626,8 +1300,8 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 			)
 		} else {
 			kernels.UpsampleNearest2dStridedF32(
@@ -1639,15 +1313,13 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
+				any(s.data).([]float32),
+				any(result.data).([]float32),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
 	case []float64:
-		srcData := any(s.data).([]float64)
-		dstData := any(result.data).([]float64)
 		if layout.IsContiguous() {
 			kernels.UpsampleNearest2dF64(
 				params.Batch,
@@ -1658,8 +1330,8 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 			)
 		} else {
 			kernels.UpsampleNearest2dStridedF64(
@@ -1671,17 +1343,15 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
+				any(s.data).([]float64),
+				any(result.data).([]float64),
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
 		}
-	case []uint8:
-		srcData := any(s.data).([]uint8)
-		dstData := any(result.data).([]uint8)
+	case []uint8, []uint32, []int64:
 		if layout.IsContiguous() {
-			kernels.UpsampleNearest2dU8(
+			kernels.UpsampleNearest2d(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1690,11 +1360,11 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 			)
 		} else {
-			kernels.UpsampleNearest2dStridedU8(
+			kernels.UpsampleNearest2dStrided(
 				params.Batch,
 				params.Ch,
 				params.InH,
@@ -1703,72 +1373,8 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 				params.WOut,
 				params.HScale,
 				params.WScale,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []uint32:
-		srcData := any(s.data).([]uint32)
-		dstData := any(result.data).([]uint32)
-		if layout.IsContiguous() {
-			kernels.UpsampleNearest2dU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.UpsampleNearest2dStridedU32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
-				srcData,
-				dstData,
-				layout.Stride(),
-				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
-			)
-		}
-	case []int64:
-		srcData := any(s.data).([]int64)
-		dstData := any(result.data).([]int64)
-		if layout.IsContiguous() {
-			kernels.UpsampleNearest2dI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
-				srcData,
-				dstData,
-			)
-		} else {
-			kernels.UpsampleNearest2dStridedI64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
-				srcData,
-				dstData,
+				s.data,
+				result.data,
 				layout.Stride(),
 				[]int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1},
 			)
@@ -2045,55 +1651,14 @@ func (s *CpuStorage[T]) Softmax(layout *spark.Layout) (spark.BackendStorage[T], 
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.SoftmaxStridedF32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(s.data).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.SoftmaxStridedF64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(s.data).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.SoftmaxStridedU8(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(s.data).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.SoftmaxStridedU32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(s.data).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.SoftmaxStridedI64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(s.data).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for softmax")
-	}
+	kernels.SoftmaxStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2110,65 +1675,16 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, eps T, alpha []T) (spark.B
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.RmsNormStridedF32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float32),
-			any(alpha).([]float32),
-			any(s.data).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.RmsNormStridedF64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]float64),
-			any(s.data).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.RmsNormStridedU8(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]uint8),
-			any(s.data).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.RmsNormStridedU32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]uint32),
-			any(s.data).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.RmsNormStridedI64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]int64),
-			any(s.data).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for RmsNorm")
-	}
+	kernels.RmsNormStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		eps,
+		alpha,
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2185,70 +1701,17 @@ func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, eps T, alpha, beta []T) 
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.LayerNormStridedF32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float32),
-			any(alpha).([]float32),
-			any(beta).([]float32),
-			any(s.data).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.LayerNormStridedF64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]float64),
-			any(beta).([]float64),
-			any(s.data).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.LayerNormStridedU8(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]uint8),
-			any(beta).([]uint8),
-			any(s.data).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.LayerNormStridedU32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]uint32),
-			any(beta).([]uint32),
-			any(s.data).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.LayerNormStridedI64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(eps).(float64),
-			any(alpha).([]int64),
-			any(beta).([]int64),
-			any(s.data).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for LayerNorm")
-	}
+	kernels.LayerNormStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		eps,
+		alpha,
+		beta,
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2268,75 +1731,18 @@ func (s *CpuStorage[T]) RopeI(layout *spark.Layout, bh, td, strideB int, cos, si
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.RopeIStridedF32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			strideB,
-			any(s.data).([]float32),
-			any(cos).([]float32),
-			any(sin).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.RopeIStridedF64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			strideB,
-			any(s.data).([]float64),
-			any(cos).([]float64),
-			any(sin).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.RopeIStridedU8(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			strideB,
-			any(s.data).([]uint8),
-			any(cos).([]uint8),
-			any(sin).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.RopeIStridedU32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			strideB,
-			any(s.data).([]uint32),
-			any(cos).([]uint32),
-			any(sin).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.RopeIStridedI64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			strideB,
-			any(s.data).([]int64),
-			any(cos).([]int64),
-			any(sin).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for RopeI")
-	}
+	kernels.RopeIStrided(
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		bh,
+		td,
+		strideB,
+		s.data,
+		cos,
+		sin,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2356,80 +1762,19 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, bh, td, d, strideB int, cos, 
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.RopeStridedF32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			d,
-			strideB,
-			any(s.data).([]float32),
-			any(cos).([]float32),
-			any(sin).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.RopeStridedF64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			d,
-			strideB,
-			any(s.data).([]float64),
-			any(cos).([]float64),
-			any(sin).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.RopeStridedU8(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			d,
-			strideB,
-			any(s.data).([]uint8),
-			any(cos).([]uint8),
-			any(sin).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.RopeStridedU32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			d,
-			strideB,
-			any(s.data).([]uint32),
-			any(cos).([]uint32),
-			any(sin).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.RopeStridedI64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			bh,
-			td,
-			d,
-			strideB,
-			any(s.data).([]int64),
-			any(cos).([]int64),
-			any(sin).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Rope")
-	}
+	kernels.RopeStrided(
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		bh,
+		td,
+		d,
+		strideB,
+		s.data,
+		cos,
+		sin,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2449,85 +1794,20 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, b, t, h, d, strideB int, c
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.RopeThdStridedF32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			b,
-			t,
-			h,
-			d,
-			strideB,
-			any(s.data).([]float32),
-			any(cos).([]float32),
-			any(sin).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.RopeThdStridedF64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			b,
-			t,
-			h,
-			d,
-			strideB,
-			any(s.data).([]float64),
-			any(cos).([]float64),
-			any(sin).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.RopeThdStridedU8(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			b,
-			t,
-			h,
-			d,
-			strideB,
-			any(s.data).([]uint8),
-			any(cos).([]uint8),
-			any(sin).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.RopeThdStridedU32(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			b,
-			t,
-			h,
-			d,
-			strideB,
-			any(s.data).([]uint32),
-			any(cos).([]uint32),
-			any(sin).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.RopeThdStridedI64(
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			b,
-			t,
-			h,
-			d,
-			strideB,
-			any(s.data).([]int64),
-			any(cos).([]int64),
-			any(sin).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for RopeThd")
-	}
+	kernels.RopeThdStrided(
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		b,
+		t,
+		h,
+		d,
+		strideB,
+		s.data,
+		cos,
+		sin,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2546,35 +1826,14 @@ func (s *CpuStorage[T]) Copy(layout *spark.Layout, src spark.BackendStorage[T]) 
 	srcData := src.(*CpuStorage[T]).data
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UCopyStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(srcData).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UCopyStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(srcData).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UCopyStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(srcData).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UCopyStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(srcData).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UCopyStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(srcData).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Copy")
-	}
+	kernels.UCopyStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		srcData,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2592,35 +1851,14 @@ func (s *CpuStorage[T]) Neg(layout *spark.Layout) (spark.BackendStorage[T], erro
 
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UNegStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UNegStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UNegStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UNegStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UNegStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Neg")
-	}
+	kernels.UNegStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2638,35 +1876,14 @@ func (s *CpuStorage[T]) Recip(layout *spark.Layout) (spark.BackendStorage[T], er
 
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.URecipStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.URecipStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.URecipStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.URecipStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.URecipStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Recip")
-	}
+	kernels.URecipStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2680,35 +1897,14 @@ func (s *CpuStorage[T]) Exp(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UExpStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UExpStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UExpStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UExpStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UExpStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Exp")
-	}
+	kernels.UExpStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2722,35 +1918,14 @@ func (s *CpuStorage[T]) Log(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.ULogStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.ULogStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.ULogStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.ULogStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.ULogStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Log")
-	}
+	kernels.ULogStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2764,35 +1939,14 @@ func (s *CpuStorage[T]) Sin(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.USinStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.USinStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.USinStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.USinStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.USinStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Sin")
-	}
+	kernels.USinStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2806,35 +1960,14 @@ func (s *CpuStorage[T]) Cos(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UCosStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UCosStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UCosStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UCosStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UCosStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Cos")
-	}
+	kernels.UCosStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2848,35 +1981,14 @@ func (s *CpuStorage[T]) Tanh(layout *spark.Layout) (spark.BackendStorage[T], err
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UTanhStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UTanhStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UTanhStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UTanhStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UTanhStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Tanh")
-	}
+	kernels.UTanhStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2890,35 +2002,14 @@ func (s *CpuStorage[T]) Erf(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UErfStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UErfStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UErfStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UErfStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UErfStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Erf")
-	}
+	kernels.UErfStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2932,35 +2023,14 @@ func (s *CpuStorage[T]) Ceil(layout *spark.Layout) (spark.BackendStorage[T], err
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UCeilStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UCeilStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UCeilStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UCeilStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UCeilStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Ceil")
-	}
+	kernels.UCeilStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -2974,35 +2044,14 @@ func (s *CpuStorage[T]) Floor(layout *spark.Layout) (spark.BackendStorage[T], er
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UFloorStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UFloorStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UFloorStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UFloorStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UFloorStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Floor")
-	}
+	kernels.UFloorStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3016,35 +2065,14 @@ func (s *CpuStorage[T]) Round(layout *spark.Layout) (spark.BackendStorage[T], er
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.URoundStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.URoundStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.URoundStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.URoundStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.URoundStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Round")
-	}
+	kernels.URoundStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3058,35 +2086,14 @@ func (s *CpuStorage[T]) Normcdf(layout *spark.Layout) (spark.BackendStorage[T], 
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UNormcdfStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UNormcdfStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UNormcdfStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UNormcdfStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UNormcdfStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Normcdf")
-	}
+	kernels.UNormcdfStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3100,35 +2107,14 @@ func (s *CpuStorage[T]) Abs(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UAbsStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UAbsStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UAbsStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UAbsStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UAbsStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Abs")
-	}
+	kernels.UAbsStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3142,79 +2128,39 @@ func (s *CpuStorage[T]) Sqr(layout *spark.Layout) (spark.BackendStorage[T], erro
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.USqrStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.USqrStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.USqrStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.USqrStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.USqrStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Sqr")
-	}
+	kernels.USqrStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
 
-// Sqrt performs element-wise square root operation.
+// Sqrt performs element-wise square root operation
 func (s *CpuStorage[T]) Sqrt(layout *spark.Layout) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
+
 	numel := layout.ElemCount()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
 
 	result := New(make([]T, numel))
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.USqrtStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.USqrtStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.USqrtStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.USqrtStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.USqrtStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Sqrt")
-	}
+
+	kernels.USqrtStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3228,35 +2174,14 @@ func (s *CpuStorage[T]) Gelu(layout *spark.Layout) (spark.BackendStorage[T], err
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UGeluStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UGeluStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UGeluStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UGeluStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UGeluStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Gelu")
-	}
+	kernels.UGeluStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3270,35 +2195,14 @@ func (s *CpuStorage[T]) GeluErf(layout *spark.Layout) (spark.BackendStorage[T], 
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UGeluErfStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UGeluErfStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UGeluErfStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UGeluErfStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UGeluErfStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for GeluErf")
-	}
+	kernels.UGeluErfStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3312,35 +2216,14 @@ func (s *CpuStorage[T]) Relu(layout *spark.Layout) (spark.BackendStorage[T], err
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UReluStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UReluStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UReluStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UReluStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UReluStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Relu")
-	}
+	kernels.UReluStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3354,60 +2237,15 @@ func (s *CpuStorage[T]) Elu(layout *spark.Layout, alpha T) (spark.BackendStorage
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UEluStridedF32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(alpha).(float32),
-			any(s.data).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UEluStridedF64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(alpha).(float64),
-			any(s.data).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UEluStridedU8(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(alpha).(uint8),
-			any(s.data).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UEluStridedU32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(alpha).(uint32),
-			any(s.data).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UEluStridedI64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(alpha).(int64),
-			any(s.data).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Elu")
-	}
+	kernels.UEluStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		alpha,
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3421,35 +2259,14 @@ func (s *CpuStorage[T]) Silu(layout *spark.Layout) (spark.BackendStorage[T], err
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.USiluStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.USiluStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.USiluStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.USiluStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.USiluStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Silu")
-	}
+	kernels.USiluStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3463,60 +2280,36 @@ func (s *CpuStorage[T]) Powf(layout *spark.Layout, param T) (spark.BackendStorag
 	numel := layout.ElemCount()
 	result := New(make([]T, numel))
 
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.UPowfStridedF32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(param).(float32),
-			any(s.data).([]float32),
-			any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.UPowfStridedF64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(param).(float64),
-			any(s.data).([]float64),
-			any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.UPowfStridedU8(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(param).(uint8),
-			any(s.data).([]uint8),
-			any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.UPowfStridedU32(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(param).(uint32),
-			any(s.data).([]uint32),
-			any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.UPowfStridedI64(
-			numel,
-			layout.Rank(),
-			layout.Dims(),
-			layout.Stride(),
-			any(param).(int64),
-			any(s.data).([]int64),
-			any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Powf")
+	kernels.UPowfStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		param,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Sigmoid performs element-wise sigmoid activation operation
+func (s *CpuStorage[T]) Sigmoid(layout *spark.Layout) (spark.BackendStorage[T], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
 	}
+
+	numel := layout.ElemCount()
+	result := New(make([]T, numel))
+
+	kernels.USigmoidStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		s.data,
+		result.data,
+	)
 
 	return result, nil
 }
@@ -3558,48 +2351,6 @@ func (s *CpuStorage[T]) Sign(layout *spark.Layout) (spark.BackendStorage[T], err
 		)
 	default:
 		return nil, errors.New("unsupported data type for Sign")
-	}
-
-	return result, nil
-}
-
-// Sigmoid performs element-wise sigmoid activation operation
-func (s *CpuStorage[T]) Sigmoid(layout *spark.Layout) (spark.BackendStorage[T], error) {
-	if layout == nil {
-		return nil, errors.New("layout cannot be nil")
-	}
-
-	numel := layout.ElemCount()
-	result := New(make([]T, numel))
-
-	switch any(s.data).(type) {
-	case []float32:
-		kernels.USigmoidStridedF32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float32), any(result.data).([]float32),
-		)
-	case []float64:
-		kernels.USigmoidStridedF64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]float64), any(result.data).([]float64),
-		)
-	case []uint8:
-		kernels.USigmoidStridedU8(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint8), any(result.data).([]uint8),
-		)
-	case []uint32:
-		kernels.USigmoidStridedU32(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]uint32), any(result.data).([]uint32),
-		)
-	case []int64:
-		kernels.USigmoidStridedI64(
-			numel, layout.Rank(), layout.Dims(), layout.Stride(),
-			any(s.data).([]int64), any(result.data).([]int64),
-		)
-	default:
-		return nil, errors.New("unsupported data type for Sigmoid")
 	}
 
 	return result, nil
