@@ -24,7 +24,7 @@ func New[T kernels.D](data []T) *CpuStorage[T] {
 	return &CpuStorage[T]{data: data, device: &CpuDevice[T]{}, dtype: spark.DTypeOf[T]()}
 }
 
-func (s *CpuStorage[T]) TryClone() (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Clone() (spark.BackendStorage[T], error) {
 	return &CpuStorage[T]{data: slices.Clone(s.data), device: s.device, dtype: s.dtype}, nil
 }
 
@@ -496,7 +496,7 @@ func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, e
 
 	srcDtype := s.dtype
 	if srcDtype == dtype {
-		cloned, err := s.TryClone()
+		cloned, err := s.Clone()
 		return cloned, err
 	}
 

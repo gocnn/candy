@@ -401,7 +401,7 @@ func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	storage, err := t.storage.TryClone()
+	storage, err := t.storage.Clone()
 	if err != nil {
 		return nil, err
 	}
