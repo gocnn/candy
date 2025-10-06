@@ -197,8 +197,8 @@ func (s *Shape) BroadcastShapeBinaryOp(rhs *Shape) (*Shape, error) {
 
 // BroadcastShapeMatmul returns the broadcasted shapes for matrix multiplication.
 // It broadcasts the batch dimensions and checks the inner dimensions for compatibility.
-func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
-	lhsDims := lhs.dims
+func (s *Shape) BroadcastShapeMatmul(rhs *Shape) (*Shape, *Shape, error) {
+	lhsDims := s.dims
 	rhsDims := rhs.dims
 	if len(lhsDims) < 2 || len(rhsDims) < 2 {
 		return nil, nil, errors.New("matmul requires at least 2D shapes")
@@ -208,7 +208,7 @@ func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
 	rhsK := rhsDims[len(rhsDims)-2]
 	n := rhsDims[len(rhsDims)-1]
 	if lhsK != rhsK {
-		return nil, nil, fmt.Errorf("inner dimensions mismatch in matmul: lhs %v, rhs %v", lhs, rhs)
+		return nil, nil, fmt.Errorf("inner dimensions mismatch in matmul: lhs %v, rhs %v", s, rhs)
 	}
 
 	lhsBatch := &Shape{lhsDims[:len(lhsDims)-2]}
@@ -223,25 +223,34 @@ func BroadcastShapeMatmul(lhs *Shape, rhs *Shape) (*Shape, *Shape, error) {
 	return bcastLhs, bcastRhs, nil
 }
 
-// ResolveAxes resolves a list of axis indices, supporting negative indices.
-// It checks for duplicates and out-of-range values.
-func ResolveAxes(axes []int, s *Shape) ([]int, error) {
-	res := make([]int, len(axes))
-	seen := make(map[int]bool)
-	for i, ax := range axes {
-		if ax < 0 {
-			ax += s.Rank()
+// Reshape returns a new shape with the given dimensions, inferring one dimension if -1 is provided.
+// The total element count must match.
+func (s *Shape) Reshape(newDims ...int) (*Shape, error) {
+	elCount := s.ElemCount()
+	prod := 1
+	holeIdx := -1
+	resDims := slices.Clone(newDims)
+	for i, d := range resDims {
+		if d == -1 {
+			if holeIdx != -1 {
+				return nil, errors.New("multiple inference holes (-1) not allowed")
+			}
+			holeIdx = i
+		} else if d <= 0 {
+			return nil, fmt.Errorf("invalid dimension %d (must be positive or -1 for inference)", d)
+		} else {
+			prod *= d
 		}
-		if ax < 0 || ax >= s.Rank() {
-			return nil, fmt.Errorf("axis out of range: shape %v, axis %d", s, ax)
-		}
-		if seen[ax] {
-			return nil, fmt.Errorf("duplicate axis: shape %v, axes %v", s, axes)
-		}
-		seen[ax] = true
-		res[i] = ax
 	}
-	return res, nil
+	if holeIdx != -1 {
+		if prod == 0 || elCount%prod != 0 {
+			return nil, fmt.Errorf("cannot infer dimension: element count %d not divisible by product %d", elCount, prod)
+		}
+		resDims[holeIdx] = elCount / prod
+	} else if prod != elCount {
+		return nil, fmt.Errorf("element count mismatch: original %d, new %d", elCount, prod)
+	}
+	return NewShapeFrom(resDims), nil
 }
 
 // Dims0 checks if the shape has 0 dimensions (scalar).
@@ -292,32 +301,34 @@ func (s *Shape) Dims5() (int, int, int, int, int, error) {
 	return s.dims[0], s.dims[1], s.dims[2], s.dims[3], s.dims[4], nil
 }
 
-// Reshape returns a new shape with the given dimensions, inferring one dimension if -1 is provided.
-// The total element count must match.
-func (s *Shape) Reshape(newDims ...int) (*Shape, error) {
-	elCount := s.ElemCount()
-	prod := 1
-	holeIdx := -1
-	resDims := slices.Clone(newDims)
-	for i, d := range resDims {
-		if d == -1 {
-			if holeIdx != -1 {
-				return nil, errors.New("multiple inference holes (-1) not allowed")
-			}
-			holeIdx = i
-		} else if d <= 0 {
-			return nil, fmt.Errorf("invalid dimension %d (must be positive or -1 for inference)", d)
-		} else {
-			prod *= d
-		}
+// ResolveAxis resolves a single axis index, supporting negative values.
+func ResolveAxis(axis, rank int) (int, error) {
+	if axis < 0 {
+		axis += rank
 	}
-	if holeIdx != -1 {
-		if prod == 0 || elCount%prod != 0 {
-			return nil, fmt.Errorf("cannot infer dimension: element count %d not divisible by product %d", elCount, prod)
-		}
-		resDims[holeIdx] = elCount / prod
-	} else if prod != elCount {
-		return nil, fmt.Errorf("element count mismatch: original %d, new %d", elCount, prod)
+	if axis < 0 || axis >= rank {
+		return 0, fmt.Errorf("axis out of range: rank %d, axis %d", rank, axis)
 	}
-	return NewShapeFrom(resDims), nil
+	return axis, nil
+}
+
+// ResolveAxes resolves a list of axis indices, supporting negative indices.
+// It checks for duplicates and out-of-range values.
+func ResolveAxes(axes []int, s *Shape) ([]int, error) {
+	res := make([]int, len(axes))
+	seen := make(map[int]bool)
+	for i, ax := range axes {
+		if ax < 0 {
+			ax += s.Rank()
+		}
+		if ax < 0 || ax >= s.Rank() {
+			return nil, fmt.Errorf("axis out of range: shape %v, axis %d", s, ax)
+		}
+		if seen[ax] {
+			return nil, fmt.Errorf("duplicate axis: shape %v, axes %v", s, axes)
+		}
+		seen[ax] = true
+		res[i] = ax
+	}
+	return res, nil
 }

@@ -26,15 +26,15 @@ func NewLayout(shape *Shape, stride []int, startOffset int) *Layout {
 	}
 }
 
+// Contiguous creates a contiguous (row-major) layout starting at offset 0.
+func Contiguous(shape *Shape) *Layout {
+	return ContiguousWithOffset(shape, 0)
+}
+
 // ContiguousWithOffset creates a contiguous (row-major) layout with the given start offset.
 func ContiguousWithOffset(shape *Shape, startOffset int) *Layout {
 	stride := shape.StrideContiguous()
 	return NewLayout(shape, stride, startOffset)
-}
-
-// Contiguous creates a contiguous (row-major) layout starting at offset 0.
-func Contiguous(shape *Shape) *Layout {
-	return ContiguousWithOffset(shape, 0)
 }
 
 // Shape returns a copy of the shape.
@@ -63,7 +63,7 @@ func (l *Layout) String() string {
 // Clone returns a deep copy of the layout.
 func (l *Layout) Clone() *Layout {
 	return &Layout{
-		shape:       l.shape,
+		shape:       l.shape.Clone(),
 		stride:      slices.Clone(l.stride),
 		startOffset: l.startOffset,
 	}
@@ -113,7 +113,7 @@ func (l *Layout) IsFortranContiguous() bool {
 // Narrow returns a new layout narrowed along the specified dimension from start to start+len.
 func (l *Layout) Narrow(dim, start, len int) (*Layout, error) {
 	rank := l.shape.Rank()
-	resolvedDim, err := resolveDim(dim, rank, "narrow")
+	resolvedDim, err := ResolveAxis(dim, rank)
 	if err != nil {
 		return nil, err
 	}
@@ -129,11 +129,11 @@ func (l *Layout) Narrow(dim, start, len int) (*Layout, error) {
 // Transpose returns a new layout with the two specified dimensions swapped.
 func (l *Layout) Transpose(dim1, dim2 int) (*Layout, error) {
 	rank := l.shape.Rank()
-	resolvedDim1, err := resolveDim(dim1, rank, "transpose")
+	resolvedDim1, err := ResolveAxis(dim1, rank)
 	if err != nil {
 		return nil, err
 	}
-	resolvedDim2, err := resolveDim(dim2, rank, "transpose")
+	resolvedDim2, err := ResolveAxis(dim2, rank)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (l *Layout) Permute(idxs []int) (*Layout, error) {
 	seen := make(map[int]struct{}, rank)
 	resolvedIdxs := make([]int, len(idxs))
 	for i, idx := range idxs {
-		resolved, err := resolveDim(idx, rank, "permute")
+		resolved, err := ResolveAxis(idx, rank)
 		if err != nil {
 			return nil, err
 		}
@@ -197,6 +197,14 @@ func (l *Layout) BroadcastAs(target *Shape) (*Layout, error) {
 		}
 	}
 	return NewLayout(target, newStride, l.startOffset), nil
+}
+
+// ContiguousOffsetsWithBroadcast represents contiguous storage with broadcasted dimensions.
+type ContiguousOffsetsWithBroadcast struct {
+	Start          int
+	Len            int
+	LeftBroadcast  int
+	RightBroadcast int
 }
 
 // OffsetsB returns contiguous offsets with broadcast dimensions if applicable,
@@ -250,23 +258,4 @@ func (l *Layout) OffsetsB() (ContiguousOffsetsWithBroadcast, bool) {
 		LeftBroadcast:  leftBroadcast,
 		RightBroadcast: rightBroadcast,
 	}, true
-}
-
-// ContiguousOffsetsWithBroadcast represents contiguous storage with broadcasted dimensions.
-type ContiguousOffsetsWithBroadcast struct {
-	Start          int
-	Len            int
-	LeftBroadcast  int
-	RightBroadcast int
-}
-
-// resolveDim resolves a dimension index, supporting negative values.
-func resolveDim(dim, rank int, op string) (int, error) {
-	if dim < 0 {
-		dim += rank
-	}
-	if dim < 0 || dim >= rank {
-		return 0, fmt.Errorf("dim out of range: rank %d, dim %d, op: %s", rank, dim, op)
-	}
-	return dim, nil
 }

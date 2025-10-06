@@ -199,7 +199,7 @@ func TestShapeBroadcastShapeBinaryOpError(t *testing.T) {
 func TestShapeBroadcastShapeMatmul(t *testing.T) {
 	s1 := spark.NewShape(2, 3, 4)
 	s2 := spark.NewShape(4, 5)
-	lhs, rhs, err := spark.BroadcastShapeMatmul(s1, s2)
+	lhs, rhs, err := s1.BroadcastShapeMatmul(s2)
 	if err != nil {
 		t.Errorf("BroadcastShapeMatmul failed: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestShapeBroadcastShapeMatmul(t *testing.T) {
 func TestShapeBroadcastShapeMatmulError(t *testing.T) {
 	s1 := spark.NewShape(2, 3, 5)
 	s2 := spark.NewShape(4, 5)
-	_, _, err := spark.BroadcastShapeMatmul(s1, s2)
+	_, _, err := s1.BroadcastShapeMatmul(s2)
 	if err == nil {
 		t.Errorf("BroadcastShapeMatmul([2 3 5], [4 5]) did not error")
 	}

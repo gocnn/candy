@@ -246,6 +246,41 @@ func (t *Tensor[T]) Device() spark.Device {
 	return t.device
 }
 
+// Data returns the underlying data slice. Panics if storage is not CPU-based.
+func (t *Tensor[T]) Data() []T {
+	return t.storage.Data()
+}
+
+// Stride returns the strides of the tensor.
+func (t *Tensor[T]) Stride() []int {
+	return t.layout.Stride()
+}
+
+// Shape returns the shape of the tensor.
+func (t *Tensor[T]) Shape() *spark.Shape {
+	return t.layout.Shape()
+}
+
+// Dims returns the dimensions of the tensor.
+func (t *Tensor[T]) Dims() []int {
+	return t.layout.Dims()
+}
+
+// Dim returns the size of the dimension at the given index.
+func (t *Tensor[T]) Dim(dim int) int {
+	return t.layout.Dim(dim)
+}
+
+// Rank returns the rank of the tensor.
+func (t *Tensor[T]) Rank() int {
+	return t.layout.Rank()
+}
+
+// ElemCount returns the number of elements in the tensor.
+func (t *Tensor[T]) ElemCount() int {
+	return t.layout.ElemCount()
+}
+
 func (t *Tensor[T]) SetStorage(storage spark.BackendStorage[T]) *Tensor[T] {
 	t.storage = storage
 	return t
@@ -279,6 +314,10 @@ func (t *Tensor[T]) SetDevice(device spark.Device) *Tensor[T] {
 func (t *Tensor[T]) RequiresGrad() *Tensor[T] {
 	t.isVar = true
 	return t
+}
+
+func (t *Tensor[T]) Detach() *Tensor[T] {
+	return NewFromStorage(t.storage, t.layout, t.dtype, t.device)
 }
 
 // Add performs element-wise addition of two tensors.
@@ -388,15 +427,7 @@ func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: t.storage,
-		layout:  newLayout,
-		op:      nil,
-		isVar:   false,
-		dtype:   t.dtype,
-		device:  t.device,
-	}, nil
+	return NewFromStorage(t.storage, newLayout, t.dtype, t.device), nil
 }
 
 // Expand broadcasts the tensor to the target shape.
@@ -404,24 +435,56 @@ func (t *Tensor[T]) Expand(shape *spark.Shape) (*Tensor[T], error) {
 	return t.BroadcastAs(shape)
 }
 
-// func (t *Tensor[T]) SumToShape(target *spark.Shape) (*Tensor[T], error) {
-// 	newLayout, err := t.layout.SumTo(target)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	storage, err := t.storage.Sum(t.layout, newLayout) // Assume BackendStorage has Sum(inputLayout, outputLayout)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return NewFromStorage(storage, newLayout, t.dtype, t.device), nil
-// }
+// MustExpand broadcasts the tensor to the target shape, panicking on error.
+func (t *Tensor[T]) MustExpand(shape *spark.Shape) *Tensor[T] {
+	t, err := t.Expand(shape)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Squeeze removes the specified dimension if its size is 1, returning a new tensor view.
+// If the dimension size is not 1, returns a shallow copy of the tensor.
+// Negative indices are supported (e.g., -1 for the last dimension).
+func (t *Tensor[T]) Squeeze(dim int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SqueezeForward[T](dim), SqueezeBackward[T](dim))
+}
+
+// MustSqueeze removes the specified dimension if its size is 1, returning a new tensor view.
+// If the dimension size is not 1, returns a shallow copy of the tensor.
+// Negative indices are supported (e.g., -1 for the last dimension).
+func (t *Tensor[T]) MustSqueeze(dim int) *Tensor[T] {
+	t, err := t.Squeeze(dim)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Unsqueeze inserts a dimension of size 1 at the specified position, returning a new tensor view.
+// The dim can be in range [-rank-1, rank], where rank is the tensor's rank.
+// Negative indices are supported (e.g., -1 to insert before the last dimension).
+func (t *Tensor[T]) Unsqueeze(dim int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, UnsqueezeForward[T](dim), UnsqueezeBackward[T](dim))
+}
+
+// MustUnsqueeze inserts a dimension of size 1 at the specified position, returning a new tensor view.
+// The dim can be in range [-rank-1, rank], where rank is the tensor's rank.
+// Negative indices are supported (e.g., -1 to insert before the last dimension).
+func (t *Tensor[T]) MustUnsqueeze(dim int) *Tensor[T] {
+	t, err := t.Unsqueeze(dim)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.
 // Returns the gradient store containing all computed gradients.
 func (t *Tensor[T]) Backward() (*GradStore[T], error) {
 	store := NewGradStore[T]()
-	err := Backward(t, store)
-	if err != nil {
+	if err := Backward(t, store); err != nil {
 		return nil, err
 	}
 	return store, nil
