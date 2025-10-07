@@ -17,6 +17,24 @@ const (
 	I64
 )
 
+func (d DType) IsFloat() bool {
+	switch d {
+	case F32, F64:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d DType) IsInteger() bool {
+	switch d {
+	case U8, U32, I64:
+		return true
+	default:
+		return false
+	}
+}
+
 func (d DType) String() string {
 	switch d {
 	case F32:

@@ -119,6 +119,9 @@ type BackendStorage[T D] interface {
 	// RopeThd performs rotary position embedding (rope_thd variant).
 	RopeThd(layout *Layout, b, t, h, d, strideB int, cos, sin []T) (BackendStorage[T], error)
 
+	// WhereCond performs element-wise selection based on condition.
+	WhereCond(condLayout *Layout, t BackendStorage[T], tLayout *Layout, f BackendStorage[T], fLayout *Layout) (BackendStorage[T], error)
+
 	// Copy performs element-wise copy operation.
 	Copy(layout *Layout, src BackendStorage[T]) (BackendStorage[T], error)
 
