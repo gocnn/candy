@@ -363,6 +363,34 @@ func (t *Tensor[T]) MustConvTranspose1d(kernel *Tensor[T], params *spark.ConvT1D
 	return result
 }
 
+// Conv2d performs 2D convolution.
+func (t *Tensor[T]) Conv2d(kernel *Tensor[T], params *spark.Conv2DParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, kernel}, Conv2dForward[T](params), Conv2dBackward[T](params))
+}
+
+// MustConv2d performs 2D convolution, panicking on error.
+func (t *Tensor[T]) MustConv2d(kernel *Tensor[T], params *spark.Conv2DParams) *Tensor[T] {
+	result, err := t.Conv2d(kernel, params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// ConvTranspose2d performs 2D transposed convolution (deconvolution).
+func (t *Tensor[T]) ConvTranspose2d(kernel *Tensor[T], params *spark.ConvT2DParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, kernel}, ConvTranspose2dForward[T](params), ConvTranspose2dBackward[T](params))
+}
+
+// MustConvTranspose2d performs 2D transposed convolution, panicking on error.
+func (t *Tensor[T]) MustConvTranspose2d(kernel *Tensor[T], params *spark.ConvT2DParams) *Tensor[T] {
+	result, err := t.ConvTranspose2d(kernel, params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Sqrt computes the square root of each element.
 func (t *Tensor[T]) Sqrt() (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, SqrtForward[T], SqrtBackward[T])
