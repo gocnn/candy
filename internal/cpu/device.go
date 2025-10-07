@@ -42,7 +42,7 @@ func (c *CpuDevice[T]) StorageFromSlice(data []T) (spark.BackendStorage[T], erro
 
 // StorageFromCpuStorage creates a copy of the given CpuStorage.
 func (c *CpuDevice[T]) StorageFromCpuStorage(s *CpuStorage[T]) (spark.BackendStorage[T], error) {
-	return s.TryClone()
+	return s.Clone()
 }
 
 // SetSeed is unsupported for CPU RNG (no global seed in math/rand/v2).

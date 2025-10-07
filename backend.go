@@ -2,8 +2,8 @@ package spark
 
 // BackendStorage defines operations for tensor storage management.
 type BackendStorage[T D] interface {
-	// TryClone creates a deep copy of the storage.
-	TryClone() (BackendStorage[T], error)
+	// Clone creates a deep copy of the storage.
+	Clone() (BackendStorage[T], error)
 
 	// Data returns a copy of the underlying data.
 	Data() []T
