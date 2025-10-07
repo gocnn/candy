@@ -348,6 +348,22 @@ func (t *Tensor[T]) MustSqrt() *Tensor[T] {
 	return t
 }
 
+// Sum computes the sum along the specified dimensions.
+// The dimensions to sum over are specified in dims.
+// The result tensor will have the summed dimensions reduced to size 1.
+func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SumForward[T](dims), SumBackward[T](dims))
+}
+
+// MustSum computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
+	t, err := t.Sum(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
 func (a *Tensor[T]) BroadcastAdd(b *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T], BroadcastAddBackward[T])
@@ -385,7 +401,11 @@ func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
 		return nil, err
 	}
 
-	return NewFrom(t.storage, newLayout, t.dtype, t.device), nil
+	storage, err := t.storage.TryClone()
+	if err != nil {
+		return nil, err
+	}
+	return NewFrom(storage, newLayout, t.dtype, t.device), nil
 }
 
 // Expand broadcasts the tensor to the target shape.
