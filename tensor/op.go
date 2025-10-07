@@ -213,21 +213,6 @@ func DivBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tens
 	return []*Tensor[T]{ga, gb}, nil
 }
 
-// SqrtForward computes element-wise square root: c = sqrt(a)
-func SqrtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 1 {
-		return nil, fmt.Errorf("SqrtForward expects 1 input, got %d", len(inputs))
-	}
-
-	a := inputs[0]
-	resStorage, err := a.storage.Sqrt(a.layout)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewFrom(resStorage, a.layout.Clone(), a.dtype, a.device), nil
-}
-
 // Conv1dForward computes 1D convolution
 func Conv1dForward[T spark.D](params *spark.Conv1DParams) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
@@ -237,17 +222,14 @@ func Conv1dForward[T spark.D](params *spark.Conv1DParams) ForwardFunc[T] {
 
 		input, kernel := inputs[0], inputs[1]
 
-		// Validate shapes
 		if input.Rank() != 3 || kernel.Rank() != 3 {
 			return nil, fmt.Errorf("input and kernel must be 3D tensors")
 		}
 
-		// Compute output shape
 		outLen := params.OutLen()
 		outputShape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, outLen})
 		outputLayout := spark.Contiguous(outputShape)
 
-		// Perform convolution
 		resStorage, err := input.storage.Conv1d(input.layout, kernel.storage, kernel.layout, params)
 		if err != nil {
 			return nil, err
@@ -335,7 +317,6 @@ func ConvTranspose1dForward[T spark.D](params *spark.ConvT1DParams) ForwardFunc[
 		outputShape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, outLen})
 		outputLayout := spark.Contiguous(outputShape)
 
-		// Perform convolution transpose
 		resStorage, err := input.storage.ConvTranspose1d(input.layout, kernel.storage, kernel.layout, params)
 		if err != nil {
 			return nil, err
@@ -346,7 +327,7 @@ func ConvTranspose1dForward[T spark.D](params *spark.ConvT1DParams) ForwardFunc[
 }
 
 // ConvTranspose1dBackward computes gradients for 1D transposed convolution
-// TODO: implement
+// Based on Rust Candle implementation
 func ConvTranspose1dBackward[T spark.D](params *spark.ConvT1DParams) BackwardFunc[T] {
 	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
@@ -355,13 +336,54 @@ func ConvTranspose1dBackward[T spark.D](params *spark.ConvT1DParams) BackwardFun
 
 		input, kernel := inputs[0].Detach(), inputs[1].Detach()
 
-		// Input gradient: regular convolution with flipped kernel
-		inputGradShape := spark.NewShapeFrom([]int{params.Batch, params.InCh, params.InLen})
-		inputGrad := Zeros[T](inputGradShape, input.Device())
+		inputGradParams := &spark.Conv1DParams{
+			Batch:  params.Batch,
+			InCh:   params.OutCh,
+			InLen:  outputGrad.Shape().Dims()[2],
+			OutCh:  params.InCh,
+			KSize:  params.KSize,
+			Stride: params.Stride,
+			Pad:    params.Pad,
+			Dilate: params.Dilate,
+		}
 
-		// Kernel gradient: correlation between input and output gradient
-		kernelGradShape := spark.NewShapeFrom([]int{params.OutCh, params.InCh, params.KSize})
-		kernelGrad := Zeros[T](kernelGradShape, kernel.Device())
+		inputGrad, err := outputGrad.Conv1d(kernel, inputGradParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute input gradient: %v", err)
+		}
+
+		outputGradT, err := outputGrad.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
+
+		inputT, err := input.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
+
+		outGradLen := outputGrad.Shape().Dims()[2]
+
+		kernelGradParams := &spark.Conv1DParams{
+			Batch:  params.OutCh,
+			InCh:   params.Batch,
+			InLen:  params.InLen,
+			OutCh:  params.InCh,
+			KSize:  outGradLen,
+			Stride: params.Dilate,
+			Pad:    params.Pad,
+			Dilate: params.Stride,
+		}
+
+		kernelGradT, err := outputGradT.Conv1d(inputT, kernelGradParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute kernel gradient: %v", err)
+		}
+
+		kernelGrad, err := kernelGradT.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
 
 		return []*Tensor[T]{inputGrad, kernelGrad}, nil
 	}
@@ -496,19 +518,432 @@ func ConvTranspose2dForward[T spark.D](params *spark.ConvT2DParams) ForwardFunc[
 }
 
 // ConvTranspose2dBackward computes gradients for 2D transposed convolution
-// TODO: implement proper backward pass
+// Based on Rust Candle implementation
 func ConvTranspose2dBackward[T spark.D](params *spark.ConvT2DParams) BackwardFunc[T] {
 	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		input, kernel := inputs[0].Detach(), inputs[1].Detach()
 
-		inputGradShape := spark.NewShapeFrom([]int{params.Batch, params.InCh, params.InH, params.InW})
-		inputGrad := Zeros[T](inputGradShape, input.Device())
+		inputGradParams := &spark.Conv2DParams{
+			Batch:  params.Batch,
+			InCh:   params.OutCh,
+			InH:    outputGrad.Shape().Dims()[2],
+			InW:    outputGrad.Shape().Dims()[3],
+			OutCh:  params.InCh,
+			KH:     params.KH,
+			KW:     params.KW,
+			Stride: params.Stride,
+			Pad:    params.Pad,
+			Dilate: params.Dilate,
+		}
 
-		kernelGradShape := spark.NewShapeFrom([]int{params.OutCh, params.InCh, params.KH, params.KW})
-		kernelGrad := Zeros[T](kernelGradShape, kernel.Device())
+		inputGrad, err := outputGrad.Conv2d(kernel, inputGradParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute input gradient: %v", err)
+		}
+
+		outputGradT, err := outputGrad.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
+
+		inputT, err := input.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
+
+		kernelGradParams := &spark.Conv2DParams{
+			Batch:  params.OutCh,
+			InCh:   params.Batch,
+			InH:    params.InH,
+			InW:    params.InW,
+			OutCh:  params.InCh,
+			KH:     outputGrad.Shape().Dims()[2],
+			KW:     outputGrad.Shape().Dims()[3],
+			Stride: params.Dilate,
+			Pad:    params.Pad,
+			Dilate: params.Stride,
+		}
+
+		kernelGradT, err := outputGradT.Conv2d(inputT, kernelGradParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute kernel gradient: %v", err)
+		}
+
+		kernelGrad, err := kernelGradT.Transpose(0, 1)
+		if err != nil {
+			return nil, err
+		}
 
 		return []*Tensor[T]{inputGrad, kernelGrad}, nil
 	}
+}
+
+// AvgPool2dForward computes 2D average pooling
+func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("AvgPool2dForward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0]
+
+		if input.Rank() != 4 {
+			return nil, fmt.Errorf("input must be 4D tensor for AvgPool2d, got %dD", input.Rank())
+		}
+
+		hOut := params.OutH()
+		wOut := params.OutW()
+		outputShape := spark.NewShapeFrom([]int{params.Batch, params.Ch, hOut, wOut})
+		outputLayout := spark.Contiguous(outputShape)
+
+		resStorage, err := input.storage.AvgPool2d(input.layout, params)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewFrom(resStorage, outputLayout, input.dtype, input.device), nil
+	}
+}
+
+// AvgPool2dBackward computes gradients for 2D average pooling
+// Based on Rust Candle implementation: only supports kernel_size == stride
+func AvgPool2dBackward[T spark.D](params *spark.Pool2DParams) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		input := inputs[0].Detach()
+
+		if params.KH != params.HStride || params.KW != params.WStride {
+			return nil, fmt.Errorf("AvgPool2dBackward only supports kernel_size == stride, got kh=%d, stride_h=%d, kw=%d, stride_w=%d",
+				params.KH, params.HStride, params.KW, params.WStride)
+		}
+
+		dims := input.Shape().Dims()
+		batch, ch, h, w := dims[0], dims[1], dims[2], dims[3]
+		outDims := outputGrad.Shape().Dims()
+		outH, outW := outDims[2], outDims[3]
+
+		upsampleParams := &spark.UpsampleParams{
+			Batch:  batch,
+			Ch:     ch,
+			InH:    outH,
+			InW:    outW,
+			HOut:   h,
+			WOut:   w,
+			HScale: float64(h) / float64(outH),
+			WScale: float64(w) / float64(outW),
+		}
+
+		gradArg, err := outputGrad.UpsampleNearest2d(upsampleParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upsample gradient: %v", err)
+		}
+		poolSize := float64(params.KH * params.KW)
+		scale := 1.0 / poolSize
+		scaleT := Full[T](scale, gradArg.Shape(), gradArg.Device())
+
+		gradArg, err = gradArg.Mul(scaleT)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scale gradient: %v", err)
+		}
+
+		return []*Tensor[T]{gradArg}, nil
+	}
+}
+
+// UpsampleNearest2dForward computes 2D nearest neighbor upsampling
+func UpsampleNearest2dForward[T spark.D](params *spark.UpsampleParams) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("UpsampleNearest2dForward expects 1 input, got %d", len(inputs))
+		}
+
+		input := inputs[0]
+
+		if input.Rank() != 4 {
+			return nil, fmt.Errorf("input must be 4D tensor for UpsampleNearest2d, got %dD", input.Rank())
+		}
+
+		outputShape := spark.NewShapeFrom([]int{params.Batch, params.Ch, params.HOut, params.WOut})
+		outputLayout := spark.Contiguous(outputShape)
+
+		resStorage, err := input.storage.UpsampleNearest2d(input.layout, params)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewFrom(resStorage, outputLayout, input.dtype, input.device), nil
+	}
+}
+
+// UpsampleNearest2dBackward computes gradients for 2D nearest neighbor upsampling
+// Based on Rust Candle implementation with restrictions:
+// 1. Only supports integer scale factors
+// 2. Only supports uniform scaling (scale_h == scale_w)
+func UpsampleNearest2dBackward[T spark.D](params *spark.UpsampleParams) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		input := inputs[0].Detach()
+
+		dims := input.Shape().Dims()
+		c, h, w := dims[1], dims[2], dims[3]
+		targetH, targetW := params.HOut, params.WOut
+
+		if targetH%h != 0 || targetW%w != 0 {
+			return nil, fmt.Errorf("UpsampleNearest2dBackward only supports integer scale factors, got target=(%d,%d), input=(%d,%d)",
+				targetH, targetW, h, w)
+		}
+
+		scaleH := targetH / h
+		scaleW := targetW / w
+
+		if scaleH != scaleW {
+			return nil, fmt.Errorf("UpsampleNearest2dBackward only supports uniform scaling, got scale_h=%d, scale_w=%d",
+				scaleH, scaleW)
+		}
+
+		kernelData := make([]T, c*scaleH*scaleW)
+		for i := range kernelData {
+			kernelData[i] = T(1.0)
+		}
+		kernel := New(kernelData, spark.NewShape(c, 1, scaleH, scaleW), input.Device())
+
+		convParams := &spark.Conv2DParams{
+			Batch:  params.Batch,
+			InCh:   c,
+			InH:    targetH,
+			InW:    targetW,
+			OutCh:  c,
+			KH:     scaleH,
+			KW:     scaleW,
+			Stride: scaleH, // stride = scale
+			Pad:    0,
+			Dilate: 1,
+		}
+
+		inputGrad, err := outputGrad.Conv2d(kernel, convParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to aggregate gradients: %v", err)
+		}
+
+		return []*Tensor[T]{inputGrad}, nil
+	}
+}
+
+// SoftmaxForward computes softmax activation along the last dimension
+// softmax(x_i) = exp(x_i) / sum(exp(x_j))
+func SoftmaxForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("SoftmaxForward expects 1 input, got %d", len(inputs))
+	}
+
+	input := inputs[0]
+
+	resStorage, err := input.storage.Softmax(input.layout)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrom(resStorage, input.layout.Clone(), input.dtype, input.device), nil
+}
+
+// SoftmaxBackward computes gradients for softmax
+// grad_input = softmax * (grad_output - sum(grad_output * softmax))
+func SoftmaxBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("SoftmaxBackward expects 1 input, got %d", len(inputs))
+	}
+
+	input := inputs[0].Detach()
+
+	softmaxOutput, err := input.Softmax()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute softmax in backward: %v", err)
+	}
+
+	gradMulSoftmax, err := outputGrad.Mul(softmaxOutput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to multiply grad_output and softmax: %v", err)
+	}
+
+	rank := input.Rank()
+	lastDim := rank - 1
+
+	sumGrad, err := gradMulSoftmax.Sum([]int{lastDim})
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum along last dimension: %v", err)
+	}
+
+	sumGradBroadcast, err := sumGrad.BroadcastAs(input.Shape())
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast sum: %v", err)
+	}
+
+	gradDiff, err := outputGrad.Sub(sumGradBroadcast)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute gradient difference: %v", err)
+	}
+
+	inputGrad, err := softmaxOutput.Mul(gradDiff)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute input gradient: %v", err)
+	}
+
+	return []*Tensor[T]{inputGrad}, nil
+}
+
+// ReluForward computes element-wise ReLU: relu(x) = max(0, x)
+func ReluForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("ReluForward expects 1 input, got %d", len(inputs))
+	}
+
+	input := inputs[0]
+
+	resStorage, err := input.storage.Relu(input.layout)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrom(resStorage, input.layout.Clone(), input.dtype, input.device), nil
+}
+
+// ReluBackward computes gradients for ReLU
+// grad_input = grad_output * (input > 0 ? 1 : 0)
+func ReluBackward[T spark.D](outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("ReluBackward expects 1 input, got %d", len(inputs))
+	}
+
+	input := inputs[0].Detach()
+	zero := Full[T](0.0, input.Shape(), input.Device())
+
+	// Compute mask: input > 0 returns uint8 (0 or 1)
+	mask, err := input.Gt(zero)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mask: %v", err)
+	}
+
+	var maskFloat *Tensor[T]
+	switch outputGrad.DType() {
+	case spark.F32:
+		maskF32, err := mask.ToFloat32()
+		if err != nil {
+			return nil, err
+		}
+		maskFloat = any(maskF32).(*Tensor[T])
+	case spark.F64:
+		maskF64, err := mask.ToFloat64()
+		if err != nil {
+			return nil, err
+		}
+		maskFloat = any(maskF64).(*Tensor[T])
+	default:
+		return nil, fmt.Errorf("unsupported dtype for ReLU: %v", outputGrad.DType())
+	}
+
+	// Use WhereCond: mask ? outputGrad : zeros
+	zeros := Zeros[T](outputGrad.Shape(), outputGrad.Device())
+	inputGrad, err := maskFloat.WhereCond(outputGrad, zeros)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute input gradient: %v", err)
+	}
+
+	return []*Tensor[T]{inputGrad}, nil
+}
+
+// WhereCondForward computes conditional selection: result = condition ? trueVal : falseVal
+func WhereCondForward[T spark.D](condition *Tensor[T]) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("WhereCondForward expects 2 inputs (trueVal, falseVal), got %d", len(inputs))
+		}
+
+		trueVal := inputs[0]
+		falseVal := inputs[1]
+
+		finalShape, err := condition.Shape().BroadcastShapeBinaryOp(trueVal.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast condition and trueVal shapes: %v", err)
+		}
+
+		finalShape, err = finalShape.BroadcastShapeBinaryOp(falseVal.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast with falseVal shape: %v", err)
+		}
+
+		condLayout, err := condition.layout.BroadcastAs(finalShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast condition layout: %v", err)
+		}
+
+		tLayout, err := trueVal.layout.BroadcastAs(finalShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast trueVal layout: %v", err)
+		}
+
+		fLayout, err := falseVal.layout.BroadcastAs(finalShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast falseVal layout: %v", err)
+		}
+
+		resStorage, err := condition.storage.WhereCond(
+			condLayout,
+			trueVal.storage, tLayout,
+			falseVal.storage, fLayout,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewFrom(resStorage, spark.Contiguous(finalShape), trueVal.dtype, trueVal.device), nil
+	}
+}
+
+// WhereCondBackward computes gradients for conditional selection
+// Gradient flows only through the selected branch based on condition
+func WhereCondBackward[T spark.D](condition *Tensor[T]) BackwardFunc[T] {
+	return func(outputGrad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("WhereCondBackward expects 2 inputs (trueVal, falseVal), got %d", len(inputs))
+		}
+
+		outputGradDetached := outputGrad.Detach()
+		zeros := Zeros[T](outputGrad.Shape(), outputGrad.Device())
+		trueGradStorage, err := condition.storage.WhereCond(
+			condition.layout,
+			outputGradDetached.storage, outputGradDetached.layout,
+			zeros.storage, zeros.layout,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute trueVal gradient: %v", err)
+		}
+		trueGrad := NewFrom(trueGradStorage, outputGrad.layout.Clone(), outputGrad.dtype, outputGrad.device)
+
+		falseGradStorage, err := condition.storage.WhereCond(
+			condition.layout,
+			zeros.storage, zeros.layout,
+			outputGradDetached.storage, outputGradDetached.layout,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute falseVal gradient: %v", err)
+		}
+		falseGrad := NewFrom(falseGradStorage, outputGrad.layout.Clone(), outputGrad.dtype, outputGrad.device)
+
+		return []*Tensor[T]{trueGrad, falseGrad}, nil
+	}
+}
+
+// SqrtForward computes element-wise square root: c = sqrt(a)
+func SqrtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("SqrtForward expects 1 input, got %d", len(inputs))
+	}
+
+	a := inputs[0]
+	resStorage, err := a.storage.Sqrt(a.layout)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrom(resStorage, a.layout.Clone(), a.dtype, a.device), nil
 }
 
 // SqrtBackward computes gradients for square root: ∂sqrt(a)/∂a = 1/(2*sqrt(a))

@@ -1815,6 +1815,83 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, b, t, h, d, strideB int, c
 	return result, nil
 }
 
+// WhereCond performs element-wise selection based on condition.
+// If s[i] != 0, result[i] = t[i], otherwise result[i] = f[i].
+// Note: s can be uint8, uint32, or int64 type (condition mask).
+func (s *CpuStorage[T]) WhereCond(condLayout *spark.Layout, t spark.BackendStorage[T], tLayout *spark.Layout, f spark.BackendStorage[T], fLayout *spark.Layout) (spark.BackendStorage[T], error) {
+	tC, ok := t.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("true storage must be CpuStorage")
+	}
+
+	fC, ok := f.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("false storage must be CpuStorage")
+	}
+
+	if condLayout == nil || tLayout == nil || fLayout == nil {
+		return nil, errors.New("layouts cannot be nil")
+	}
+
+	elemCount := condLayout.ElemCount()
+	if tLayout.ElemCount() != elemCount || fLayout.ElemCount() != elemCount {
+		return nil, errors.New("layout element counts must match")
+	}
+
+	result := New(make([]T, elemCount))
+	switch cond := any(s.data).(type) {
+	case []float32:
+		kernels.WhereStridedF32(
+			elemCount, condLayout.Rank(), condLayout.Dims(),
+			condLayout.Stride(), tLayout.Stride(), fLayout.Stride(),
+			cond,
+			tC.data,
+			fC.data,
+			result.data,
+		)
+	case []float64:
+		kernels.WhereStridedF64(
+			elemCount, condLayout.Rank(), condLayout.Dims(),
+			condLayout.Stride(), tLayout.Stride(), fLayout.Stride(),
+			cond,
+			tC.data,
+			fC.data,
+			result.data,
+		)
+	case []uint8:
+		kernels.WhereStridedU8(
+			elemCount, condLayout.Rank(), condLayout.Dims(),
+			condLayout.Stride(), tLayout.Stride(), fLayout.Stride(),
+			cond,
+			tC.data,
+			fC.data,
+			result.data,
+		)
+	case []uint32:
+		kernels.WhereStridedU32(
+			elemCount, condLayout.Rank(), condLayout.Dims(),
+			condLayout.Stride(), tLayout.Stride(), fLayout.Stride(),
+			cond,
+			tC.data,
+			fC.data,
+			result.data,
+		)
+	case []int64:
+		kernels.WhereStridedI64(
+			elemCount, condLayout.Rank(), condLayout.Dims(),
+			condLayout.Stride(), tLayout.Stride(), fLayout.Stride(),
+			cond,
+			tC.data,
+			fC.data,
+			result.data,
+		)
+	default:
+		return nil, errors.New("condition must be uint8, uint32, or int64 type")
+	}
+
+	return result, nil
+}
+
 // Copy performs element-wise copy operation
 func (s *CpuStorage[T]) Copy(layout *spark.Layout, src spark.BackendStorage[T]) (spark.BackendStorage[T], error) {
 	if layout == nil {

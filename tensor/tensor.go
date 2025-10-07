@@ -279,6 +279,101 @@ func (t *Tensor[T]) Detach() *Tensor[T] {
 	return NewFrom(t.storage, t.layout, t.dtype, t.device)
 }
 
+// ToFloat32 converts the tensor to float32 type.
+func (t *Tensor[T]) ToFloat32() (*Tensor[float32], error) {
+	result, err := t.storage.ToDtype(t.layout, spark.F32)
+	if err != nil {
+		return nil, err
+	}
+	storage := result.(*cpu.CpuStorage[float32])
+	return NewFrom(storage, t.layout.Clone(), spark.F32, t.device), nil
+}
+
+// ToFloat64 converts the tensor to float64 type.
+func (t *Tensor[T]) ToFloat64() (*Tensor[float64], error) {
+	result, err := t.storage.ToDtype(t.layout, spark.F64)
+	if err != nil {
+		return nil, err
+	}
+	storage := result.(*cpu.CpuStorage[float64])
+	return NewFrom(storage, t.layout.Clone(), spark.F64, t.device), nil
+}
+
+// ToUint8 converts the tensor to uint8 type.
+func (t *Tensor[T]) ToUint8() (*Tensor[uint8], error) {
+	result, err := t.storage.ToDtype(t.layout, spark.U8)
+	if err != nil {
+		return nil, err
+	}
+	storage := result.(*cpu.CpuStorage[uint8])
+	return NewFrom(storage, t.layout.Clone(), spark.U8, t.device), nil
+}
+
+// ToUint32 converts the tensor to uint32 type.
+func (t *Tensor[T]) ToUint32() (*Tensor[uint32], error) {
+	result, err := t.storage.ToDtype(t.layout, spark.U32)
+	if err != nil {
+		return nil, err
+	}
+	storage := result.(*cpu.CpuStorage[uint32])
+	return NewFrom(storage, t.layout.Clone(), spark.U32, t.device), nil
+}
+
+// ToInt64 converts the tensor to int64 type.
+func (t *Tensor[T]) ToInt64() (*Tensor[int64], error) {
+	result, err := t.storage.ToDtype(t.layout, spark.I64)
+	if err != nil {
+		return nil, err
+	}
+	storage := result.(*cpu.CpuStorage[int64])
+	return NewFrom(storage, t.layout.Clone(), spark.I64, t.device), nil
+}
+
+// MustToFloat32 converts the tensor to float32 type, panicking on error.
+func (t *Tensor[T]) MustToFloat32() *Tensor[float32] {
+	result, err := t.ToFloat32()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustToFloat64 converts the tensor to float64 type, panicking on error.
+func (t *Tensor[T]) MustToFloat64() *Tensor[float64] {
+	result, err := t.ToFloat64()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustToUint8 converts the tensor to uint8 type, panicking on error.
+func (t *Tensor[T]) MustToUint8() *Tensor[uint8] {
+	result, err := t.ToUint8()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustToUint32 converts the tensor to uint32 type, panicking on error.
+func (t *Tensor[T]) MustToUint32() *Tensor[uint32] {
+	result, err := t.ToUint32()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MustToInt64 converts the tensor to int64 type, panicking on error.
+func (t *Tensor[T]) MustToInt64() *Tensor[int64] {
+	result, err := t.ToInt64()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Add performs element-wise addition of two tensors.
 func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T], AddBackward[T])
@@ -335,6 +430,42 @@ func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
 	return t
 }
 
+// Gt performs element-wise greater-than comparison: result[i] = (a[i] > b[i]) ? 1 : 0.
+// Returns a tensor of uint8 type.
+func (t *Tensor[T]) Gt(other *Tensor[T]) (*Tensor[uint8], error) {
+	finalShape, err := t.Shape().BroadcastShapeBinaryOp(other.Shape())
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast shapes: %v", err)
+	}
+
+	lhsLayout, err := t.layout.BroadcastAs(finalShape)
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast lhs: %v", err)
+	}
+
+	rhsLayout, err := other.layout.BroadcastAs(finalShape)
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast rhs: %v", err)
+	}
+
+	resLayout := spark.Contiguous(finalShape)
+	resStorage, err := t.storage.Gt(other.storage, lhsLayout, rhsLayout, resLayout)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFrom(resStorage, resLayout, spark.U8, t.device), nil
+}
+
+// MustGt performs greater-than comparison, panicking on error.
+func (t *Tensor[T]) MustGt(other *Tensor[T]) *Tensor[uint8] {
+	result, err := t.Gt(other)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Conv1d performs 1D convolution.
 func (t *Tensor[T]) Conv1d(kernel *Tensor[T], params *spark.Conv1DParams) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, kernel}, Conv1dForward[T](params), Conv1dBackward[T](params))
@@ -385,6 +516,82 @@ func (t *Tensor[T]) ConvTranspose2d(kernel *Tensor[T], params *spark.ConvT2DPara
 // MustConvTranspose2d performs 2D transposed convolution, panicking on error.
 func (t *Tensor[T]) MustConvTranspose2d(kernel *Tensor[T], params *spark.ConvT2DParams) *Tensor[T] {
 	result, err := t.ConvTranspose2d(kernel, params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// AvgPool2d performs 2D average pooling.
+func (t *Tensor[T]) AvgPool2d(params *spark.Pool2DParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, AvgPool2dForward[T](params), AvgPool2dBackward[T](params))
+}
+
+// MustAvgPool2d performs 2D average pooling, panicking on error.
+func (t *Tensor[T]) MustAvgPool2d(params *spark.Pool2DParams) *Tensor[T] {
+	result, err := t.AvgPool2d(params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// UpsampleNearest2d performs 2D nearest neighbor upsampling.
+func (t *Tensor[T]) UpsampleNearest2d(params *spark.UpsampleParams) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, UpsampleNearest2dForward[T](params), UpsampleNearest2dBackward[T](params))
+}
+
+// MustUpsampleNearest2d performs 2D nearest neighbor upsampling, panicking on error.
+func (t *Tensor[T]) MustUpsampleNearest2d(params *spark.UpsampleParams) *Tensor[T] {
+	result, err := t.UpsampleNearest2d(params)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Softmax performs softmax activation along the last dimension.
+func (t *Tensor[T]) Softmax() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SoftmaxForward[T], SoftmaxBackward[T])
+}
+
+// MustSoftmax performs softmax activation, panicking on error.
+func (t *Tensor[T]) MustSoftmax() *Tensor[T] {
+	result, err := t.Softmax()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Relu performs element-wise ReLU activation: relu(x) = max(0, x).
+func (t *Tensor[T]) Relu() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReluForward[T], ReluBackward[T])
+}
+
+// MustRelu performs ReLU activation, panicking on error.
+func (t *Tensor[T]) MustRelu() *Tensor[T] {
+	result, err := t.Relu()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// WhereCond performs element-wise selection based on condition.
+// result[i] = condition[i] != 0 ? trueVal[i] : falseVal[i]
+// Supports automatic differentiation for trueVal and falseVal.
+func (t *Tensor[T]) WhereCond(trueVal, falseVal *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp(
+		[]*Tensor[T]{trueVal, falseVal},
+		WhereCondForward(t),
+		WhereCondBackward(t),
+	)
+}
+
+// MustWhereCond performs conditional selection, panicking on error.
+func (t *Tensor[T]) MustWhereCond(trueVal, falseVal *Tensor[T]) *Tensor[T] {
+	result, err := t.WhereCond(trueVal, falseVal)
 	if err != nil {
 		panic(err)
 	}
