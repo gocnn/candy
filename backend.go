@@ -56,6 +56,9 @@ type BackendStorage[T D] interface {
 	// ToDtype performs type conversion to the specified target type.
 	ToDtype(layout *Layout, dtype DType) (any, error)
 
+	// MatMul performs matrix multiplication: C = A * B
+	MatMul(lhsLayout *Layout, rhs BackendStorage[T], rhsLayout *Layout, b, m, n, k int) (BackendStorage[T], error)
+
 	// Conv1d performs 1D convolution using im2col + BLAS for supported types.
 	Conv1d(layout *Layout, kernel BackendStorage[T], kernelLayout *Layout, params *Conv1DParams) (BackendStorage[T], error)
 

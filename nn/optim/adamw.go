@@ -69,112 +69,17 @@ func NewAdamW[T spark.D](vars []*tensor.Tensor[T], params AdamWParams) (*AdamW[T
 func NewAdamWWithLR[T spark.D](vars []*tensor.Tensor[T], lr float64) (*AdamW[T], error) {
 	params := DefaultAdamWParams()
 	params.LearningRate = lr
-	return NewAdamW[T](vars, params)
+	return NewAdamW(vars, params)
 }
 
-// Step performs an AdamW optimization step.
-func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
-	a.step++
-	p := a.params
-
-	// Bias correction
-	scaleM := 1.0 / (1.0 - math.Pow(p.Beta1, float64(a.step)))
-	scaleV := 1.0 / (1.0 - math.Pow(p.Beta2, float64(a.step)))
-
-	for _, av := range a.vars {
-		theta := av.varTensor
-		grad := grads.Get(theta)
-		if grad == nil {
-			continue
-		}
-
-		// Update first moment: m = beta1 * m + (1 - beta1) * grad
-		mScaled, err := av.m.MulScalar(p.Beta1)
-		if err != nil {
-			return fmt.Errorf("scale first moment: %w", err)
-		}
-		gradScaled, err := grad.MulScalar(1.0 - p.Beta1)
-		if err != nil {
-			return fmt.Errorf("scale gradient: %w", err)
-		}
-		nextM, err := mScaled.Add(gradScaled)
-		if err != nil {
-			return fmt.Errorf("update first moment: %w", err)
-		}
-
-		// Update second moment: v = beta2 * v + (1 - beta2) * grad^2
-		vScaled, err := av.v.MulScalar(p.Beta2)
-		if err != nil {
-			return fmt.Errorf("scale second moment: %w", err)
-		}
-		gradSqr, err := grad.Mul(grad)
-		if err != nil {
-			return fmt.Errorf("square gradient: %w", err)
-		}
-		gradSqrScaled, err := gradSqr.MulScalar(1.0 - p.Beta2)
-		if err != nil {
-			return fmt.Errorf("scale squared gradient: %w", err)
-		}
-		nextV, err := vScaled.Add(gradSqrScaled)
-		if err != nil {
-			return fmt.Errorf("update second moment: %w", err)
-		}
-
-		// Bias-corrected moments
-		mHat, err := nextM.MulScalar(scaleM)
-		if err != nil {
-			return fmt.Errorf("bias-correct first moment: %w", err)
-		}
-		vHat, err := nextV.MulScalar(scaleV)
-		if err != nil {
-			return fmt.Errorf("bias-correct second moment: %w", err)
-		}
-
-		// Weight decay: theta = theta * (1 - lr * lambda)
-		thetaScaled, err := theta.MulScalar(1.0 - p.LearningRate*p.WeightDecay)
-		if err != nil {
-			return fmt.Errorf("apply weight decay: %w", err)
-		}
-
-		// Compute adjusted gradient: mHat / (sqrt(vHat) + eps)
-		vHatSqrt, err := vHat.Sqrt()
-		if err != nil {
-			return fmt.Errorf("sqrt second moment: %w", err)
-		}
-		vHatSqrtEps, err := vHatSqrt.AddScalar(p.Epsilon)
-		if err != nil {
-			return fmt.Errorf("add epsilon: %w", err)
-		}
-		adjGrad, err := mHat.Div(vHatSqrtEps)
-		if err != nil {
-			return fmt.Errorf("compute adjusted gradient: %w", err)
-		}
-
-		// Update: theta = theta - lr * adjGrad
-		lrAdjGrad, err := adjGrad.MulScalar(p.LearningRate)
-		if err != nil {
-			return fmt.Errorf("scale adjusted gradient: %w", err)
-		}
-		finalTheta, err := thetaScaled.Sub(lrAdjGrad)
-		if err != nil {
-			return fmt.Errorf("update parameter: %w", err)
-		}
-
-		// Update tensors
-		av.m.SetStorage(nextM.Storage())
-		av.v.SetStorage(nextV.Storage())
-		theta.SetStorage(finalTheta.Storage())
-	}
-	return nil
+// Params returns the current AdamW parameters.
+func (a *AdamW[T]) Params() AdamWParams {
+	return a.params
 }
 
-// Optimize performs backward propagation and an AdamW step.
-func (a *AdamW[T]) Optimize(loss *tensor.Tensor[T]) error {
-	store := tensor.NewGradStore[T]()
-	if err := tensor.Backward(loss, store); err != nil {
-		return fmt.Errorf("backward propagation: %w", err)
-	}
-	return a.Step(store)
+// SetParams sets the AdamW parameters.
+func (a *AdamW[T]) SetParams(params AdamWParams) {
+	a.params = params
 }
 
 // LearningRate returns the current learning rate.
@@ -207,12 +112,118 @@ func (a *AdamW[T]) Vars() []*tensor.Tensor[T] {
 	return vars
 }
 
-// Params returns the current AdamW parameters.
-func (a *AdamW[T]) Params() AdamWParams {
-	return a.params
+// Optimize performs backward propagation and an AdamW step.
+func (a *AdamW[T]) Optimize(loss *tensor.Tensor[T]) error {
+	store := tensor.NewGradStore[T]()
+	if err := tensor.Backward(loss, store); err != nil {
+		return fmt.Errorf("backward propagation: %w", err)
+	}
+	return a.Step(store)
 }
 
-// SetParams sets the AdamW parameters.
-func (a *AdamW[T]) SetParams(params AdamWParams) {
-	a.params = params
+// Step performs an AdamW optimization step.
+func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
+	a.step++
+	p := a.params
+
+	// Bias correction
+	scaleM := 1.0 / (1.0 - math.Pow(p.Beta1, float64(a.step)))
+	scaleV := 1.0 / (1.0 - math.Pow(p.Beta2, float64(a.step)))
+
+	for _, av := range a.vars {
+		theta := av.varTensor
+		grad := grads.Get(theta)
+		if grad == nil {
+			continue
+		}
+
+		beta1Tensor := tensor.Full[T](T(p.Beta1), spark.NewShape(), theta.Device())
+		beta1CompTensor := tensor.Full[T](T(1.0-p.Beta1), spark.NewShape(), theta.Device())
+		beta2Tensor := tensor.Full[T](T(p.Beta2), spark.NewShape(), theta.Device())
+		beta2CompTensor := tensor.Full[T](T(1.0-p.Beta2), spark.NewShape(), theta.Device())
+
+		// Update first moment: m = beta1 * m + (1 - beta1) * grad
+		mScaled, err := av.m.Mul(beta1Tensor)
+		if err != nil {
+			return fmt.Errorf("scale first moment: %w", err)
+		}
+		gradScaled, err := grad.Mul(beta1CompTensor)
+		if err != nil {
+			return fmt.Errorf("scale gradient: %w", err)
+		}
+		nextM, err := mScaled.BroadcastAdd(gradScaled)
+		if err != nil {
+			return fmt.Errorf("update first moment: %w", err)
+		}
+
+		// Update second moment: v = beta2 * v + (1 - beta2) * grad^2
+		vScaled, err := av.v.Mul(beta2Tensor)
+		if err != nil {
+			return fmt.Errorf("scale second moment: %w", err)
+		}
+		gradSqr, err := grad.Mul(grad)
+		if err != nil {
+			return fmt.Errorf("square gradient: %w", err)
+		}
+		gradSqrScaled, err := gradSqr.Mul(beta2CompTensor)
+		if err != nil {
+			return fmt.Errorf("scale squared gradient: %w", err)
+		}
+		nextV, err := vScaled.BroadcastAdd(gradSqrScaled)
+		if err != nil {
+			return fmt.Errorf("update second moment: %w", err)
+		}
+
+		// Bias-corrected moments
+		scaleMTensor := tensor.Full[T](T(scaleM), spark.NewShape(), theta.Device())
+		scaleVTensor := tensor.Full[T](T(scaleV), spark.NewShape(), theta.Device())
+
+		mHat, err := nextM.Mul(scaleMTensor)
+		if err != nil {
+			return fmt.Errorf("bias-correct first moment: %w", err)
+		}
+		vHat, err := nextV.Mul(scaleVTensor)
+		if err != nil {
+			return fmt.Errorf("bias-correct second moment: %w", err)
+		}
+
+		// Weight decay: theta = theta * (1 - lr * lambda)
+		decayFactor := tensor.Full[T](T(1.0-p.LearningRate*p.WeightDecay), spark.NewShape(), theta.Device())
+		thetaScaled, err := theta.Mul(decayFactor)
+		if err != nil {
+			return fmt.Errorf("apply weight decay: %w", err)
+		}
+
+		// Compute adjusted gradient: mHat / (sqrt(vHat) + eps)
+		vHatSqrt, err := vHat.Sqrt()
+		if err != nil {
+			return fmt.Errorf("sqrt second moment: %w", err)
+		}
+		epsTensor := tensor.Full[T](T(p.Epsilon), spark.NewShape(), theta.Device())
+		vHatSqrtEps, err := vHatSqrt.BroadcastAdd(epsTensor)
+		if err != nil {
+			return fmt.Errorf("add epsilon: %w", err)
+		}
+		adjGrad, err := mHat.Div(vHatSqrtEps)
+		if err != nil {
+			return fmt.Errorf("compute adjusted gradient: %w", err)
+		}
+
+		// Update: theta = theta - lr * adjGrad
+		lrTensor := tensor.Full[T](T(p.LearningRate), spark.NewShape(), theta.Device())
+		lrAdjGrad, err := adjGrad.Mul(lrTensor)
+		if err != nil {
+			return fmt.Errorf("scale adjusted gradient: %w", err)
+		}
+		finalTheta, err := thetaScaled.Sub(lrAdjGrad)
+		if err != nil {
+			return fmt.Errorf("update parameter: %w", err)
+		}
+
+		// Update tensors
+		av.m.SetStorage(nextM.Storage())
+		av.v.SetStorage(nextV.Storage())
+		theta.SetStorage(finalTheta.Storage())
+	}
+	return nil
 }

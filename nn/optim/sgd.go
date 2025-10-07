@@ -27,38 +27,6 @@ func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) *SGD[T] {
 	return &SGD[T]{vars: filtered, lr: lr}
 }
 
-// Step performs an SGD optimization step.
-func (s *SGD[T]) Step(grads *tensor.GradStore[T]) error {
-	for _, v := range s.vars {
-		grad := grads.Get(v)
-		if grad == nil {
-			continue
-		}
-
-		scaled, err := grad.MulScalar(s.lr)
-		if err != nil {
-			return fmt.Errorf("scale gradient: %w", err)
-		}
-
-		updated, err := v.Sub(scaled)
-		if err != nil {
-			return fmt.Errorf("update variable: %w", err)
-		}
-
-		v.SetStorage(updated.Storage())
-	}
-	return nil
-}
-
-// Optimize performs backward propagation and an SGD step.
-func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
-	store := tensor.NewGradStore[T]()
-	if err := tensor.Backward(loss, store); err != nil {
-		return fmt.Errorf("backward propagation: %w", err)
-	}
-	return s.Step(store)
-}
-
 // LearningRate returns the current learning rate.
 func (s *SGD[T]) LearningRate() float64 {
 	return s.lr
@@ -81,4 +49,37 @@ func (s *SGD[T]) Add(v *tensor.Tensor[T]) error {
 // Vars returns all variables being optimized.
 func (s *SGD[T]) Vars() []*tensor.Tensor[T] {
 	return s.vars
+}
+
+// Optimize performs backward propagation and an SGD step.
+func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
+	store := tensor.NewGradStore[T]()
+	if err := tensor.Backward(loss, store); err != nil {
+		return fmt.Errorf("backward propagation: %w", err)
+	}
+	return s.Step(store)
+}
+
+// Step performs an SGD optimization step.
+func (s *SGD[T]) Step(grads *tensor.GradStore[T]) error {
+	for _, v := range s.vars {
+		grad := grads.Get(v)
+		if grad == nil {
+			continue
+		}
+
+		lrTensor := tensor.Full[T](T(s.lr), spark.NewShape(), v.Device())
+		scaled, err := grad.Mul(lrTensor)
+		if err != nil {
+			return fmt.Errorf("scale gradient: %w", err)
+		}
+
+		updated, err := v.Sub(scaled)
+		if err != nil {
+			return fmt.Errorf("update variable: %w", err)
+		}
+
+		v.SetStorage(updated.Storage())
+	}
+	return nil
 }

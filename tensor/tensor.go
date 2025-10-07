@@ -127,7 +127,7 @@ func RandN[T spark.D](mean, std float64, shape *spark.Shape, device spark.Device
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
-func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
+func Full[T spark.D](value T, shape *spark.Shape, device spark.Device) *Tensor[T] {
 	var storage spark.BackendStorage[T]
 	var err error
 
@@ -156,7 +156,7 @@ func (t *Tensor[T]) OnesLike() *Tensor[T] {
 }
 
 // FullLike creates a new tensor with the same shape as the input tensor, filled with the specified value.
-func (t *Tensor[T]) FullLike(value float64) *Tensor[T] {
+func (t *Tensor[T]) FullLike(value T) *Tensor[T] {
 	return Full[T](value, t.layout.Shape(), t.device)
 }
 
@@ -374,6 +374,20 @@ func (t *Tensor[T]) MustToInt64() *Tensor[int64] {
 	return result
 }
 
+// Affine performs affine transformation: y = scale * x + bias
+func (t *Tensor[T]) Affine(scale, bias float64) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, AffineForward[T](scale, bias), AffineBackward[T](scale, bias))
+}
+
+// MustAffine performs affine transformation, panicking on error.
+func (t *Tensor[T]) MustAffine(scale, bias float64) *Tensor[T] {
+	result, err := t.Affine(scale, bias)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Add performs element-wise addition of two tensors.
 func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T], AddBackward[T])
@@ -430,36 +444,104 @@ func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
 	return t
 }
 
-// Gt performs element-wise greater-than comparison: result[i] = (a[i] > b[i]) ? 1 : 0.
-// Returns a tensor of uint8 type.
-func (t *Tensor[T]) Gt(other *Tensor[T]) (*Tensor[uint8], error) {
-	finalShape, err := t.Shape().BroadcastShapeBinaryOp(other.Shape())
-	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast shapes: %v", err)
-	}
-
-	lhsLayout, err := t.layout.BroadcastAs(finalShape)
-	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast lhs: %v", err)
-	}
-
-	rhsLayout, err := other.layout.BroadcastAs(finalShape)
-	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast rhs: %v", err)
-	}
-
-	resLayout := spark.Contiguous(finalShape)
-	resStorage, err := t.storage.Gt(other.storage, lhsLayout, rhsLayout, resLayout)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewFrom(resStorage, resLayout, spark.U8, t.device), nil
+// Eq compares two tensors element-wise for equality: result = (a == b)
+// Returns a uint8 tensor with 1 for equal elements and 0 for unequal elements.
+func (a *Tensor[T]) Eq(b *Tensor[T]) (*Tensor[uint8], error) {
+	return EqForward([]*Tensor[T]{a, b})
 }
 
-// MustGt performs greater-than comparison, panicking on error.
-func (t *Tensor[T]) MustGt(other *Tensor[T]) *Tensor[uint8] {
-	result, err := t.Gt(other)
+// MustEq compares two tensors for equality, panicking on error.
+func (a *Tensor[T]) MustEq(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Eq(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Ne compares two tensors element-wise for inequality: result = (a != b)
+// Returns a uint8 tensor with 1 for unequal elements and 0 for equal elements.
+func (a *Tensor[T]) Ne(b *Tensor[T]) (*Tensor[uint8], error) {
+	return NeForward([]*Tensor[T]{a, b})
+}
+
+// MustNe compares two tensors for inequality, panicking on error.
+func (a *Tensor[T]) MustNe(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Ne(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Lt compares two tensors element-wise: result = (a < b)
+// Returns a uint8 tensor with 1 where a < b and 0 otherwise.
+func (a *Tensor[T]) Lt(b *Tensor[T]) (*Tensor[uint8], error) {
+	return LtForward([]*Tensor[T]{a, b})
+}
+
+// MustLt compares two tensors, panicking on error.
+func (a *Tensor[T]) MustLt(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Lt(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Le compares two tensors element-wise: result = (a <= b)
+// Returns a uint8 tensor with 1 where a <= b and 0 otherwise.
+func (a *Tensor[T]) Le(b *Tensor[T]) (*Tensor[uint8], error) {
+	return LeForward([]*Tensor[T]{a, b})
+}
+
+// MustLe compares two tensors, panicking on error.
+func (a *Tensor[T]) MustLe(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Le(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Gt compares two tensors element-wise: result = (a > b)
+// Returns a uint8 tensor with 1 where a > b and 0 otherwise.
+func (a *Tensor[T]) Gt(b *Tensor[T]) (*Tensor[uint8], error) {
+	return GtForward([]*Tensor[T]{a, b})
+}
+
+// MustGt compares two tensors, panicking on error.
+func (a *Tensor[T]) MustGt(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Gt(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Ge compares two tensors element-wise: result = (a >= b)
+// Returns a uint8 tensor with 1 where a >= b and 0 otherwise.
+func (a *Tensor[T]) Ge(b *Tensor[T]) (*Tensor[uint8], error) {
+	return GeForward([]*Tensor[T]{a, b})
+}
+
+// MustGe compares two tensors, panicking on error.
+func (a *Tensor[T]) MustGe(b *Tensor[T]) *Tensor[uint8] {
+	result, err := a.Ge(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MatMul performs matrix multiplication: C = A × B
+func (t *Tensor[T]) MatMul(rhs *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, rhs}, MatMulForward[T](), MatMulBackward[T]())
+}
+
+// MustMatMul performs matrix multiplication, panicking on error
+func (t *Tensor[T]) MustMatMul(rhs *Tensor[T]) *Tensor[T] {
+	result, err := t.MatMul(rhs)
 	if err != nil {
 		panic(err)
 	}
@@ -598,6 +680,62 @@ func (t *Tensor[T]) MustWhereCond(trueVal, falseVal *Tensor[T]) *Tensor[T] {
 	return result
 }
 
+// Neg computes the negation of each element: neg(x) = -x
+func (t *Tensor[T]) Neg() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, NegForward[T], NegBackward[T])
+}
+
+// MustNeg computes the negation of each element, panicking on error.
+func (t *Tensor[T]) MustNeg() *Tensor[T] {
+	result, err := t.Neg()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Log computes the natural logarithm of each element: log(x) = ln(x)
+func (t *Tensor[T]) Log() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, LogForward[T], LogBackward[T])
+}
+
+// MustLog computes the natural logarithm of each element, panicking on error.
+func (t *Tensor[T]) MustLog() *Tensor[T] {
+	result, err := t.Log()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Abs computes the absolute value of each element: abs(x) = |x|
+func (t *Tensor[T]) Abs() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, AbsForward[T], AbsBackward[T])
+}
+
+// MustAbs computes the absolute value of each element, panicking on error.
+func (t *Tensor[T]) MustAbs() *Tensor[T] {
+	result, err := t.Abs()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Sqr computes the square of each element: sqr(x) = x²
+func (t *Tensor[T]) Sqr() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SqrForward[T], SqrBackward[T])
+}
+
+// MustSqr computes the square of each element, panicking on error.
+func (t *Tensor[T]) MustSqr() *Tensor[T] {
+	result, err := t.Sqr()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Sqrt computes the square root of each element.
 func (t *Tensor[T]) Sqrt() (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, SqrtForward[T], SqrtBackward[T])
@@ -612,20 +750,110 @@ func (t *Tensor[T]) MustSqrt() *Tensor[T] {
 	return t
 }
 
+// Sigmoid computes the sigmoid activation: sigmoid(x) = 1/(1+e^(-x))
+func (t *Tensor[T]) Sigmoid() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SigmoidForward[T], SigmoidBackward[T])
+}
+
+// MustSigmoid computes the sigmoid activation, panicking on error.
+func (t *Tensor[T]) MustSigmoid() *Tensor[T] {
+	result, err := t.Sigmoid()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Sign computes the sign of each element: sign(x) = {1 if x>0, 0 if x=0, -1 if x<0}
+func (t *Tensor[T]) Sign() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SignForward[T], SignBackward[T])
+}
+
+// MustSign computes the sign of each element, panicking on error.
+func (t *Tensor[T]) MustSign() *Tensor[T] {
+	result, err := t.Sign()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Sum computes the sum along the specified dimensions.
 // The dimensions to sum over are specified in dims.
-// The result tensor will have the summed dimensions reduced to size 1.
-func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SumForward[T](dims), SumBackward[T](dims))
+// If keepdim is true, the summed dimensions are retained with size 1.
+// If keepdim is false, the summed dimensions are removed.
+func (t *Tensor[T]) Sum(dims []int, keepdim bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SumForward[T](dims, keepdim), SumBackward[T](dims, keepdim))
 }
 
 // MustSum computes the sum along the specified dimensions, panicking on error.
-func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
-	t, err := t.Sum(dims)
+func (t *Tensor[T]) MustSum(dims []int, keepdim bool) *Tensor[T] {
+	t, err := t.Sum(dims, keepdim)
 	if err != nil {
 		panic(err)
 	}
 	return t
+}
+
+// SumKeepDim computes the sum along the specified dimensions, keeping the dimensions with size 1.
+func (t *Tensor[T]) SumKeepDim(dims []int) (*Tensor[T], error) {
+	return t.Sum(dims, true)
+}
+
+// MustSumKeepDim computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSumKeepDim(dims []int) *Tensor[T] {
+	t, err := t.SumKeepDim(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// SumAll computes the sum of all elements in the tensor.
+func (t *Tensor[T]) SumAll() (*Tensor[T], error) {
+	dims := make([]int, t.Rank())
+	for i := range dims {
+		dims[i] = i
+	}
+	return t.Sum(dims, false)
+}
+
+// MustSumAll computes the sum of all elements in the tensor, panicking on error.
+func (t *Tensor[T]) MustSumAll() *Tensor[T] {
+	t, err := t.SumAll()
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MeanAll computes the mean of all elements in the tensor.
+func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
+	// Sum all elements
+	sum, err := t.SumAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum all elements: %w", err)
+	}
+
+	// Divide by element count
+	elemCount := T(t.Shape().ElemCount())
+	divisor := Full[T](elemCount, sum.Shape(), sum.Device())
+
+	mean, err := sum.Div(divisor)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
+
+	return mean, nil
+}
+
+// MustMeanAll computes the mean of all elements in the tensor, panicking on error.
+func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
+	result, err := t.MeanAll()
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
@@ -640,18 +868,6 @@ func (a *Tensor[T]) MustBroadcastAdd(b *Tensor[T]) *Tensor[T] {
 		panic(err)
 	}
 	return t
-}
-
-// AddScalar adds a scalar value to the tensor.
-func (t *Tensor[T]) AddScalar(scalar float64) (*Tensor[T], error) {
-	// TODO: Implement scalar addition
-	return nil, nil
-}
-
-// MulScalar multiplies the tensor by a scalar value.
-func (t *Tensor[T]) MulScalar(scalar float64) (*Tensor[T], error) {
-	// TODO: Implement scalar multiplication
-	return nil, nil
 }
 
 // Transpose returns a tensor that is a transposed version of the input.
@@ -719,6 +935,28 @@ func (t *Tensor[T]) MustExpand(shape *spark.Shape) *Tensor[T] {
 	return t
 }
 
+// BroadcastLeft broadcasts the tensor by adding new dimensions on the left.
+// For example, if tensor has shape [3, 4] and leftDims is [2, 5],
+// the result will have shape [2, 5, 3, 4].
+func (t *Tensor[T]) BroadcastLeft(leftDims ...int) (*Tensor[T], error) {
+	currentDims := t.Dims()
+	newDims := make([]int, 0, len(leftDims)+len(currentDims))
+	newDims = append(newDims, leftDims...)
+	newDims = append(newDims, currentDims...)
+
+	targetShape := spark.NewShapeFrom(newDims)
+	return t.BroadcastAs(targetShape)
+}
+
+// MustBroadcastLeft broadcasts the tensor by adding new dimensions on the left, panicking on error.
+func (t *Tensor[T]) MustBroadcastLeft(leftDims ...int) *Tensor[T] {
+	result, err := t.BroadcastLeft(leftDims...)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Squeeze removes the specified dimension if its size is 1, returning a new tensor view.
 // If the dimension size is not 1, returns a shallow copy of the tensor.
 // Negative indices are supported (e.g., -1 for the last dimension).
@@ -753,6 +991,144 @@ func (t *Tensor[T]) MustUnsqueeze(dim int) *Tensor[T] {
 		panic(err)
 	}
 	return t
+}
+
+func (t *Tensor[T]) SqueezeDims(dims []int) (*Tensor[T], error) {
+	if len(dims) == 0 {
+		return t, nil
+	}
+
+	if len(dims) == 1 {
+		return t.Squeeze(dims[0])
+	}
+
+	dimSet := make(map[int]bool)
+	for _, dim := range dims {
+		resolved, err := spark.ResolveAxis(dim, t.Rank())
+		if err != nil {
+			return nil, err
+		}
+		dimSet[resolved] = true
+	}
+
+	currentDims := t.Dims()
+	var newDims []int
+	for i, size := range currentDims {
+		if !dimSet[i] {
+			newDims = append(newDims, size)
+		}
+	}
+
+	return t.Reshape(newDims...)
+}
+
+// Reshape changes the tensor's shape while preserving the total number of elements.
+func (t *Tensor[T]) Reshape(dims ...int) (*Tensor[T], error) {
+	newShape := spark.NewShapeFrom(dims)
+	return ApplyOp([]*Tensor[T]{t}, ReshapeForward[T](newShape), ReshapeBackward[T](t.layout.Shape()))
+}
+
+// MustReshape changes the tensor's shape, panicking on error.
+func (t *Tensor[T]) MustReshape(dims ...int) *Tensor[T] {
+	result, err := t.Reshape(dims...)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FlattenAll flattens the tensor into a one-dimensional tensor.
+func (t *Tensor[T]) FlattenAll() (*Tensor[T], error) {
+	totalElements := t.layout.Shape().ElemCount()
+	return t.Reshape(totalElements)
+}
+
+// MustFlattenAll flattens the tensor into 1D, panicking on error.
+func (t *Tensor[T]) MustFlattenAll() *Tensor[T] {
+	result, err := t.FlattenAll()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Flatten flattens dimensions from startDim to endDim (inclusive).
+func (t *Tensor[T]) Flatten(startDim, endDim int) (*Tensor[T], error) {
+	shape := t.layout.Shape()
+	rank := shape.Rank()
+
+	resolvedStartDim, err := spark.ResolveAxis(startDim, rank)
+	if err != nil {
+		return nil, fmt.Errorf("flatten start_dim: %w", err)
+	}
+	resolvedEndDim, err := spark.ResolveAxis(endDim, rank)
+	if err != nil {
+		return nil, fmt.Errorf("flatten end_dim: %w", err)
+	}
+
+	if resolvedStartDim > resolvedEndDim {
+		return nil, fmt.Errorf("flatten: start_dim %d must be <= end_dim %d", startDim, endDim)
+	}
+	if resolvedStartDim == resolvedEndDim {
+		return NewFrom(t.storage, t.layout.Clone(), t.dtype, t.device), nil
+	}
+
+	dims := shape.Dims()
+	var newDims []int
+
+	// Add dimensions before startDim
+	newDims = append(newDims, dims[:resolvedStartDim]...)
+
+	// Calculate flattened dimension size
+	flattenedSize := 1
+	for i := resolvedStartDim; i <= resolvedEndDim; i++ {
+		flattenedSize *= dims[i]
+	}
+	newDims = append(newDims, flattenedSize)
+
+	// Add dimensions after endDim
+	if resolvedEndDim+1 < len(dims) {
+		newDims = append(newDims, dims[resolvedEndDim+1:]...)
+	}
+
+	return t.Reshape(newDims...)
+}
+
+// MustFlatten flattens dimensions, panicking on error.
+func (t *Tensor[T]) MustFlatten(startDim, endDim int) *Tensor[T] {
+	result, err := t.Flatten(startDim, endDim)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FlattenFrom flattens from startDim to the last dimension.
+func (t *Tensor[T]) FlattenFrom(startDim int) (*Tensor[T], error) {
+	return t.Flatten(startDim, t.layout.Shape().Rank()-1)
+}
+
+// MustFlattenFrom flattens from startDim, panicking on error.
+func (t *Tensor[T]) MustFlattenFrom(startDim int) *Tensor[T] {
+	result, err := t.FlattenFrom(startDim)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FlattenTo flattens from dimension 0 to endDim.
+func (t *Tensor[T]) FlattenTo(endDim int) (*Tensor[T], error) {
+	return t.Flatten(0, endDim)
+}
+
+// MustFlattenTo flattens to endDim, panicking on error.
+func (t *Tensor[T]) MustFlattenTo(endDim int) *Tensor[T] {
+	result, err := t.FlattenTo(endDim)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.

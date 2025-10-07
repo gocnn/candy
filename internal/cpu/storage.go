@@ -652,6 +652,99 @@ func (s *CpuStorage[T]) CastFromI64(numel int, layout *spark.Layout, dtype spark
 	return nil, errors.New("unsupported target type: " + dtype.String())
 }
 
+// MatMul performs matrix multiplication: C = A * B
+func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage[T], rhsLayout *spark.Layout, b, m, n, k int) (spark.BackendStorage[T], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+
+	if lhsLayout == nil || rhsLayout == nil {
+		return nil, errors.New("layouts cannot be nil")
+	}
+
+	if m <= 0 || n <= 0 || k <= 0 {
+		return nil, errors.New("invalid matrix dimensions")
+	}
+
+	result := New(make([]T, b*m*n))
+
+	switch any(s.data).(type) {
+	case []float32:
+		lhsData := any(s.data).([]float32)
+		rhsData := any(rhsC.data).([]float32)
+		resultData := any(result.data).([]float32)
+
+		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
+			kernels.NaiveBatchedMatMulF32(b, m, n, k, lhsData, rhsData, resultData)
+		} else {
+			lhsStrides := []int{m * k, k, 1} // [batch, row, col]
+			rhsStrides := []int{k * n, n, 1}
+			cStrides := []int{m * n, n, 1}
+			kernels.NaiveBatchedMatMulStridedF32(
+				b,
+				m,
+				n,
+				k,
+				lhsData,
+				rhsData,
+				resultData,
+				lhsStrides,
+				rhsStrides,
+				cStrides,
+			)
+		}
+	case []float64:
+		lhsData := any(s.data).([]float64)
+		rhsData := any(rhsC.data).([]float64)
+		resultData := any(result.data).([]float64)
+
+		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
+			kernels.NaiveBatchedMatMulF64(b, m, n, k, lhsData, rhsData, resultData)
+		} else {
+			lhsStrides := []int{m * k, k, 1}
+			rhsStrides := []int{k * n, n, 1}
+			cStrides := []int{m * n, n, 1}
+			kernels.NaiveBatchedMatMulStridedF64(
+				b,
+				m,
+				n,
+				k,
+				lhsData,
+				rhsData,
+				resultData,
+				lhsStrides,
+				rhsStrides,
+				cStrides,
+			)
+		}
+	case []uint8, []uint32, []int64:
+		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
+			kernels.NaiveBatchedMatMul(b, m, n, k, s.data, rhsC.data, result.data)
+		} else {
+			lhsStrides := []int{m * k, k, 1}
+			rhsStrides := []int{k * n, n, 1}
+			cStrides := []int{m * n, n, 1}
+			kernels.NaiveBatchedMatMulStrided(
+				b,
+				m,
+				n,
+				k,
+				s.data,
+				rhsC.data,
+				result.data,
+				lhsStrides,
+				rhsStrides,
+				cStrides,
+			)
+		}
+	default:
+		return nil, errors.New("unsupported type for matmul")
+	}
+
+	return result, nil
+}
+
 // Conv1d performs 1D convolution using im2col + BLAS for supported types.
 func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.Conv1DParams) (spark.BackendStorage[T], error) {
 	kernelC, ok := kernel.(*CpuStorage[T])

@@ -1,11 +1,11 @@
 package loss
 
-// import (
-// 	"fmt"
+import (
+	"fmt"
 
-// 	"github.com/gocnn/spark"
-// 	"github.com/gocnn/spark/tensor"
-// )
+	"github.com/gocnn/spark"
+	"github.com/gocnn/spark/tensor"
+)
 
 // // NLL computes the negative log likelihood loss.
 // //
@@ -85,135 +85,135 @@ package loss
 // 	return NLL(logSoftmax, target)
 // }
 
-// // MSE computes the mean squared error loss.
-// //
-// // Arguments:
-// // - inp: Input tensor
-// // - target: Target tensor (same shape as input)
-// //
-// // Returns a scalar tensor containing the mean squared error.
-// func MSE[T spark.D](inp, target *spark.Tensor[T]) (*spark.Tensor[T], error) {
-// 	// Compute (inp - target)
-// 	diff, err := inp.Sub(target)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute difference: %w", err)
-// 	}
+// MSE computes the mean squared error loss.
+//
+// Arguments:
+// - inp: Input tensor
+// - target: Target tensor (same shape as input)
+//
+// Returns a scalar tensor containing the mean squared error.
+func MSE[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	// Compute (inp - target)
+	diff, err := inp.Sub(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute difference: %w", err)
+	}
 
-// 	// Square the difference
-// 	squared, err := diff.Sqr()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to square: %w", err)
-// 	}
+	// Square the difference
+	squared, err := diff.Sqr()
+	if err != nil {
+		return nil, fmt.Errorf("failed to square: %w", err)
+	}
 
-// 	// Compute mean over all elements
-// 	mean, err := squared.MeanAll()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute mean: %w", err)
-// 	}
+	// Compute mean over all elements
+	mean, err := squared.MeanAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
 
-// 	return mean, nil
-// }
+	return mean, nil
+}
 
-// // BinaryCrossEntropyWithLogits computes the binary cross-entropy loss with logits.
-// //
-// // Arguments:
-// //   - inp: Input tensor of dimensions [N, C] where N is batch size and C is number of categories.
-// //     Expected to contain raw logits.
-// //   - target: Ground truth labels as tensor of dimension [N, C] where N is batch size and C is number of categories.
-// //
-// // Returns a scalar tensor containing the average value over the batch.
-// func BinaryCrossEntropyWithLogits[T spark.D](inp, target *spark.Tensor[T]) (*spark.Tensor[T], error) {
-// 	// Apply sigmoid to input
-// 	sigmoid, err := inp.Sigmoid()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
-// 	}
+// BinaryCrossEntropyWithLogits computes the binary cross-entropy loss with logits.
+//
+// Arguments:
+//   - inp: Input tensor of dimensions [N, C] where N is batch size and C is number of categories.
+//     Expected to contain raw logits.
+//   - target: Ground truth labels as tensor of dimension [N, C] where N is batch size and C is number of categories.
+//
+// Returns a scalar tensor containing the average value over the batch.
+func BinaryCrossEntropyWithLogits[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	// Apply sigmoid to input
+	sigmoid, err := inp.Sigmoid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
+	}
 
-// 	// Compute log of sigmoid
-// 	sigmoidLog, err := sigmoid.Log()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute log of sigmoid: %w", err)
-// 	}
+	// Compute log of sigmoid
+	sigmoidLog, err := sigmoid.Log()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute log of sigmoid: %w", err)
+	}
 
-// 	// Left side: target * log(sigmoid(inp))
-// 	leftSide, err := target.Mul(sigmoidLog)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute left side: %w", err)
-// 	}
+	// Left side: target * log(sigmoid(inp))
+	leftSide, err := target.Mul(sigmoidLog)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute left side: %w", err)
+	}
 
-// 	// Compute (1 - target)
-// 	oneMinusTarget, err := target.Affine(-1.0, 1.0)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute (1 - target): %w", err)
-// 	}
+	// Compute (1 - target)
+	oneMinusTarget, err := target.Affine(-1.0, 1.0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute (1 - target): %w", err)
+	}
 
-// 	// Compute (1 - sigmoid(inp))
-// 	oneMinusSigmoid, err := sigmoid.Affine(-1.0, 1.0)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute (1 - sigmoid): %w", err)
-// 	}
+	// Compute (1 - sigmoid(inp))
+	oneMinusSigmoid, err := sigmoid.Affine(-1.0, 1.0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute (1 - sigmoid): %w", err)
+	}
 
-// 	// Compute log(1 - sigmoid(inp))
-// 	oneMinusSigmoidLog, err := oneMinusSigmoid.Log()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute log(1 - sigmoid): %w", err)
-// 	}
+	// Compute log(1 - sigmoid(inp))
+	oneMinusSigmoidLog, err := oneMinusSigmoid.Log()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute log(1 - sigmoid): %w", err)
+	}
 
-// 	// Right side: (1 - target) * log(1 - sigmoid(inp))
-// 	rightSide, err := oneMinusTarget.Mul(oneMinusSigmoidLog)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute right side: %w", err)
-// 	}
+	// Right side: (1 - target) * log(1 - sigmoid(inp))
+	rightSide, err := oneMinusTarget.Mul(oneMinusSigmoidLog)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute right side: %w", err)
+	}
 
-// 	// Combine: left_side + right_side
-// 	combined, err := leftSide.Add(rightSide)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to combine sides: %w", err)
-// 	}
+	// Combine: left_side + right_side
+	combined, err := leftSide.Add(rightSide)
+	if err != nil {
+		return nil, fmt.Errorf("failed to combine sides: %w", err)
+	}
 
-// 	// Negate the result
-// 	negated, err := combined.Neg()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to negate: %w", err)
-// 	}
+	// Negate the result
+	negated, err := combined.Neg()
+	if err != nil {
+		return nil, fmt.Errorf("failed to negate: %w", err)
+	}
 
-// 	// Compute mean over all elements
-// 	loss, err := negated.MeanAll()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute mean: %w", err)
-// 	}
+	// Compute mean over all elements
+	loss, err := negated.MeanAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
 
-// 	return loss, nil
-// }
+	return loss, nil
+}
 
-// // L1Loss computes the L1 (Mean Absolute Error) loss.
-// //
-// // Arguments:
-// // - inp: Input tensor
-// // - target: Target tensor (same shape as input)
-// //
-// // Returns a scalar tensor containing the mean absolute error.
-// func L1Loss[T spark.D](inp, target *spark.Tensor[T]) (*spark.Tensor[T], error) {
-// 	// Compute (inp - target)
-// 	diff, err := inp.Sub(target)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute difference: %w", err)
-// 	}
+// L1Loss computes the L1 (Mean Absolute Error) loss.
+//
+// Arguments:
+// - inp: Input tensor
+// - target: Target tensor (same shape as input)
+//
+// Returns a scalar tensor containing the mean absolute error.
+func L1Loss[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	// Compute (inp - target)
+	diff, err := inp.Sub(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute difference: %w", err)
+	}
 
-// 	// Take absolute value
-// 	abs, err := diff.Abs()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute absolute value: %w", err)
-// 	}
+	// Take absolute value
+	abs, err := diff.Abs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute absolute value: %w", err)
+	}
 
-// 	// Compute mean over all elements
-// 	mean, err := abs.MeanAll()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute mean: %w", err)
-// 	}
+	// Compute mean over all elements
+	mean, err := abs.MeanAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
 
-// 	return mean, nil
-// }
+	return mean, nil
+}
 
 // // SmoothL1Loss computes the Smooth L1 loss (Huber loss).
 // //
@@ -223,7 +223,7 @@ package loss
 // // - beta: Threshold for switching between L1 and L2 loss (default: 1.0)
 // //
 // // Returns a scalar tensor containing the smooth L1 loss.
-// func SmoothL1Loss[T spark.D](inp, target *spark.Tensor[T], beta float64) (*spark.Tensor[T], error) {
+// func SmoothL1Loss[T spark.D](inp, target *tensor.Tensor[T], beta float64) (*tensor.Tensor[T], error) {
 // 	if beta <= 0 {
 // 		beta = 1.0
 // 	}
@@ -240,10 +240,7 @@ package loss
 // 	}
 
 // 	// Create condition: |diff| < beta
-// 	betaTensor, err := absDiff.ZerosLike()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to create beta tensor: %w", err)
-// 	}
+// 	betaTensor := absDiff.ZerosLike()
 // 	betaTensor, err = betaTensor.AddScalar(beta)
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to add beta: %w", err)
@@ -271,7 +268,7 @@ package loss
 // 	}
 
 // 	// Select between L2 and L1 based on condition
-// 	result, err := condition.Where(l2Part, l1Part)
+// 	result, err := condition.WhereCond(l2Part, l1Part)
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to select loss: %w", err)
 // 	}

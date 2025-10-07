@@ -75,7 +75,7 @@ type BackendDevice[T D] interface {
 	Ones(*Shape, DType) (BackendStorage[T], error)
 
 	// Full creates a storage filled with a specific value.
-	Full(*Shape, DType, float64) (BackendStorage[T], error)
+	Full(*Shape, DType, T) (BackendStorage[T], error)
 
 	// Synchronize blocks until all operations on the device are complete.
 	Synchronize() error
