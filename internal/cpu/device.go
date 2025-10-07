@@ -162,72 +162,18 @@ func (c *CpuDevice[T]) Zeros(shape *spark.Shape, dtype spark.DType) (spark.Backe
 
 // Ones creates a storage filled with ones.
 func (c *CpuDevice[T]) Ones(shape *spark.Shape, dtype spark.DType) (spark.BackendStorage[T], error) {
-	storage := New(make([]T, shape.ElemCount()))
-	data := storage.data
-	switch dtype {
-	case spark.F32:
-		for i := range data {
-			data[i] = any(float32(1.0)).(T)
-		}
-	case spark.F64:
-		for i := range data {
-			data[i] = any(1.0).(T)
-		}
-	case spark.U8:
-		for i := range data {
-			data[i] = any(uint8(1)).(T)
-		}
-	case spark.U32:
-		for i := range data {
-			data[i] = any(uint32(1)).(T)
-		}
-	case spark.I64:
-		for i := range data {
-			data[i] = any(int64(1)).(T)
-		}
-	default:
-		return nil, errors.New("unsupported dtype")
-	}
-	return storage, nil
+	return c.Full(shape, dtype, T(1))
 }
 
 // Full creates a storage filled with a specific value.
-func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value float64) (spark.BackendStorage[T], error) {
+func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value T) (spark.BackendStorage[T], error) {
 	storage := New(make([]T, shape.ElemCount()))
 	data := storage.data
-	switch dtype {
-	case spark.F32:
-		for i := range data {
-			data[i] = any(float32(value)).(T)
-		}
-	case spark.F64:
-		for i := range data {
-			data[i] = any(value).(T)
-		}
-	case spark.U8:
-		if value < 0 || value > math.MaxUint8 || value != math.Floor(value) {
-			return nil, errors.New("invalid value for uint8")
-		}
-		for i := range data {
-			data[i] = any(uint8(value)).(T)
-		}
-	case spark.U32:
-		if value < 0 || value > math.MaxUint32 || value != math.Floor(value) {
-			return nil, errors.New("invalid value for uint32")
-		}
-		for i := range data {
-			data[i] = any(uint32(value)).(T)
-		}
-	case spark.I64:
-		if value < math.MinInt64 || value > math.MaxInt64 || value != math.Floor(value) {
-			return nil, errors.New("invalid value for int64")
-		}
-		for i := range data {
-			data[i] = any(int64(value)).(T)
-		}
-	default:
-		return nil, errors.New("unsupported dtype")
+
+	for i := range data {
+		data[i] = value
 	}
+
 	return storage, nil
 }
 

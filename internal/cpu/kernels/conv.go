@@ -8,6 +8,448 @@ import (
 	"github.com/gocnn/gomat/blas/blas64"
 )
 
+// MatMulF32 performs simple matrix multiplication for float32: C = A*B
+func MatMulF32(m, n, k int, a, b, c []float32) {
+	blas32.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0, a, k, b, n, 0.0, c, n)
+}
+
+// MatMulF64 performs simple matrix multiplication for float64: C = A*B
+func MatMulF64(m, n, k int, a, b, c []float64) {
+	blas64.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0, a, k, b, n, 0.0, c, n)
+}
+
+// NaiveMatMul performs matrix multiplication for any numeric type using direct loops
+func NaiveMatMul[T D](m, n, k int, a, b, c []T) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum T
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulF32 performs matrix multiplication for float32 using direct loops
+func NaiveMatMulF32(m, n, k int, a, b, c []float32) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum float32
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulF64 performs matrix multiplication for float64 using direct loops
+func NaiveMatMulF64(m, n, k int, a, b, c []float64) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum float64
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulU8 performs matrix multiplication for uint8 using direct loops
+func NaiveMatMulU8(m, n, k int, a, b, c []uint8) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum uint8
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulU32 performs matrix multiplication for uint32 using direct loops
+func NaiveMatMulU32(m, n, k int, a, b, c []uint32) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum uint32
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulI64 performs matrix multiplication for int64 using direct loops
+func NaiveMatMulI64(m, n, k int, a, b, c []int64) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum int64
+			for l := range k {
+				sum += a[i*k+l] * b[l*n+j]
+			}
+			c[i*n+j] = sum
+		}
+	}
+}
+
+// NaiveMatMulStrided performs matrix multiplication for any numeric type using direct loops with support for non-contiguous memory
+func NaiveMatMulStrided[T D](m, n, k int, a, b, c []T, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum T
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveMatMulStridedF32 performs matrix multiplication for float32 using direct loops with support for non-contiguous memory
+func NaiveMatMulStridedF32(m, n, k int, a, b, c []float32, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum float32
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveMatMulStridedF64 performs matrix multiplication for float64 using direct loops with support for non-contiguous memory
+func NaiveMatMulStridedF64(m, n, k int, a, b, c []float64, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum float64
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveMatMulStridedU8 performs matrix multiplication for uint8 using direct loops with support for non-contiguous memory
+func NaiveMatMulStridedU8(m, n, k int, a, b, c []uint8, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum uint8
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveMatMulStridedU32 performs matrix multiplication for uint32 using direct loops with support for non-contiguous memory
+func NaiveMatMulStridedU32(m, n, k int, a, b, c []uint32, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum uint32
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveMatMulStridedI64 performs matrix multiplication for int64 using direct loops with support for non-contiguous memory
+func NaiveMatMulStridedI64(m, n, k int, a, b, c []int64, aStrides, bStrides, cStrides []int) {
+	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
+	for i := range m {
+		for j := range n {
+			var sum int64
+			for l := range k {
+				aIdx := i*aStrides[0] + l*aStrides[1]
+				bIdx := l*bStrides[0] + j*bStrides[1]
+				sum += a[aIdx] * b[bIdx]
+			}
+			cIdx := i*cStrides[0] + j*cStrides[1]
+			c[cIdx] = sum
+		}
+	}
+}
+
+// NaiveBatchedMatMul performs batched matrix multiplication for any numeric type using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMul[T D](bSize, m, n, k int, a, b, c []T) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum T
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulF32 performs batched matrix multiplication for float32 using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMulF32(bSize, m, n, k int, a, b, c []float32) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum float32
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulF64 performs batched matrix multiplication for float64 using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMulF64(bSize, m, n, k int, a, b, c []float64) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum float64
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulU8 performs batched matrix multiplication for uint8 using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMulU8(bSize, m, n, k int, a, b, c []uint8) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum uint8
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulU32 performs batched matrix multiplication for uint32 using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMulU32(bSize, m, n, k int, a, b, c []uint32) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum uint32
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulI64 performs batched matrix multiplication for int64 using direct loops
+// Assumes both A and B are batched with contiguous memory layout: A[bSize*m*k], B[bSize*k*n], C[bSize*m*n]
+func NaiveBatchedMatMulI64(bSize, m, n, k int, a, b, c []int64) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		aBase := bb * m * k
+		bBase := bb * k * n
+		cBase := bb * m * n
+		for i := range m {
+			for j := range n {
+				var sum int64
+				for l := range k {
+					sum += a[aBase+i*k+l] * b[bBase+l*n+j]
+				}
+				c[cBase+i*n+j] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStrided performs batched matrix multiplication for any numeric type using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStrided[T D](bSize, m, n, k int, a, b, c []T, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum T
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStridedF32 performs batched matrix multiplication for float32 using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStridedF32(bSize, m, n, k int, a, b, c []float32, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum float32
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStridedF64 performs batched matrix multiplication for float64 using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStridedF64(bSize, m, n, k int, a, b, c []float64, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum float64
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStridedU8 performs batched matrix multiplication for uint8 using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStridedU8(bSize, m, n, k int, a, b, c []uint8, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum uint8
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStridedU32 performs batched matrix multiplication for uint32 using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStridedU32(bSize, m, n, k int, a, b, c []uint32, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum uint32
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
+// NaiveBatchedMatMulStridedI64 performs batched matrix multiplication for int64 using direct loops with support for non-contiguous memory
+// Strides are [batch_stride, row_stride, col_stride] for each tensor.
+// Broadcasting over batch is supported if the batch_stride (strides[0]) is 0 for A or B.
+func NaiveBatchedMatMulStridedI64(bSize, m, n, k int, a, b, c []int64, aStrides, bStrides, cStrides []int) {
+	// C[bb,i,j] = sum(A[bb,i,l] * B[bb,l,j]) for l in [0,k)
+	for bb := range bSize {
+		for i := range m {
+			for j := range n {
+				var sum int64
+				for l := range k {
+					aIdx := bb*aStrides[0] + i*aStrides[1] + l*aStrides[2]
+					bIdx := bb*bStrides[0] + l*bStrides[1] + j*bStrides[2]
+					sum += a[aIdx] * b[bIdx]
+				}
+				cIdx := bb*cStrides[0] + i*cStrides[1] + j*cStrides[2]
+				c[cIdx] = sum
+			}
+		}
+	}
+}
+
 // Im2colConv1dF32 performs 1D convolution for float32 using im2col + gemm with direct BLAS Gemm call
 func Im2colConv1dF32(bSize, cIn, lIn, cOut, kSize int, stride, padding, dilation int, src, kernel, dst []float32) {
 	lOut := (lIn+2*padding-dilation*(kSize-1)-1)/stride + 1
