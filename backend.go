@@ -36,22 +36,22 @@ type BackendStorage[T D] interface {
 	Min(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Eq performs element-wise equality comparison of two tensors.
-	Eq(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Eq(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Ne performs element-wise not-equal comparison of two tensors.
-	Ne(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Ne(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Lt performs element-wise less-than comparison of two tensors.
-	Lt(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Lt(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Le performs element-wise less-than-or-equal comparison of two tensors.
-	Le(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Le(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Gt performs element-wise greater-than comparison of two tensors.
-	Gt(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Gt(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Ge performs element-wise greater-than-or-equal comparison of two tensors.
-	Ge(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+	Ge(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// ToDtype performs type conversion to the specified target type.
 	ToDtype(layout *Layout, dtype DType) (any, error)

@@ -275,7 +275,7 @@ func (s *CpuStorage[T]) Min(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Eq performs element-wise equality comparison of two tensors.
-func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -293,7 +293,7 @@ func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.EqStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
@@ -310,7 +310,7 @@ func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Ne performs element-wise not-equal comparison of two tensors.
-func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -328,7 +328,7 @@ func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.NeStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
@@ -345,7 +345,7 @@ func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Lt performs element-wise less-than comparison of two tensors.
-func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -363,7 +363,7 @@ func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.LtStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
@@ -380,7 +380,7 @@ func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Le performs element-wise less-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -398,7 +398,7 @@ func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.LeStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
@@ -415,7 +415,7 @@ func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Gt performs element-wise greater-than comparison of two tensors.
-func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -433,7 +433,7 @@ func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.GtStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
@@ -450,7 +450,7 @@ func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Ge performs element-wise greater-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -468,7 +468,7 @@ func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.ElemCount()))
 	kernels.GeStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims

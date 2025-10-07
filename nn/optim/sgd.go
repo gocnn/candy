@@ -68,7 +68,7 @@ func (s *SGD[T]) Step(grads *tensor.GradStore[T]) error {
 			continue
 		}
 
-		lrTensor := tensor.Full[T](T(s.lr), spark.NewShape(), v.Device())
+		lrTensor := tensor.Full[T](s.lr, spark.NewShape(), v.Device())
 		scaled, err := grad.Mul(lrTensor)
 		if err != nil {
 			return fmt.Errorf("scale gradient: %w", err)
