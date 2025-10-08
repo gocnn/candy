@@ -8,17 +8,18 @@ import (
 	"github.com/gocnn/spark/internal/cpu"
 )
 
-// counter is a package-level atomic counter for generating unique TensorId values.
+// counter is an atomic counter for unique TensorId values.
 var counter uint64
 
 // TensorId is a unique identifier for a tensor.
 type TensorId uint64
 
-// NewId generates a new, unique TensorId in a thread-safe manner.
+// NewId generates a unique TensorId thread-safely.
 func NewId() TensorId {
 	return TensorId(atomic.AddUint64(&counter, 1))
 }
 
+// Tensor represents a multi-dimensional array with automatic differentiation support.
 type Tensor[T spark.D] struct {
 	id      TensorId
 	storage spark.BackendStorage[T]
@@ -29,158 +30,199 @@ type Tensor[T spark.D] struct {
 	device  spark.Device
 }
 
-// NewFrom creates a new tensor from existing storage and layout.
-// This is useful for creating tensors in backward passes without adding to computation graph.
-func NewFrom[T spark.D](storage spark.BackendStorage[T], layout *spark.Layout, dtype spark.DType, device spark.Device) *Tensor[T] {
+// NewFrom creates a tensor from existing storage and layout.
+func NewFrom[T spark.D](storage spark.BackendStorage[T], layout *spark.Layout, dtype spark.DType, dev spark.Device) *Tensor[T] {
 	return &Tensor[T]{
 		id:      NewId(),
 		storage: storage,
 		layout:  layout,
-		isVar:   false, // Gradient tensors should not be variables by default
 		dtype:   dtype,
-		device:  device,
+		device:  dev,
 	}
 }
 
-func New[T spark.D](array []T, shape *spark.Shape, device spark.Device) *Tensor[T] {
+// New creates a tensor from an array and shape on the specified device.
+func New[T spark.D](data []T, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
 	var storage spark.BackendStorage[T]
-	switch device {
+	switch dev {
 	case spark.CPU:
-		storage = cpu.New(array)
+		storage = cpu.New(data)
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-func Ones[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	var err error
+// MustNew creates a tensor from an array and shape on the specified device, panicking on error.
+func MustNew[T spark.D](data []T, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := New[T](data, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	switch device {
+// Ones creates a tensor filled with ones.
+func Ones[T spark.D](shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
 	case spark.CPU:
-		cpuDevice := cpu.NewCpuDevice[T]()
-		storage, err = cpuDevice.Ones(shape, spark.DTypeOf[T]())
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().Ones(shape, spark.DTypeOf[T]())
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to create ones: %w", err)
 		}
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-func Zeros[T spark.D](shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	var err error
+// MustOnes creates a tensor filled with ones, panicking on error.
+func MustOnes[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Ones[T](shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	switch device {
+// Zeros creates a tensor filled with zeros.
+func Zeros[T spark.D](shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
 	case spark.CPU:
-		cpuDevice := cpu.NewCpuDevice[T]()
-		storage, err = cpuDevice.Zeros(shape, spark.DTypeOf[T]())
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().Zeros(shape, spark.DTypeOf[T]())
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// Rand creates a new tensor initialized with values sampled uniformly between lo and up.
-func Rand[T spark.D](lo, up float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	var err error
+// MustZeros creates a tensor filled with zeros, panicking on error.
+func MustZeros[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Zeros[T](shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	switch device {
+// Rand creates a tensor with values uniformly sampled between lo and up.
+func Rand[T spark.D](lo, up float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
 	case spark.CPU:
-		cpuDevice := cpu.NewCpuDevice[T]()
-		storage, err = cpuDevice.RandUniform(shape, spark.DTypeOf[T](), lo, up)
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().RandUniform(shape, spark.DTypeOf[T](), lo, up)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to create rand: %w", err)
 		}
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// RandN creates a new tensor initialized with values sampled from a normal distribution.
-func RandN[T spark.D](mean, std float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	var err error
+// MustRand creates a tensor with values uniformly sampled between lo and up, panicking on error.
+func MustRand[T spark.D](lo, up float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Rand[T](lo, up, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	switch device {
+// RandN creates a tensor with values sampled from a normal distribution.
+func RandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
 	case spark.CPU:
-		cpuDevice := cpu.NewCpuDevice[T]()
-		storage, err = cpuDevice.RandNormal(shape, spark.DTypeOf[T](), mean, std)
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().RandNormal(shape, spark.DTypeOf[T](), mean, std)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to create randn: %w", err)
 		}
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
-	var storage spark.BackendStorage[T]
-	var err error
+// MustRandN creates a tensor with values sampled from a normal distribution, panicking on error.
+func MustRandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := RandN[T](mean, std, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
 
-	switch device {
+// Full creates a tensor filled with the specified value.
+func Full[T spark.D](value float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
 	case spark.CPU:
-		cpuDevice := cpu.NewCpuDevice[T]()
-		storage, err = cpuDevice.Full(shape, spark.DTypeOf[T](), value)
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().Full(shape, spark.DTypeOf[T](), value)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to create full: %w", err)
 		}
 	default:
-		panic("device not supported")
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// ZerosLike creates a new tensor with the same shape as the input tensor, filled with zeros.
-func (t *Tensor[T]) ZerosLike() *Tensor[T] {
-	return Zeros[T](t.layout.Shape(), t.device)
+// MustFull creates a tensor filled with the specified value, panicking on error.
+func MustFull[T spark.D](value float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Full[T](value, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
-// OnesLike creates a new tensor with the same shape as the input tensor, filled with ones.
-func (t *Tensor[T]) OnesLike() *Tensor[T] {
-	return Ones[T](t.layout.Shape(), t.device)
+// ZerosLike creates a tensor with the same shape and device as t, filled with zeros.
+func (t *Tensor[T]) ZerosLike() (*Tensor[T], error) {
+	return Zeros[T](t.Shape(), t.device)
 }
 
-// FullLike creates a new tensor with the same shape as the input tensor, filled with the specified value.
-func (t *Tensor[T]) FullLike(value float64) *Tensor[T] {
-	return Full[T](value, t.layout.Shape(), t.device)
+// OnesLike creates a tensor with the same shape and device as t, filled with ones.
+func (t *Tensor[T]) OnesLike() (*Tensor[T], error) {
+	return Ones[T](t.Shape(), t.device)
 }
 
-// RandLike creates a new tensor with the same shape as the input tensor, filled with random values.
-func (t *Tensor[T]) RandLike(lo, up float64) *Tensor[T] {
-	return Rand[T](lo, up, t.layout.Shape(), t.device)
+// FullLike creates a tensor with the same shape and device as t, filled with value.
+func (t *Tensor[T]) FullLike(value float64) (*Tensor[T], error) {
+	return Full[T](value, t.Shape(), t.device)
 }
 
-// RandNLike creates a new tensor with the same shape as the input tensor, filled with values sampled from a normal distribution.
-func (t *Tensor[T]) RandNLike(mean, std float64) *Tensor[T] {
-	return RandN[T](mean, std, t.layout.Shape(), t.device)
+// RandLike creates a tensor with the same shape and device as t, with random values.
+func (t *Tensor[T]) RandLike(lo, up float64) (*Tensor[T], error) {
+	return Rand[T](lo, up, t.Shape(), t.device)
 }
 
-// ID returns the unique identifier of the tensor.
+// RandNLike creates a tensor with the same shape and device as t, with normal-distributed values.
+func (t *Tensor[T]) RandNLike(mean, std float64) (*Tensor[T], error) {
+	return RandN[T](mean, std, t.Shape(), t.device)
+}
+
+// ID returns the tensor's unique identifier.
 func (t *Tensor[T]) ID() TensorId {
 	return t.id
 }
 
-// Storage returns the backend storage of the tensor.
+// Storage returns the tensor's backend storage.
 func (t *Tensor[T]) Storage() spark.BackendStorage[T] {
 	return t.storage
 }
 
-// Layout returns the layout of the tensor.
+// Layout returns a clone of the tensor's layout.
 func (t *Tensor[T]) Layout() *spark.Layout {
 	return t.layout.Clone()
 }
@@ -190,47 +232,47 @@ func (t *Tensor[T]) Op() *Op[T] {
 	return t.op
 }
 
-// IsVar returns true if the tensor is a variable (requires gradient).
+// IsVar reports whether the tensor requires gradient computation.
 func (t *Tensor[T]) IsVar() bool {
 	return t.isVar
 }
 
-// DType returns the data type of the tensor.
+// DType returns the tensor's data type.
 func (t *Tensor[T]) DType() spark.DType {
 	return t.dtype
 }
 
-// Device returns the device of the tensor.
+// Device returns the tensor's device.
 func (t *Tensor[T]) Device() spark.Device {
 	return t.device
 }
 
-// Data returns the underlying data slice. Panics if storage is not CPU-based.
+// Data returns the tensor's data slice; panics if not CPU-based.
 func (t *Tensor[T]) Data() []T {
 	return t.storage.Data()
 }
 
-// Stride returns the strides of the tensor.
+// Stride returns the tensor's strides.
 func (t *Tensor[T]) Stride() []int {
 	return t.layout.Stride()
 }
 
-// Shape returns the shape of the tensor.
+// Shape returns the tensor's shape.
 func (t *Tensor[T]) Shape() *spark.Shape {
 	return t.layout.Shape()
 }
 
-// Dims returns the dimensions of the tensor.
+// Dims returns the tensor's dimensions.
 func (t *Tensor[T]) Dims() []int {
 	return t.layout.Dims()
 }
 
-// Dim returns the size of the dimension at the given index.
+// Dim returns the size of the specified dimension.
 func (t *Tensor[T]) Dim(dim int) int {
 	return t.layout.Dim(dim)
 }
 
-// Rank returns the rank of the tensor.
+// Rank returns the tensor's rank.
 func (t *Tensor[T]) Rank() int {
 	return t.layout.Rank()
 }
@@ -240,136 +282,141 @@ func (t *Tensor[T]) ElemCount() int {
 	return t.layout.ElemCount()
 }
 
+// SetStorage sets the tensor's storage and returns the tensor.
 func (t *Tensor[T]) SetStorage(storage spark.BackendStorage[T]) *Tensor[T] {
 	t.storage = storage
 	return t
 }
 
+// SetLayout sets the tensor's layout and returns the tensor.
 func (t *Tensor[T]) SetLayout(layout *spark.Layout) *Tensor[T] {
 	t.layout = layout.Clone()
 	return t
 }
 
+// SetOp sets the tensor's operation and returns the tensor.
 func (t *Tensor[T]) SetOp(op *Op[T]) *Tensor[T] {
 	t.op = op
 	return t
 }
 
+// SetIsVar sets whether the tensor requires gradients and returns the tensor.
 func (t *Tensor[T]) SetIsVar(isVar bool) *Tensor[T] {
 	t.isVar = isVar
 	return t
 }
 
+// SetDType sets the tensor's data type and returns the tensor.
 func (t *Tensor[T]) SetDType(dtype spark.DType) *Tensor[T] {
 	t.dtype = dtype
 	return t
 }
 
-func (t *Tensor[T]) SetDevice(device spark.Device) *Tensor[T] {
-	t.device = device
+// SetDevice sets the tensor's device and returns the tensor.
+func (t *Tensor[T]) SetDevice(dev spark.Device) *Tensor[T] {
+	t.device = dev
 	return t
 }
 
+// RequiresGrad marks the tensor as requiring gradients and returns the tensor.
 func (t *Tensor[T]) RequiresGrad() *Tensor[T] {
 	t.isVar = true
 	return t
 }
 
+// Detach creates a new tensor detached from the computation graph.
 func (t *Tensor[T]) Detach() *Tensor[T] {
 	return NewFrom(t.storage, t.layout, t.dtype, t.device)
 }
 
-// ToFloat32 converts the tensor to float32 type.
+// Clone creates a clone of the tensor.
+func (t *Tensor[T]) Clone() *Tensor[T] {
+	return &Tensor[T]{
+		id:      NewId(),
+		storage: t.storage,
+		layout:  t.layout.Clone(),
+		op:      nil,
+		isVar:   false,
+		dtype:   t.dtype,
+		device:  t.device,
+	}
+}
+
+// ToDtype converts the tensor to the specified dtype, returning a new tensor.
+func ToDtype[T spark.D, U spark.D](t *Tensor[T], dtype spark.DType) (*Tensor[U], error) {
+	storage, err := t.storage.ToDtype(t.layout, dtype)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to %v: %w", dtype, err)
+	}
+	return NewFrom(storage.(spark.BackendStorage[U]), t.layout.Clone(), dtype, t.device), nil
+}
+
+// ToFloat32 converts the tensor to float32.
 func (t *Tensor[T]) ToFloat32() (*Tensor[float32], error) {
-	result, err := t.storage.ToDtype(t.layout, spark.F32)
-	if err != nil {
-		return nil, err
-	}
-	storage := result.(*cpu.CpuStorage[float32])
-	return NewFrom(storage, t.layout.Clone(), spark.F32, t.device), nil
+	return ToDtype[T, float32](t, spark.F32)
 }
 
-// ToFloat64 converts the tensor to float64 type.
+// ToFloat64 converts the tensor to float64.
 func (t *Tensor[T]) ToFloat64() (*Tensor[float64], error) {
-	result, err := t.storage.ToDtype(t.layout, spark.F64)
-	if err != nil {
-		return nil, err
-	}
-	storage := result.(*cpu.CpuStorage[float64])
-	return NewFrom(storage, t.layout.Clone(), spark.F64, t.device), nil
+	return ToDtype[T, float64](t, spark.F64)
 }
 
-// ToUint8 converts the tensor to uint8 type.
+// ToUint8 converts the tensor to uint8.
 func (t *Tensor[T]) ToUint8() (*Tensor[uint8], error) {
-	result, err := t.storage.ToDtype(t.layout, spark.U8)
-	if err != nil {
-		return nil, err
-	}
-	storage := result.(*cpu.CpuStorage[uint8])
-	return NewFrom(storage, t.layout.Clone(), spark.U8, t.device), nil
+	return ToDtype[T, uint8](t, spark.U8)
 }
 
-// ToUint32 converts the tensor to uint32 type.
+// ToUint32 converts the tensor to uint32.
 func (t *Tensor[T]) ToUint32() (*Tensor[uint32], error) {
-	result, err := t.storage.ToDtype(t.layout, spark.U32)
-	if err != nil {
-		return nil, err
-	}
-	storage := result.(*cpu.CpuStorage[uint32])
-	return NewFrom(storage, t.layout.Clone(), spark.U32, t.device), nil
+	return ToDtype[T, uint32](t, spark.U32)
 }
 
-// ToInt64 converts the tensor to int64 type.
+// ToInt64 converts the tensor to int64.
 func (t *Tensor[T]) ToInt64() (*Tensor[int64], error) {
-	result, err := t.storage.ToDtype(t.layout, spark.I64)
-	if err != nil {
-		return nil, err
-	}
-	storage := result.(*cpu.CpuStorage[int64])
-	return NewFrom(storage, t.layout.Clone(), spark.I64, t.device), nil
+	return ToDtype[T, int64](t, spark.I64)
 }
 
-// MustToFloat32 converts the tensor to float32 type, panicking on error.
+// MustToFloat32 converts the tensor to float32, panicking on error.
 func (t *Tensor[T]) MustToFloat32() *Tensor[float32] {
 	result, err := t.ToFloat32()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to convert to float32: %v", err))
 	}
 	return result
 }
 
-// MustToFloat64 converts the tensor to float64 type, panicking on error.
+// MustToFloat64 converts the tensor to float64, panicking on error.
 func (t *Tensor[T]) MustToFloat64() *Tensor[float64] {
 	result, err := t.ToFloat64()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to convert to float64: %v", err))
 	}
 	return result
 }
 
-// MustToUint8 converts the tensor to uint8 type, panicking on error.
+// MustToUint8 converts the tensor to uint8, panicking on error.
 func (t *Tensor[T]) MustToUint8() *Tensor[uint8] {
 	result, err := t.ToUint8()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to convert to uint8: %v", err))
 	}
 	return result
 }
 
-// MustToUint32 converts the tensor to uint32 type, panicking on error.
+// MustToUint32 converts the tensor to uint32, panicking on error.
 func (t *Tensor[T]) MustToUint32() *Tensor[uint32] {
 	result, err := t.ToUint32()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to convert to uint32: %v", err))
 	}
 	return result
 }
 
-// MustToInt64 converts the tensor to int64 type, panicking on error.
+// MustToInt64 converts the tensor to int64, panicking on error.
 func (t *Tensor[T]) MustToInt64() *Tensor[int64] {
 	result, err := t.ToInt64()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to convert to int64: %v", err))
 	}
 	return result
 }
@@ -674,28 +721,6 @@ func (t *Tensor[T]) MustCopy() *Tensor[T] {
 	return result
 }
 
-// Clone creates a clone of the tensor.
-func (t *Tensor[T]) Clone() (*Tensor[T], error) {
-	return &Tensor[T]{
-		id:      NewId(),
-		storage: t.storage,
-		layout:  t.layout.Clone(),
-		op:      nil,
-		isVar:   false,
-		dtype:   t.dtype,
-		device:  t.device,
-	}, nil
-}
-
-// MustClone creates a clone of the tensor, panicking on error.
-func (t *Tensor[T]) MustClone() *Tensor[T] {
-	result, err := t.Clone()
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
 // Softmax performs softmax activation along the last dimension.
 func (t *Tensor[T]) Softmax() (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, SoftmaxForward[T](), SoftmaxBackward[T]())
@@ -714,11 +739,7 @@ func (t *Tensor[T]) MustSoftmax() *Tensor[T] {
 // result[i] = condition[i] != 0 ? trueVal[i] : falseVal[i]
 // Supports automatic differentiation for trueVal and falseVal.
 func (t *Tensor[T]) WhereCond(trueVal, falseVal *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp(
-		[]*Tensor[T]{trueVal, falseVal},
-		WhereCondForward(t),
-		WhereCondBackward(t),
-	)
+	return ApplyOp([]*Tensor[T]{trueVal, falseVal}, WhereCondForward(t), WhereCondBackward(t))
 }
 
 // MustWhereCond performs conditional selection, panicking on error.
@@ -1125,7 +1146,10 @@ func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
 
 	// Divide by element count
 	elemCount := float64(t.Shape().ElemCount())
-	divisor := Full[T](elemCount, sum.Shape(), sum.Device())
+	divisor, err := Full[T](elemCount, sum.Shape(), sum.Device())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create divisor: %w", err)
+	}
 
 	mean, err := sum.Div(divisor)
 	if err != nil {

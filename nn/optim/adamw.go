@@ -53,8 +53,14 @@ func NewAdamW[T spark.D](vars []*tensor.Tensor[T], params AdamWParams) (*AdamW[T
 			continue
 		}
 
-		m := v.ZerosLike()
-		vv := v.ZerosLike()
+		m, err := v.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("create momentum tensor: %w", err)
+		}
+		vv, err := v.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("create velocity tensor: %w", err)
+		}
 
 		adamVars = append(adamVars, adamVar[T]{
 			varTensor: v,
@@ -97,8 +103,14 @@ func (a *AdamW[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
 		return errors.New("not a variable")
 	}
-	m := v.ZerosLike()
-	vv := v.ZerosLike()
+	m, err := v.ZerosLike()
+	if err != nil {
+		return fmt.Errorf("create momentum tensor: %w", err)
+	}
+	vv, err := v.ZerosLike()
+	if err != nil {
+		return fmt.Errorf("create velocity tensor: %w", err)
+	}
 	a.vars = append(a.vars, adamVar[T]{varTensor: v, m: m, v: vv})
 	return nil
 }
@@ -137,10 +149,22 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 			continue
 		}
 
-		beta1Tensor := tensor.Full[T](p.Beta1, spark.NewShape(), theta.Device())
-		beta1CompTensor := tensor.Full[T](1.0-p.Beta1, spark.NewShape(), theta.Device())
-		beta2Tensor := tensor.Full[T](p.Beta2, spark.NewShape(), theta.Device())
-		beta2CompTensor := tensor.Full[T](1.0-p.Beta2, spark.NewShape(), theta.Device())
+		beta1Tensor, err := tensor.Full[T](p.Beta1, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create beta1 tensor: %w", err)
+		}
+		beta1CompTensor, err := tensor.Full[T](1.0-p.Beta1, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create beta1 comp tensor: %w", err)
+		}
+		beta2Tensor, err := tensor.Full[T](p.Beta2, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create beta2 tensor: %w", err)
+		}
+		beta2CompTensor, err := tensor.Full[T](1.0-p.Beta2, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create beta2 comp tensor: %w", err)
+		}
 
 		// Update first moment: m = beta1 * m + (1 - beta1) * grad
 		mScaled, err := av.m.Mul(beta1Tensor)
@@ -175,8 +199,14 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Bias-corrected moments
-		scaleMTensor := tensor.Full[T](scaleM, spark.NewShape(), theta.Device())
-		scaleVTensor := tensor.Full[T](scaleV, spark.NewShape(), theta.Device())
+		scaleMTensor, err := tensor.Full[T](scaleM, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create scaleM tensor: %w", err)
+		}
+		scaleVTensor, err := tensor.Full[T](scaleV, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create scaleV tensor: %w", err)
+		}
 
 		mHat, err := nextM.Mul(scaleMTensor)
 		if err != nil {
@@ -188,7 +218,10 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Weight decay: theta = theta * (1 - lr * lambda)
-		decayFactor := tensor.Full[T](1.0-p.LearningRate*p.WeightDecay, spark.NewShape(), theta.Device())
+		decayFactor, err := tensor.Full[T](1.0-p.LearningRate*p.WeightDecay, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create decay factor: %w", err)
+		}
 		thetaScaled, err := theta.Mul(decayFactor)
 		if err != nil {
 			return fmt.Errorf("apply weight decay: %w", err)
@@ -199,7 +232,10 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		if err != nil {
 			return fmt.Errorf("sqrt second moment: %w", err)
 		}
-		epsTensor := tensor.Full[T](p.Epsilon, spark.NewShape(), theta.Device())
+		epsTensor, err := tensor.Full[T](p.Epsilon, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create epsilon tensor: %w", err)
+		}
 		vHatSqrtEps, err := vHatSqrt.BroadcastAdd(epsTensor)
 		if err != nil {
 			return fmt.Errorf("add epsilon: %w", err)
@@ -210,7 +246,10 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Update: theta = theta - lr * adjGrad
-		lrTensor := tensor.Full[T](p.LearningRate, spark.NewShape(), theta.Device())
+		lrTensor, err := tensor.Full[T](p.LearningRate, spark.NewShape(), theta.Device())
+		if err != nil {
+			return fmt.Errorf("create learning rate tensor: %w", err)
+		}
 		lrAdjGrad, err := adjGrad.Mul(lrTensor)
 		if err != nil {
 			return fmt.Errorf("scale adjusted gradient: %w", err)
