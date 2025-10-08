@@ -75,10 +75,10 @@ type BackendStorage[T D] interface {
 	AvgPool2d(layout *Layout, kH, kW, sH, sW int) (BackendStorage[T], error)
 
 	// MaxPool2d performs 2D max pooling for supported types.
-	MaxPool2d(layout *Layout, params *MaxPool2DParams) (BackendStorage[T], error)
+	MaxPool2d(layout *Layout, kH, kW, sH, sW int) (BackendStorage[T], error)
 
 	// UpsampleNearest2d performs 2D nearest neighbor upsampling for supported types.
-	UpsampleNearest2d(layout *Layout, params *UpsampleParams) (BackendStorage[T], error)
+	UpsampleNearest2d(layout *Layout, targetH, targetW int) (BackendStorage[T], error)
 
 	// ConstSet sets all elements to a constant value for supported types.
 	ConstSet(layout *Layout, val T) error

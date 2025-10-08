@@ -908,14 +908,28 @@ func (t *Tensor[T]) MustAvgPool2d(kH, kW, sH, sW int) *Tensor[T] {
 	return result
 }
 
+// MaxPool2d performs 2D max pooling.
+func (t *Tensor[T]) MaxPool2d(kH, kW, sH, sW int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, MaxPool2dForward[T](kH, kW, sH, sW), MaxPool2dBackward[T](kH, kW, sH, sW))
+}
+
+// MustMaxPool2d performs 2D max pooling, panicking on error.
+func (t *Tensor[T]) MustMaxPool2d(kH, kW, sH, sW int) *Tensor[T] {
+	result, err := t.MaxPool2d(kH, kW, sH, sW)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // UpsampleNearest2d performs 2D nearest neighbor upsampling.
-func (t *Tensor[T]) UpsampleNearest2d(params *spark.UpsampleParams) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, UpsampleNearest2dForward[T](params), UpsampleNearest2dBackward[T](params))
+func (t *Tensor[T]) UpsampleNearest2d(targetH, targetW int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, UpsampleNearest2dForward[T](targetH, targetW), UpsampleNearest2dBackward[T](targetH, targetW))
 }
 
 // MustUpsampleNearest2d performs 2D nearest neighbor upsampling, panicking on error.
-func (t *Tensor[T]) MustUpsampleNearest2d(params *spark.UpsampleParams) *Tensor[T] {
-	result, err := t.UpsampleNearest2d(params)
+func (t *Tensor[T]) MustUpsampleNearest2d(targetH, targetW int) *Tensor[T] {
+	result, err := t.UpsampleNearest2d(targetH, targetW)
 	if err != nil {
 		panic(err)
 	}

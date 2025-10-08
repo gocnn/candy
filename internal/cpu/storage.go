@@ -1226,48 +1226,50 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spa
 }
 
 // MaxPool2d performs 2D max pooling for supported types.
-func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	if params == nil {
-		return nil, errors.New("params cannot be nil")
+	n, c, h, w, err := layout.Dims4()
+	if err != nil {
+		return nil, fmt.Errorf("expected 4D tensor for max_pool2d, got: %w", err)
 	}
+	if h < kH || w < kW {
+		return nil, fmt.Errorf("kernel size (%d,%d) is larger than input size (%d,%d)", kH, kW, h, w)
+	}
+	if kH <= 0 || kW <= 0 || sH <= 0 || sW <= 0 {
+		return nil, fmt.Errorf("kernel and stride must be positive")
+	}
+	hOut := (h-kH)/sH + 1
+	wOut := (w-kW)/sW + 1
 
-	hOut := params.OutH()
-	wOut := params.OutW()
 	if hOut <= 0 || wOut <= 0 {
-		return nil, errors.New("invalid pooling parameters: output dimensions <= 0")
+		return nil, fmt.Errorf("invalid pooling parameters: output dimensions (%d,%d) <= 0", hOut, wOut)
 	}
 
-	dstStrides := []int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1}
-	result := New(make([]T, params.Batch*params.Ch*hOut*wOut))
+	outputSize := n * c * hOut * wOut
+	result := New(make([]T, outputSize))
+	dstStrides := []int{c * hOut * wOut, hOut * wOut, wOut, 1}
 
 	switch any(s.data).(type) {
 	case []float32:
 		if layout.IsContiguous() {
 			kernels.MaxPool2dF32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n,  // batch
+				c,  // channels
+				h,  // input height
+				w,  // input width
+				kH, // kernel height
+				kW, // kernel width
+				sH, // stride height
+				sW, // stride width
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 			)
 		} else {
 			kernels.MaxPool2dStridedF32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n, c, h, w,
+				kH, kW, sH, sW,
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 				layout.Stride(),
@@ -1277,27 +1279,15 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 	case []float64:
 		if layout.IsContiguous() {
 			kernels.MaxPool2dF64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n, c, h, w,
+				kH, kW, sH, sW,
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 			)
 		} else {
 			kernels.MaxPool2dStridedF64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n, c, h, w,
+				kH, kW, sH, sW,
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 				layout.Stride(),
@@ -1307,27 +1297,15 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 	case []uint8, []uint32, []int64:
 		if layout.IsContiguous() {
 			kernels.MaxPool2d(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n, c, h, w,
+				kH, kW, sH, sW,
 				s.data,
 				result.data,
 			)
 		} else {
 			kernels.MaxPool2dStrided(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.KH,
-				params.KW,
-				params.HStride,
-				params.WStride,
+				n, c, h, w,
+				kH, kW, sH, sW,
 				s.data,
 				result.data,
 				layout.Stride(),
@@ -1342,48 +1320,42 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, params *spark.MaxPool2DP
 }
 
 // UpsampleNearest2d performs 2D nearest neighbor upsampling for supported types.
-func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.UpsampleParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, targetH, targetW int) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	if params == nil {
-		return nil, errors.New("params cannot be nil")
+	b, c, srcH, srcW, err := layout.Dims4()
+	if err != nil {
+		return nil, fmt.Errorf("expected 4D tensor for upsample_nearest2d, got: %w", err)
 	}
-
-	hOut := params.HOut
-	wOut := params.WOut
-	if hOut <= 0 || wOut <= 0 {
-		return nil, errors.New("invalid upsampling parameters: output dimensions <= 0")
+	if targetH <= 0 || targetW <= 0 {
+		return nil, fmt.Errorf("target dimensions must be positive, got (%d,%d)", targetH, targetW)
 	}
-
-	dstStrides := []int{params.Ch * hOut * wOut, hOut * wOut, wOut, 1}
-	result := New(make([]T, params.Batch*params.Ch*hOut*wOut))
+	scaleH := float64(srcH) / float64(targetH)
+	scaleW := float64(srcW) / float64(targetW)
+	outputSize := b * c * targetH * targetW
+	result := New(make([]T, outputSize))
+	dstStrides := []int{c * targetH * targetW, targetH * targetW, targetW, 1}
 
 	switch any(s.data).(type) {
 	case []float32:
 		if layout.IsContiguous() {
 			kernels.UpsampleNearest2dF32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b,       // batch
+				c,       // channels
+				srcH,    // source height
+				srcW,    // source width
+				targetH, // target height
+				targetW, // target width
+				scaleH,  // height scale
+				scaleW,  // width scale
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 			)
 		} else {
 			kernels.UpsampleNearest2dStridedF32(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b, c, srcH, srcW,
+				targetH, targetW, scaleH, scaleW,
 				any(s.data).([]float32),
 				any(result.data).([]float32),
 				layout.Stride(),
@@ -1393,27 +1365,15 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 	case []float64:
 		if layout.IsContiguous() {
 			kernels.UpsampleNearest2dF64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b, c, srcH, srcW,
+				targetH, targetW, scaleH, scaleW,
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 			)
 		} else {
 			kernels.UpsampleNearest2dStridedF64(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b, c, srcH, srcW,
+				targetH, targetW, scaleH, scaleW,
 				any(s.data).([]float64),
 				any(result.data).([]float64),
 				layout.Stride(),
@@ -1423,27 +1383,15 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, params *spark.Up
 	case []uint8, []uint32, []int64:
 		if layout.IsContiguous() {
 			kernels.UpsampleNearest2d(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b, c, srcH, srcW,
+				targetH, targetW, scaleH, scaleW,
 				s.data,
 				result.data,
 			)
 		} else {
 			kernels.UpsampleNearest2dStrided(
-				params.Batch,
-				params.Ch,
-				params.InH,
-				params.InW,
-				params.HOut,
-				params.WOut,
-				params.HScale,
-				params.WScale,
+				b, c, srcH, srcW,
+				targetH, targetW, scaleH, scaleW,
 				s.data,
 				result.data,
 				layout.Stride(),
