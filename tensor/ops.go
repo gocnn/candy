@@ -248,15 +248,15 @@ func DivBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// MaxForward returns a ForwardFunc for element-wise maximum: max(x, y).
-func MaxForward[T spark.D]() ForwardFunc[T] {
+// MaximumForward returns a ForwardFunc for element-wise maximum: max(x, y).
+func MaximumForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, y := inputs[0], inputs[1]
 		s := spark.Contiguous(x.Shape())
-		data, err := x.storage.Max(y.storage, x.layout, y.layout, s)
+		data, err := x.storage.Maximum(y.storage, x.layout, y.layout, s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute max: %w", err)
 		}
@@ -264,8 +264,8 @@ func MaxForward[T spark.D]() ForwardFunc[T] {
 	}
 }
 
-// MaxBackward returns a BackwardFunc for maximum gradients: ∂z/∂x = (x >= y) ? g : 0, ∂z/∂y = (y > x) ? g : 0.
-func MaxBackward[T spark.D]() BackwardFunc[T] {
+// MaximumBackward returns a BackwardFunc for maximum gradients: ∂z/∂x = (x >= y) ? g : 0, ∂z/∂y = (y > x) ? g : 0.
+func MaximumBackward[T spark.D]() BackwardFunc[T] {
 	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -295,15 +295,15 @@ func MaxBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// MinForward returns a ForwardFunc for element-wise minimum: min(x, y).
-func MinForward[T spark.D]() ForwardFunc[T] {
+// MinimumForward returns a ForwardFunc for element-wise minimum: min(x, y).
+func MinimumForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, y := inputs[0], inputs[1]
 		s := spark.Contiguous(x.Shape())
-		data, err := x.storage.Min(y.storage, x.layout, y.layout, s)
+		data, err := x.storage.Minimum(y.storage, x.layout, y.layout, s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute min: %w", err)
 		}
@@ -311,8 +311,8 @@ func MinForward[T spark.D]() ForwardFunc[T] {
 	}
 }
 
-// MinBackward returns a BackwardFunc for minimum gradients: ∂z/∂x = (x <= y) ? g : 0, ∂z/∂y = (y < x) ? g : 0.
-func MinBackward[T spark.D]() BackwardFunc[T] {
+// MinimumBackward returns a BackwardFunc for minimum gradients: ∂z/∂x = (x <= y) ? g : 0, ∂z/∂y = (y < x) ? g : 0.
+func MinimumBackward[T spark.D]() BackwardFunc[T] {
 	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -787,6 +787,178 @@ func BroadcastDivBackward[T spark.D]() BackwardFunc[T] {
 		gy, err = gy.Neg()
 		if err != nil {
 			return nil, fmt.Errorf("failed to negate g*x/y²: %w", err)
+		}
+		dy, err := ReduceBroadcastGrad(gy, y.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
+		}
+		return []*Tensor[T]{dx, dy}, nil
+	}
+}
+
+// BroadcastMaximumForward returns a ForwardFunc for broadcasted maximum: max(x, y).
+func BroadcastMaximumForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		xb, err := x.BroadcastAs(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
+		}
+		yb, err := y.BroadcastAs(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
+		}
+		data, err := xb.storage.Maximum(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute max: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
+	}
+}
+
+// BroadcastMaximumBackward returns a BackwardFunc for broadcasted maximum gradients.
+func BroadcastMaximumBackward[T spark.D]() BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		xb, err := x.BroadcastAs(g.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
+		}
+		yb, err := y.BroadcastAs(g.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
+		}
+		o, err := xb.Maximum(yb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute output: %w", err)
+		}
+		mx, err := o.Eq(xb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create mask_x: %w", err)
+		}
+		my, err := o.Eq(yb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create mask_y: %w", err)
+		}
+		d, err := mx.Add(my)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute denom: %w", err)
+		}
+		gx, err := mx.Mul(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute gx: %w", err)
+		}
+		gx, err = gx.Div(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to divide gx: %w", err)
+		}
+		gy, err := my.Mul(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute gy: %w", err)
+		}
+		gy, err = gy.Div(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to divide gy: %w", err)
+		}
+		dx, err := ReduceBroadcastGrad(gx, x.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
+		}
+		dy, err := ReduceBroadcastGrad(gy, y.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
+		}
+		return []*Tensor[T]{dx, dy}, nil
+	}
+}
+
+// BroadcastMinimumForward returns a ForwardFunc for broadcasted minimum: min(x, y).
+func BroadcastMinimumForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		xb, err := x.BroadcastAs(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
+		}
+		yb, err := y.BroadcastAs(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
+		}
+		data, err := xb.storage.Minimum(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute min: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
+	}
+}
+
+// BroadcastMinimumBackward returns a BackwardFunc for broadcasted minimum gradients.
+func BroadcastMinimumBackward[T spark.D]() BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		xb, err := x.BroadcastAs(g.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
+		}
+		yb, err := y.BroadcastAs(g.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
+		}
+		o, err := xb.Minimum(yb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute output: %w", err)
+		}
+		mx, err := o.Eq(xb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create mask_x: %w", err)
+		}
+		my, err := o.Eq(yb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create mask_y: %w", err)
+		}
+		d, err := mx.Add(my)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute denom: %w", err)
+		}
+		gx, err := mx.Mul(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute gx: %w", err)
+		}
+		gx, err = gx.Div(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to divide gx: %w", err)
+		}
+		gy, err := my.Mul(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute gy: %w", err)
+		}
+		gy, err = gy.Div(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to divide gy: %w", err)
+		}
+		dx, err := ReduceBroadcastGrad(gx, x.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
 		dy, err := ReduceBroadcastGrad(gy, y.Dims())
 		if err != nil {

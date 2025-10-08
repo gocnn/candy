@@ -567,13 +567,13 @@ func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
 }
 
 // Max performs element-wise maximum of two tensors.
-func (a *Tensor[T]) Max(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, MaxForward[T](), MaxBackward[T]())
+func (a *Tensor[T]) Maximum(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, MaximumForward[T](), MaximumBackward[T]())
 }
 
 // MustMax performs element-wise maximum of two tensors, panicking on error.
 func (a *Tensor[T]) MustMax(b *Tensor[T]) *Tensor[T] {
-	result, err := a.Max(b)
+	result, err := a.Maximum(b)
 	if err != nil {
 		panic(err)
 	}
@@ -581,13 +581,13 @@ func (a *Tensor[T]) MustMax(b *Tensor[T]) *Tensor[T] {
 }
 
 // Min performs element-wise minimum of two tensors.
-func (a *Tensor[T]) Min(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, MinForward[T](), MinBackward[T]())
+func (a *Tensor[T]) Minimum(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, MinimumForward[T](), MinimumBackward[T]())
 }
 
 // MustMin performs element-wise minimum of two tensors, panicking on error.
 func (a *Tensor[T]) MustMin(b *Tensor[T]) *Tensor[T] {
-	result, err := a.Min(b)
+	result, err := a.Minimum(b)
 	if err != nil {
 		panic(err)
 	}
@@ -738,6 +738,34 @@ func (a *Tensor[T]) MustBroadcastDiv(b *Tensor[T]) *Tensor[T] {
 		panic(err)
 	}
 	return t
+}
+
+// BroadcastMaximum performs element-wise maximum with broadcasting.
+func (a *Tensor[T]) BroadcastMaximum(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastMaximumForward[T](), BroadcastMaximumBackward[T]())
+}
+
+// MustBroadcastMaximum performs element-wise maximum with broadcasting, panicking on error.
+func (a *Tensor[T]) MustBroadcastMaximum(b *Tensor[T]) *Tensor[T] {
+	result, err := a.BroadcastMaximum(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// BroadcastMinimum performs element-wise minimum with broadcasting.
+func (a *Tensor[T]) BroadcastMinimum(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastMinimumForward[T](), BroadcastMinimumBackward[T]())
+}
+
+// MustBroadcastMinimum performs element-wise minimum with broadcasting, panicking on error.
+func (a *Tensor[T]) MustBroadcastMinimum(b *Tensor[T]) *Tensor[T] {
+	result, err := a.BroadcastMinimum(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // BroadcastEq performs broadcasted equality comparison: result = broadcast(a) == broadcast(b).
