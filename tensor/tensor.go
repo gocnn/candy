@@ -405,16 +405,29 @@ func (t *Tensor[T]) Detach() *Tensor[T] {
 }
 
 // Clone clones the tensor.
-func (t *Tensor[T]) Clone() *Tensor[T] {
+func (t *Tensor[T]) Clone() (*Tensor[T], error) {
+	storage, err := t.storage.Clone()
+	if err != nil {
+		return nil, err
+	}
 	return &Tensor[T]{
 		id:      NewID(),
-		storage: t.storage,
+		storage: storage,
 		layout:  t.layout.Clone(),
-		op:      nil,
-		isVar:   false,
+		op:      t.op,
+		isVar:   t.isVar,
 		dtype:   t.dtype,
 		device:  t.device,
+	}, nil
+}
+
+// MustClone clones, panics on error.
+func (t *Tensor[T]) MustClone() *Tensor[T] {
+	res, err := t.Clone()
+	if err != nil {
+		panic(err)
 	}
+	return res
 }
 
 // ToDtype converts to new dtype.
