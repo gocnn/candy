@@ -53,6 +53,24 @@ type BackendStorage[T D] interface {
 	// Ge performs element-wise greater-than-or-equal comparison of two tensors.
 	Ge(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
+	// EqU8 performs element-wise equality comparison of two tensors.
+	EqU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
+	// NeU8 performs element-wise not-equal comparison of two tensors.
+	NeU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
+	// LtU8 performs element-wise less-than comparison of two tensors.
+	LtU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
+	// LeU8 performs element-wise less-than-or-equal comparison of two tensors.
+	LeU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
+	// GtU8 performs element-wise greater-than comparison of two tensors.
+	GtU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
+	// GeU8 performs element-wise greater-than-or-equal comparison of two tensors.
+	GeU8(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[uint8], error)
+
 	// ToDtype performs type conversion to the specified target type.
 	ToDtype(layout *Layout, dtype DType) (any, error)
 

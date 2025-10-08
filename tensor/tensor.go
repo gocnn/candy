@@ -666,7 +666,7 @@ func (t *Tensor[T]) MustMinimum(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Eq compares equality element-wise (uint8 result).
+// Eq compares equality element-wise.
 func (t *Tensor[T]) Eq(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, EqForward[T](), EqBackward[T]())
 }
@@ -680,7 +680,7 @@ func (t *Tensor[T]) MustEq(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Ne compares inequality element-wise (uint8 result).
+// Ne compares inequality element-wise.
 func (t *Tensor[T]) Ne(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, NeForward[T](), NeBackward[T]())
 }
@@ -694,7 +694,7 @@ func (t *Tensor[T]) MustNe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Lt compares less-than element-wise (uint8 result).
+// Lt compares less-than element-wise.
 func (t *Tensor[T]) Lt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, LtForward[T](), LtBackward[T]())
 }
@@ -708,7 +708,7 @@ func (t *Tensor[T]) MustLt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Le compares less-equal element-wise (uint8 result).
+// Le compares less-equal element-wise.
 func (t *Tensor[T]) Le(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, LeForward[T](), LeBackward[T]())
 }
@@ -722,7 +722,7 @@ func (t *Tensor[T]) MustLe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Gt compares greater-than element-wise (uint8 result).
+// Gt compares greater-than element-wise.
 func (t *Tensor[T]) Gt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, GtForward[T](), GtBackward[T]())
 }
@@ -736,7 +736,7 @@ func (t *Tensor[T]) MustGt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Ge compares greater-equal element-wise (uint8 result).
+// Ge compares greater-equal element-wise.
 func (t *Tensor[T]) Ge(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, GeForward[T](), GeBackward[T]())
 }
@@ -834,7 +834,7 @@ func (t *Tensor[T]) MustBroadcastMinimum(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastEq equals with broadcast (uint8 result).
+// BroadcastEq equals with broadcast.
 func (t *Tensor[T]) BroadcastEq(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastEqForward[T](), BroadcastEqBackward[T]())
 }
@@ -848,7 +848,7 @@ func (t *Tensor[T]) MustBroadcastEq(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastNe not equals with broadcast (uint8 result).
+// BroadcastNe not equals with broadcast.
 func (t *Tensor[T]) BroadcastNe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastNeForward[T](), BroadcastNeBackward[T]())
 }
@@ -862,7 +862,7 @@ func (t *Tensor[T]) MustBroadcastNe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastLt less-than with broadcast (uint8 result).
+// BroadcastLt less-than with broadcast.
 func (t *Tensor[T]) BroadcastLt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastLtForward[T](), BroadcastLtBackward[T]())
 }
@@ -876,7 +876,7 @@ func (t *Tensor[T]) MustBroadcastLt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastLe less-equal with broadcast (uint8 result).
+// BroadcastLe less-equal with broadcast.
 func (t *Tensor[T]) BroadcastLe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastLeForward[T](), BroadcastLeBackward[T]())
 }
@@ -890,7 +890,7 @@ func (t *Tensor[T]) MustBroadcastLe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastGt greater-than with broadcast (uint8 result).
+// BroadcastGt greater-than with broadcast.
 func (t *Tensor[T]) BroadcastGt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastGtForward[T](), BroadcastGtBackward[T]())
 }
@@ -904,7 +904,7 @@ func (t *Tensor[T]) MustBroadcastGt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastGe greater-equal with broadcast (uint8 result).
+// BroadcastGe greater-equal with broadcast.
 func (t *Tensor[T]) BroadcastGe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastGeForward[T](), BroadcastGeBackward[T]())
 }

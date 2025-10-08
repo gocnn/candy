@@ -485,6 +485,216 @@ func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	return result, nil
 }
 
+// EqU8 performs element-wise equality comparison of two tensors.
+func (s *CpuStorage[T]) EqU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.EqStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// NeU8 performs element-wise not-equal comparison of two tensors.
+func (s *CpuStorage[T]) NeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.NeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// LtU8 performs element-wise less-than comparison of two tensors.
+func (s *CpuStorage[T]) LtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.LtStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// LeU8 performs element-wise less-than-or-equal comparison of two tensors.
+func (s *CpuStorage[T]) LeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.LeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// GtU8 performs element-wise greater-than comparison of two tensors.
+func (s *CpuStorage[T]) GtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.GtStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// GeU8 performs element-wise greater-than-or-equal comparison of two tensors.
+func (s *CpuStorage[T]) GeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.GeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
 // ToDtype performs type conversion to the specified target type.
 func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, error) {
 	if layout == nil {
