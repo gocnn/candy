@@ -53,13 +53,20 @@ func New[T spark.D](data []T, shape *spark.Shape, dev spark.Device) (*Tensor[T],
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// MustNew creates a tensor from an array and shape on the specified device, panicking on error.
-func MustNew[T spark.D](data []T, shape *spark.Shape, dev spark.Device) *Tensor[T] {
-	t, err := New[T](data, shape, dev)
-	if err != nil {
-		panic(err)
+// Full creates a tensor filled with the specified value.
+func Full[T spark.D](value float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
+	var storage spark.BackendStorage[T]
+	switch dev {
+	case spark.CPU:
+		var err error
+		storage, err = cpu.NewCpuDevice[T]().Full(shape, spark.DTypeOf[T](), value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create full: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
-	return t
+	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
 // Ones creates a tensor filled with ones.
@@ -78,15 +85,6 @@ func Ones[T spark.D](shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// MustOnes creates a tensor filled with ones, panicking on error.
-func MustOnes[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
-	t, err := Ones[T](shape, dev)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
 // Zeros creates a tensor filled with zeros.
 func Zeros[T spark.D](shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
 	var storage spark.BackendStorage[T]
@@ -101,15 +99,6 @@ func Zeros[T spark.D](shape *spark.Shape, dev spark.Device) (*Tensor[T], error) 
 		return nil, fmt.Errorf("unsupported device: %v", dev)
 	}
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
-}
-
-// MustZeros creates a tensor filled with zeros, panicking on error.
-func MustZeros[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
-	t, err := Zeros[T](shape, dev)
-	if err != nil {
-		panic(err)
-	}
-	return t
 }
 
 // Rand creates a tensor with values uniformly sampled between lo and up.
@@ -128,15 +117,6 @@ func Rand[T spark.D](lo, up float64, shape *spark.Shape, dev spark.Device) (*Ten
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// MustRand creates a tensor with values uniformly sampled between lo and up, panicking on error.
-func MustRand[T spark.D](lo, up float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
-	t, err := Rand[T](lo, up, shape, dev)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
 // RandN creates a tensor with values sampled from a normal distribution.
 func RandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
 	var storage spark.BackendStorage[T]
@@ -153,29 +133,13 @@ func RandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) (
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
-// MustRandN creates a tensor with values sampled from a normal distribution, panicking on error.
-func MustRandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
-	t, err := RandN[T](mean, std, shape, dev)
+// MustNew creates a tensor from an array and shape on the specified device, panicking on error.
+func MustNew[T spark.D](data []T, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := New[T](data, shape, dev)
 	if err != nil {
 		panic(err)
 	}
 	return t
-}
-
-// Full creates a tensor filled with the specified value.
-func Full[T spark.D](value float64, shape *spark.Shape, dev spark.Device) (*Tensor[T], error) {
-	var storage spark.BackendStorage[T]
-	switch dev {
-	case spark.CPU:
-		var err error
-		storage, err = cpu.NewCpuDevice[T]().Full(shape, spark.DTypeOf[T](), value)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create full: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unsupported device: %v", dev)
-	}
-	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), dev), nil
 }
 
 // MustFull creates a tensor filled with the specified value, panicking on error.
@@ -187,9 +151,45 @@ func MustFull[T spark.D](value float64, shape *spark.Shape, dev spark.Device) *T
 	return t
 }
 
-// ZerosLike creates a tensor with the same shape and device as t, filled with zeros.
-func (t *Tensor[T]) ZerosLike() (*Tensor[T], error) {
-	return Zeros[T](t.Shape(), t.device)
+// MustOnes creates a tensor filled with ones, panicking on error.
+func MustOnes[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Ones[T](shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustZeros creates a tensor filled with zeros, panicking on error.
+func MustZeros[T spark.D](shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Zeros[T](shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustRand creates a tensor with values uniformly sampled between lo and up, panicking on error.
+func MustRand[T spark.D](lo, up float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := Rand[T](lo, up, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustRandN creates a tensor with values sampled from a normal distribution, panicking on error.
+func MustRandN[T spark.D](mean, std float64, shape *spark.Shape, dev spark.Device) *Tensor[T] {
+	t, err := RandN[T](mean, std, shape, dev)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// FullLike creates a tensor with the same shape and device as t, filled with value.
+func (t *Tensor[T]) FullLike(value float64) (*Tensor[T], error) {
+	return Full[T](value, t.Shape(), t.device)
 }
 
 // OnesLike creates a tensor with the same shape and device as t, filled with ones.
@@ -197,9 +197,9 @@ func (t *Tensor[T]) OnesLike() (*Tensor[T], error) {
 	return Ones[T](t.Shape(), t.device)
 }
 
-// FullLike creates a tensor with the same shape and device as t, filled with value.
-func (t *Tensor[T]) FullLike(value float64) (*Tensor[T], error) {
-	return Full[T](value, t.Shape(), t.device)
+// ZerosLike creates a tensor with the same shape and device as t, filled with zeros.
+func (t *Tensor[T]) ZerosLike() (*Tensor[T], error) {
+	return Zeros[T](t.Shape(), t.device)
 }
 
 // RandLike creates a tensor with the same shape and device as t, with random values.
@@ -210,6 +210,51 @@ func (t *Tensor[T]) RandLike(lo, up float64) (*Tensor[T], error) {
 // RandNLike creates a tensor with the same shape and device as t, with normal-distributed values.
 func (t *Tensor[T]) RandNLike(mean, std float64) (*Tensor[T], error) {
 	return RandN[T](mean, std, t.Shape(), t.device)
+}
+
+// MustFullLike creates a tensor with the same shape and device as t, filled with value, panicking on error.
+func (t *Tensor[T]) MustFullLike(value float64) *Tensor[T] {
+	t, err := Full[T](value, t.Shape(), t.device)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustOnesLike creates a tensor with the same shape and device as t, filled with ones, panicking on error.
+func (t *Tensor[T]) MustOnesLike() *Tensor[T] {
+	t, err := Ones[T](t.Shape(), t.device)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustZerosLike creates a tensor with the same shape and device as t, filled with zeros, panicking on error.
+func (t *Tensor[T]) MustZerosLike() *Tensor[T] {
+	t, err := Zeros[T](t.Shape(), t.device)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustRandLike creates a tensor with the same shape and device as t, with random values, panicking on error.
+func (t *Tensor[T]) MustRandLike(lo, up float64) *Tensor[T] {
+	t, err := Rand[T](lo, up, t.Shape(), t.device)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MustRandNLike creates a tensor with the same shape and device as t, with normal-distributed values, panicking on error.
+func (t *Tensor[T]) MustRandNLike(mean, std float64) *Tensor[T] {
+	t, err := RandN[T](mean, std, t.Shape(), t.device)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 // ID returns the tensor's unique identifier.

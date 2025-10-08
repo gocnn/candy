@@ -18,6 +18,28 @@ func MatMulF64(m, n, k int, a, b, c []float64) {
 	blas64.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0, a, k, b, n, 0.0, c, n)
 }
 
+// MatMulBatchedF32 performs batched matrix multiplication for float32: C[i] = A[i] * B[i]
+func MatMulBatchedF32(b, m, n, k int, a, bMat, c []float32) {
+	for i := range b {
+		aOffset := i * m * k
+		bOffset := i * k * n
+		cOffset := i * m * n
+		blas32.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0,
+			a[aOffset:], k, bMat[bOffset:], n, 0.0, c[cOffset:], n)
+	}
+}
+
+// MatMulBatchedF64 performs batched matrix multiplication for float64: C[i] = A[i] * B[i]
+func MatMulBatchedF64(b, m, n, k int, a, bMat, c []float64) {
+	for i := range b {
+		aOffset := i * m * k
+		bOffset := i * k * n
+		cOffset := i * m * n
+		blas64.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0,
+			a[aOffset:], k, bMat[bOffset:], n, 0.0, c[cOffset:], n)
+	}
+}
+
 // NaiveMatMul performs matrix multiplication for any numeric type using direct loops
 func NaiveMatMul[T D](m, n, k int, a, b, c []T) {
 	// C[i,j] = sum(A[i,l] * B[l,j]) for l in [0,k)
