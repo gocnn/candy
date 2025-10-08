@@ -1787,6 +1787,66 @@ func UpsampleNearest2dBackward[T spark.D](h, w int) BackwardFunc[T] {
 	}
 }
 
+// SumDimForward returns a ForwardFunc for summing along specified dimensions.
+func SumDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		d, err := spark.ResolveAxes(dims, x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dims: %w", err)
+		}
+		data, err := x.storage.Sum(x.layout, d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sum: %w", err)
+		}
+		s := make([]int, len(x.Dims()))
+		copy(s, x.Dims())
+		for _, i := range d {
+			s[i] = 1
+		}
+		shape := spark.NewShapeFrom(s)
+		r := NewFrom(data, spark.Contiguous(shape), x.dtype, x.device)
+		if keepdim {
+			return r, nil
+		}
+		return r.SqueezeDims(d)
+	}
+}
+
+// SumDimBackward returns a BackwardFunc for sum gradients.
+func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0].Detach()
+		d, err := spark.ResolveAxes(dims, x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dims: %w", err)
+		}
+		r := g
+		if !keepdim {
+			s := make([]int, len(x.Dims()))
+			copy(s, x.Dims())
+			for _, i := range d {
+				s[i] = 1
+			}
+			r, err = g.Reshape(s...)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reshape: %w", err)
+			}
+		}
+		dx, err := r.BroadcastAs(x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
 // SoftmaxForward returns a ForwardFunc for softmax along the last dimension.
 func SoftmaxForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
@@ -2980,66 +3040,6 @@ func SignBackward[T spark.D]() BackwardFunc[T] {
 		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
-		}
-		return []*Tensor[T]{dx}, nil
-	}
-}
-
-// SumDimForward returns a ForwardFunc for summing along specified dimensions.
-func SumDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
-	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
-		if len(inputs) != 1 {
-			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
-		}
-		x := inputs[0]
-		d, err := spark.ResolveAxes(dims, x.Shape())
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve dims: %w", err)
-		}
-		data, err := x.storage.Sum(x.layout, d)
-		if err != nil {
-			return nil, fmt.Errorf("failed to sum: %w", err)
-		}
-		s := make([]int, len(x.Dims()))
-		copy(s, x.Dims())
-		for _, i := range d {
-			s[i] = 1
-		}
-		shape := spark.NewShapeFrom(s)
-		r := NewFrom(data, spark.Contiguous(shape), x.dtype, x.device)
-		if keepdim {
-			return r, nil
-		}
-		return r.SqueezeDims(d)
-	}
-}
-
-// SumDimBackward returns a BackwardFunc for sum gradients.
-func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
-	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
-		if len(inputs) != 1 {
-			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
-		}
-		x := inputs[0].Detach()
-		d, err := spark.ResolveAxes(dims, x.Shape())
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve dims: %w", err)
-		}
-		r := g
-		if !keepdim {
-			s := make([]int, len(x.Dims()))
-			copy(s, x.Dims())
-			for _, i := range d {
-				s[i] = 1
-			}
-			r, err = g.Reshape(s...)
-			if err != nil {
-				return nil, fmt.Errorf("failed to reshape: %w", err)
-			}
-		}
-		dx, err := r.BroadcastAs(x.Shape())
-		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
