@@ -1,6 +1,10 @@
 package tensor
 
-import "github.com/gocnn/spark"
+import (
+	"fmt"
+
+	"github.com/gocnn/spark"
+)
 
 // GradStore maps tensor IDs to their gradient tensors for backpropagation.
 type GradStore[T spark.D] struct {
@@ -26,7 +30,11 @@ func (s *GradStore[T]) Get(t *Tensor[T]) *Tensor[T] {
 func (s *GradStore[T]) GetOrCreate(t *Tensor[T]) (*Tensor[T], error) {
 	id := t.ID()
 	if _, ok := s.m[id]; !ok {
-		s.m[id] = t.ZerosLike()
+		zero, err := t.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("create zero tensor: %w", err)
+		}
+		s.m[id] = zero
 	}
 	return s.m[id], nil
 }
@@ -78,7 +86,11 @@ func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
 	}
 
 	if store.Get(root) == nil {
-		store.Set(root, Ones[T](root.Layout().Shape(), root.Device()))
+		one, err := Ones[T](root.Layout().Shape(), root.Device())
+		if err != nil {
+			return fmt.Errorf("create ones tensor: %w", err)
+		}
+		store.Set(root, one)
 	}
 
 	vars := make(map[TensorId]*Tensor[T])

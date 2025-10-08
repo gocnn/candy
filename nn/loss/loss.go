@@ -7,277 +7,187 @@ import (
 	"github.com/gocnn/spark/tensor"
 )
 
-// // NLL computes the negative log likelihood loss.
-// //
-// // Arguments:
-// //   - inp: Input tensor of dimensions [N, C] where N is batch size and C is number of categories.
-// //     Expected to contain log probabilities.
-// //   - target: Ground truth labels as tensor of uint32 of dimension [N].
-// //
-// // Returns a scalar tensor containing the average value over the batch.
-// func NLL[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-// 	inpShape := inp.Layout().Shape()
-// 	targetShape := target.Layout().Shape()
-
-// 	// Validate target shape: should be [batch_size]
-// 	if targetShape.Rank() != 1 {
-// 		return nil, fmt.Errorf("target tensor should have a single dimension, got %v", targetShape)
+// // NLL computes the negative log likelihood loss for log probabilities.
+// func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+// 	xs, ys := x.Shape(), y.Shape()
+// 	if ys.Rank() != 1 {
+// 		return nil, fmt.Errorf("target must be 1D, got %dD", ys.Rank())
 // 	}
-// 	batchSize := targetShape.Dim(0)
-
-// 	// Validate input shape: should be [batch_size, num_classes]
-// 	if inpShape.Rank() != 2 {
-// 		return nil, fmt.Errorf("input tensor should have two dimensions, got %v", inpShape)
+// 	n := ys.Dim(0)
+// 	if xs.Rank() != 2 || xs.Dim(0) != n {
+// 		return nil, fmt.Errorf("input must be 2D with batch size %d, got shape %v", n, xs)
 // 	}
-// 	if inpShape.Dim(0) != batchSize {
-// 		return nil, fmt.Errorf("batch size mismatch between input (%d) and target (%d)",
-// 			inpShape.Dim(0), batchSize)
-// 	}
-
-// 	// Gather operation: inp.gather(target.unsqueeze(1), dim=1)
-// 	targetUnsqueezed, err := target.Unsqueeze(1)
+// 	yt, err := y.Unsqueeze(1)
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to unsqueeze target: %w", err)
 // 	}
-
-// 	gathered, err := inp.Gather(targetUnsqueezed, 1)
+// 	g, err := x.Gather(yt, 1)
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to gather: %w", err)
 // 	}
-
-// 	// Sum all elements
-// 	summed, err := gathered.SumAll()
+// 	s, err := g.SumAll()
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to sum: %w", err)
 // 	}
-
-// 	// Apply affine transformation: -1/batch_size * sum + 0
-// 	scale := -1.0 / float64(batchSize)
-// 	result, err := summed.Affine(scale, 0.0)
+// 	m, err := s.Affine(-1.0/float64(n), 0)
 // 	if err != nil {
-// 		return nil, fmt.Errorf("failed to apply affine transformation: %w", err)
+// 		return nil, fmt.Errorf("failed to scale: %w", err)
 // 	}
-
-// 	return result, nil
+// 	return m, nil
 // }
 
-// // CrossEntropy computes the cross-entropy loss.
-// //
-// // Arguments:
-// //   - inp: Input tensor of dimensions [N, C] where N is batch size and C is number of categories.
-// //     Expected to contain raw logits.
-// //   - target: Ground truth labels as tensor of uint32 of dimension [N].
-// //
-// // Returns a scalar tensor containing the average value over the batch.
-// func CrossEntropy[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-// 	if inp.Layout().Shape().Rank() != 2 {
-// 		return nil, fmt.Errorf("cross_entropy expects an input tensor of rank 2, got %d",
-// 			inp.Layout().Shape().Rank())
+// // CrossEntropy computes the cross-entropy loss for logits.
+// func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+// 	if x.Rank() != 2 {
+// 		return nil, fmt.Errorf("input must be 2D, got %dD", x.Rank())
 // 	}
-
-// 	// Apply log_softmax to input along dimension 1
-// 	logSoftmax, err := inp.LogSoftmax(1)
+// 	z, err := x.LogSoftmax(1)
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
 // 	}
-
-// 	// Compute NLL loss
-// 	return NLL(logSoftmax, target)
+// 	return NLL(z, y)
 // }
 
-// MSE computes the mean squared error loss.
-//
-// Arguments:
-// - inp: Input tensor
-// - target: Target tensor (same shape as input)
-//
-// Returns a scalar tensor containing the mean squared error.
-func MSE[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	// Compute (inp - target)
-	diff, err := inp.Sub(target)
+// MSE computes the mean squared error loss between input and target.
+func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	diff, err := x.Sub(y)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute difference: %w", err)
+		return nil, fmt.Errorf("failed to compute x - y: %w", err)
 	}
-
-	// Square the difference
-	squared, err := diff.Sqr()
+	sqr, err := diff.Sqr()
 	if err != nil {
 		return nil, fmt.Errorf("failed to square: %w", err)
 	}
-
-	// Compute mean over all elements
-	mean, err := squared.MeanAll()
+	mean, err := sqr.MeanAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
-
 	return mean, nil
 }
 
-// BinaryCrossEntropyWithLogits computes the binary cross-entropy loss with logits.
-//
-// Arguments:
-//   - inp: Input tensor of dimensions [N, C] where N is batch size and C is number of categories.
-//     Expected to contain raw logits.
-//   - target: Ground truth labels as tensor of dimension [N, C] where N is batch size and C is number of categories.
-//
-// Returns a scalar tensor containing the average value over the batch.
-func BinaryCrossEntropyWithLogits[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	// Apply sigmoid to input
-	sigmoid, err := inp.Sigmoid()
+// BCE computes the binary cross-entropy loss for logits.
+func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	// Stable formula: BCE = 1/N * Σ [max(x,0) - x*y + log(1 + exp(-|x|))]
+	zero, err := tensor.Full[T](0.0, x.Shape(), x.Device())
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
+		return nil, fmt.Errorf("failed to create zero tensor: %w", err)
 	}
-
-	// Compute log of sigmoid
-	sigmoidLog, err := sigmoid.Log()
+	c, err := x.Gt(zero)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute log of sigmoid: %w", err)
+		return nil, fmt.Errorf("failed to compute condition: %w", err)
 	}
-
-	// Left side: target * log(sigmoid(inp))
-	leftSide, err := target.Mul(sigmoidLog)
+	m, err := c.WhereCond(x, zero) // max(x, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute left side: %w", err)
+		return nil, fmt.Errorf("failed to compute max(x, 0): %w", err)
 	}
-
-	// Compute (1 - target)
-	oneMinusTarget, err := target.Affine(-1.0, 1.0)
+	p, err := x.Mul(y) // x*y
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute (1 - target): %w", err)
+		return nil, fmt.Errorf("failed to compute x*y: %w", err)
 	}
-
-	// Compute (1 - sigmoid(inp))
-	oneMinusSigmoid, err := sigmoid.Affine(-1.0, 1.0)
+	a, err := x.Abs() // |x|
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute (1 - sigmoid): %w", err)
+		return nil, fmt.Errorf("failed to compute |x|: %w", err)
 	}
-
-	// Compute log(1 - sigmoid(inp))
-	oneMinusSigmoidLog, err := oneMinusSigmoid.Log()
+	n, err := a.Neg() // -|x|
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute log(1 - sigmoid): %w", err)
+		return nil, fmt.Errorf("failed to compute -|x|: %w", err)
 	}
-
-	// Right side: (1 - target) * log(1 - sigmoid(inp))
-	rightSide, err := oneMinusTarget.Mul(oneMinusSigmoidLog)
+	e, err := n.Exp() // exp(-|x|)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute right side: %w", err)
+		return nil, fmt.Errorf("failed to compute exp(-|x|): %w", err)
 	}
-
-	// Combine: left_side + right_side
-	combined, err := leftSide.Add(rightSide)
+	one, err := tensor.Full[T](1.0, e.Shape(), e.Device())
 	if err != nil {
-		return nil, fmt.Errorf("failed to combine sides: %w", err)
+		return nil, fmt.Errorf("failed to create one tensor: %w", err)
 	}
-
-	// Negate the result
-	negated, err := combined.Neg()
+	t, err := one.Add(e) // 1 + exp(-|x|)
 	if err != nil {
-		return nil, fmt.Errorf("failed to negate: %w", err)
+		return nil, fmt.Errorf("failed to compute 1 + exp(-|x|): %w", err)
 	}
-
-	// Compute mean over all elements
-	loss, err := negated.MeanAll()
+	l, err := t.Log() // log(1 + exp(-|x|))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute log(1 + exp(-|x|)): %w", err)
+	}
+	z, err := m.Sub(p) // max(x, 0) - x*y
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute max(x, 0) - x*y: %w", err)
+	}
+	s, err := z.Add(l) // max(x, 0) - x*y + log(1 + exp(-|x|))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute sum: %w", err)
+	}
+	mn, err := s.MeanAll() // 1/N * Σ
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
-
-	return loss, nil
+	return mn, nil
 }
 
-// L1Loss computes the L1 (Mean Absolute Error) loss.
-//
-// Arguments:
-// - inp: Input tensor
-// - target: Target tensor (same shape as input)
-//
-// Returns a scalar tensor containing the mean absolute error.
-func L1Loss[T spark.D](inp, target *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	// Compute (inp - target)
-	diff, err := inp.Sub(target)
+// L1Loss computes the L1 (mean absolute error) loss between input and target.
+func L1Loss[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	diff, err := x.Sub(y)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute difference: %w", err)
+		return nil, fmt.Errorf("failed to compute x - y: %w", err)
 	}
-
-	// Take absolute value
 	abs, err := diff.Abs()
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute absolute value: %w", err)
+		return nil, fmt.Errorf("failed to compute abs: %w", err)
 	}
-
-	// Compute mean over all elements
 	mean, err := abs.MeanAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
-
 	return mean, nil
 }
 
-// // SmoothL1Loss computes the Smooth L1 loss (Huber loss).
-// //
-// // Arguments:
-// // - inp: Input tensor
-// // - target: Target tensor (same shape as input)
-// // - beta: Threshold for switching between L1 and L2 loss (default: 1.0)
-// //
-// // Returns a scalar tensor containing the smooth L1 loss.
-// func SmoothL1Loss[T spark.D](inp, target *tensor.Tensor[T], beta float64) (*tensor.Tensor[T], error) {
-// 	if beta <= 0 {
-// 		beta = 1.0
-// 	}
-
-// 	// Compute absolute difference
-// 	diff, err := inp.Sub(target)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute difference: %w", err)
-// 	}
-
-// 	absDiff, err := diff.Abs()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute absolute difference: %w", err)
-// 	}
-
-// 	// Create condition: |diff| < beta
-// 	betaTensor := absDiff.ZerosLike()
-// 	betaTensor, err = betaTensor.AddScalar(beta)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to add beta: %w", err)
-// 	}
-
-// 	condition, err := absDiff.Lt(betaTensor)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute condition: %w", err)
-// 	}
-
-// 	// L2 part: 0.5 * diff^2 / beta
-// 	diffSqr, err := diff.Sqr()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to square difference: %w", err)
-// 	}
-// 	l2Part, err := diffSqr.MulScalar(0.5 / beta)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute L2 part: %w", err)
-// 	}
-
-// 	// L1 part: |diff| - 0.5 * beta
-// 	l1Part, err := absDiff.AddScalar(-0.5 * beta)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute L1 part: %w", err)
-// 	}
-
-// 	// Select between L2 and L1 based on condition
-// 	result, err := condition.WhereCond(l2Part, l1Part)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to select loss: %w", err)
-// 	}
-
-// 	// Compute mean
-// 	mean, err := result.MeanAll()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute mean: %w", err)
-// 	}
-
-// 	return mean, nil
-// }
+// SmoothL1Loss computes the Smooth L1 (Huber) loss between input and target.
+func SmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tensor[T], error) {
+	if beta <= 0 {
+		beta = 1.0
+	}
+	d, err := x.Sub(y)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute x - y: %w", err)
+	}
+	a, err := d.Abs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute abs: %w", err)
+	}
+	b, err := tensor.Full[T](beta, a.Shape(), a.Device())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create beta tensor: %w", err)
+	}
+	c, err := a.Lt(b)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute condition: %w", err)
+	}
+	s, err := d.Sqr()
+	if err != nil {
+		return nil, fmt.Errorf("failed to square: %w", err)
+	}
+	b, err = tensor.Full[T](0.5/beta, s.Shape(), s.Device())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create scale: %w", err)
+	}
+	q, err := s.Mul(b)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute quadratic part: %w", err)
+	}
+	b, err = tensor.Full[T](-0.5*beta, a.Shape(), a.Device())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create offset: %w", err)
+	}
+	l, err := a.Add(b)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute linear part: %w", err)
+	}
+	z, err := c.WhereCond(q, l)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select loss: %w", err)
+	}
+	m, err := z.MeanAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
+	return m, nil
+}

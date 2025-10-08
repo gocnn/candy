@@ -24,11 +24,18 @@ func NewLinear[T spark.D](weight *tensor.Tensor[T], bias *tensor.Tensor[T]) *Lin
 // NewLinearLayer creates a linear layer with random initialization
 func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device) *Linear[T] {
 	bound := 1.0 / float64(inDim)
-	weight := tensor.RandN[T](0.0, bound, spark.NewShape(outDim, inDim), device)
+	weight, err := tensor.RandN[T](0.0, bound, spark.NewShape(outDim, inDim), device)
+	if err != nil {
+		panic(err)
+	}
 
 	var biasT *tensor.Tensor[T]
 	if bias {
-		biasT = tensor.Rand[T](-bound, bound, spark.NewShape(outDim), device)
+		var err error
+		biasT, err = tensor.Rand[T](-bound, bound, spark.NewShape(outDim), device)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return NewLinear(weight, biasT)
