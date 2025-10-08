@@ -111,6 +111,32 @@ func (t *Tensor[T]) formatFloat(v T) string {
 		}
 		return "-inf"
 	}
+
+	// Use scientific notation for very large or very small numbers
+	absF := math.Abs(f)
+	if absF != 0 && (absF >= 1e8 || absF < 1e-4) {
+		s := fmt.Sprintf("%.4e", f)
+		// Clean up scientific notation: remove trailing zeros in mantissa
+		if idx := strings.Index(s, "e"); idx != -1 {
+			mantissa := s[:idx]
+			exponent := s[idx:]
+			mantissa = strings.TrimRight(mantissa, "0")
+			mantissa = strings.TrimRight(mantissa, ".")
+			return mantissa + exponent
+		}
+		return s
+	}
+
+	// Use regular decimal notation for normal range numbers
 	s := fmt.Sprintf("%.4f", f)
-	return strings.TrimRight(s, "0")
+	s = strings.TrimRight(s, "0")
+	// Preserve decimal point for floats (PyTorch style: 1. not 1)
+	if strings.HasSuffix(s, ".") {
+		return s
+	}
+	// If we trimmed all decimal places, add back the decimal point
+	if !strings.Contains(s, ".") {
+		return s + "."
+	}
+	return s
 }
