@@ -510,6 +510,65 @@ func (t *Tensor[T]) MustAffine(scale, bias float64) *Tensor[T] {
 	return result
 }
 
+// AddScalar performs tensor + scalar operation using affine(1, scalar).
+func (t *Tensor[T]) AddScalar(scalar float64) (*Tensor[T], error) {
+	return t.Affine(1.0, scalar)
+}
+
+// MustAddScalar performs tensor + scalar operation, panicking on error.
+func (t *Tensor[T]) MustAddScalar(scalar float64) *Tensor[T] {
+	result, err := t.AddScalar(scalar)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// SubScalar performs tensor - scalar operation using affine(1, -scalar).
+func (t *Tensor[T]) SubScalar(scalar float64) (*Tensor[T], error) {
+	return t.Affine(1.0, -scalar)
+}
+
+// MustSubScalar performs tensor - scalar operation, panicking on error.
+func (t *Tensor[T]) MustSubScalar(scalar float64) *Tensor[T] {
+	result, err := t.SubScalar(scalar)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MulScalar performs tensor * scalar operation using affine(scalar, 0).
+func (t *Tensor[T]) MulScalar(scalar float64) (*Tensor[T], error) {
+	return t.Affine(scalar, 0.0)
+}
+
+// MustMulScalar performs tensor * scalar operation, panicking on error.
+func (t *Tensor[T]) MustMulScalar(scalar float64) *Tensor[T] {
+	result, err := t.MulScalar(scalar)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// DivScalar performs tensor / scalar operation using affine(1/scalar, 0).
+func (t *Tensor[T]) DivScalar(scalar float64) (*Tensor[T], error) {
+	if scalar == 0.0 {
+		return nil, fmt.Errorf("division by zero")
+	}
+	return t.Affine(1.0/scalar, 0.0)
+}
+
+// MustDivScalar performs tensor / scalar operation, panicking on error.
+func (t *Tensor[T]) MustDivScalar(scalar float64) *Tensor[T] {
+	result, err := t.DivScalar(scalar)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Add performs element-wise addition of two tensors.
 func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T](), AddBackward[T]())

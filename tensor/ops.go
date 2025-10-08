@@ -98,11 +98,7 @@ func AffineBackward[T spark.D](scale, bias float64) BackwardFunc[T] {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		s, err := Full[T](scale, g.Shape(), g.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create scale: %w", err)
-		}
-		dx, err := g.Mul(s)
+		dx, err := g.MulScalar(scale)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1637,12 +1633,7 @@ func AvgPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to upsample grad: %w", err)
 		}
-		scale := 1.0 / float64(kH*kW)
-		scaleTensor, err := Full[T](scale, dx.Shape(), dx.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create scale tensor: %w", err)
-		}
-		dx, err = dx.Mul(scaleTensor)
+		dx, err = dx.MulScalar(1.0 / float64(kH*kW))
 		if err != nil {
 			return nil, fmt.Errorf("failed to scale grad: %w", err)
 		}
@@ -1775,11 +1766,7 @@ func UpsampleNearest2dBackward[T spark.D](h, w int) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to avgpool grad: %w", err)
 		}
-		s, err := Full[T](float64(sh*sw), p.Shape(), p.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create scale: %w", err)
-		}
-		dx, err := p.Mul(s)
+		dx, err := p.MulScalar(float64(sh * sw))
 		if err != nil {
 			return nil, fmt.Errorf("failed to scale grad: %w", err)
 		}
@@ -1866,11 +1853,7 @@ func MeanDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to sum: %w", err)
 		}
-		r, err := Full[T](float64(n), s.Shape(), s.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create divisor: %w", err)
-		}
-		m, err := s.Div(r)
+		m, err := s.DivScalar(float64(n))
 		if err != nil {
 			return nil, fmt.Errorf("failed to divide: %w", err)
 		}
@@ -1893,11 +1876,7 @@ func MeanDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 		for _, i := range d {
 			n *= x.Dims()[i]
 		}
-		r, err := Full[T](1.0/float64(n), g.Shape(), g.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create grad: %w", err)
-		}
-		m, err := g.Mul(r)
+		m, err := g.MulScalar(1.0 / float64(n))
 		if err != nil {
 			return nil, fmt.Errorf("failed to scale: %w", err)
 		}
@@ -2242,21 +2221,13 @@ func RecipBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		r, err := Full[T](1, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
-		}
-		r, err = r.Div(x2)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1/x²: %w", err)
-		}
-		r, err = r.Neg()
-		if err != nil {
-			return nil, fmt.Errorf("failed to negate: %w", err)
-		}
-		dx, err := g.Mul(r)
+		dx, err := g.Div(x2)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
+		}
+		dx, err = dx.Neg()
+		if err != nil {
+			return nil, fmt.Errorf("failed to negate dx: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -2318,15 +2289,7 @@ func LogBackward[T spark.D]() BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		r, err := Full[T](1, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
-		}
-		r, err = r.Div(x)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1/x: %w", err)
-		}
-		dx, err := g.Mul(r)
+		dx, err := g.Div(x)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2436,13 +2399,13 @@ func TanhBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute tanh²: %w", err)
 		}
-		d, err := Full[T](1, x.Shape(), x.Device())
+		d, err := t2.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		d, err = d.Sub(t2)
+		d, err = d.AddScalar(1.0)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1-tanh²: %w", err)
+			return nil, fmt.Errorf("failed to add one: %w", err)
 		}
 		dx, err := g.Mul(d)
 		if err != nil {
@@ -2486,13 +2449,9 @@ func ErfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		c, err := Full[T](1.1283791670955126, x.Shape(), x.Device()) // 2/√π
+		d, err := e.MulScalar(1.1283791670955126) // (2/√π) * exp(-x²)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create coeff: %w", err)
-		}
-		d, err := c.Mul(e)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute deriv: %w", err)
+			return nil, fmt.Errorf("failed to scale: %w", err)
 		}
 		dx, err := g.Mul(d)
 		if err != nil {
@@ -2615,11 +2574,7 @@ func NormcdfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		h, err := Full[T](0.5, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create half: %w", err)
-		}
-		n, err := x2.Mul(h)
+		n, err := x2.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²/2: %w", err)
 		}
@@ -2631,13 +2586,9 @@ func NormcdfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		c, err := Full[T](0.3989422804014327, x.Shape(), x.Device()) // 1/√(2π)
+		d, err := e.MulScalar(0.3989422804014327) // (1/√(2π)) * exp(-x²/2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create coeff: %w", err)
-		}
-		d, err := c.Mul(e)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute deriv: %w", err)
+			return nil, fmt.Errorf("failed to scale: %w", err)
 		}
 		dx, err := g.Mul(d)
 		if err != nil {
@@ -2703,11 +2654,7 @@ func SqrBackward[T spark.D]() BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		d, err := Full[T](2, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create two: %w", err)
-		}
-		d, err = d.Mul(x)
+		d, err := x.MulScalar(2.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 2x: %w", err)
 		}
@@ -2745,11 +2692,7 @@ func SqrtBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sqrt: %w", err)
 		}
-		d, err := Full[T](2, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create two: %w", err)
-		}
-		d, err = d.Mul(s)
+		d, err := s.MulScalar(2.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 2√x: %w", err)
 		}
@@ -2783,10 +2726,6 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		c, err := Full[T](0.044715, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create coeff: %w", err)
-		}
 		x2, err := x.Sqr()
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
@@ -2795,7 +2734,7 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x³: %w", err)
 		}
-		cx3, err := c.Mul(x3)
+		cx3, err := x3.MulScalar(0.044715)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute c*x³: %w", err)
 		}
@@ -2803,11 +2742,7 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x+c*x³: %w", err)
 		}
-		s, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // √(2/π)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create sqrt2/pi: %w", err)
-		}
-		a, err := s.Mul(i)
+		a, err := i.MulScalar(0.7978845608028654) // √(2/π)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute a: %w", err)
 		}
@@ -2815,19 +2750,11 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute tanh: %w", err)
 		}
-		o, err := Full[T](1, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
-		}
-		p, err := o.Add(t)
+		p, err := t.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1+tanh: %w", err)
 		}
-		h, err := Full[T](0.5, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create half: %w", err)
-		}
-		f, err := h.Mul(p)
+		f, err := p.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute first: %w", err)
 		}
@@ -2835,27 +2762,23 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute tanh²: %w", err)
 		}
-		o, err = o.Sub(t2)
+		o, err := t2.Neg()
+		if err != nil {
+			return nil, fmt.Errorf("failed to negate: %w", err)
+		}
+		o, err = o.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sech²: %w", err)
 		}
-		n, err := Full[T](3, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create three: %w", err)
-		}
-		n, err = n.Mul(c)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute 3*c: %w", err)
-		}
-		n, err = n.Mul(x2)
+		n, err := x2.MulScalar(0.134145) // 3*c
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 3*c*x²: %w", err)
 		}
-		n, err = o.Add(n)
+		n, err = n.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1+3*c*x²: %w", err)
 		}
-		r, err := h.Mul(x)
+		r, err := x.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute half*x: %w", err)
 		}
@@ -2863,7 +2786,7 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sech² term: %w", err)
 		}
-		r, err = r.Mul(s)
+		r, err = r.MulScalar(0.7978845608028654)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sqrt2/pi term: %w", err)
 		}
@@ -2905,19 +2828,7 @@ func GeluErfBackward[T spark.D]() BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		h, err := Full[T](0.5, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create half: %w", err)
-		}
-		o, err := Full[T](1, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
-		}
-		s, err := Full[T](1.4142135623730951, x.Shape(), x.Device()) // √2
-		if err != nil {
-			return nil, fmt.Errorf("failed to create sqrt2: %w", err)
-		}
-		xs, err := x.Div(s)
+		xs, err := x.DivScalar(1.4142135623730951) // x/√2
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x/√2: %w", err)
 		}
@@ -2925,11 +2836,11 @@ func GeluErfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute erf: %w", err)
 		}
-		p, err := o.Add(e)
+		p, err := e.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1+erf: %w", err)
 		}
-		f, err := h.Mul(p)
+		f, err := p.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute first: %w", err)
 		}
@@ -2937,7 +2848,7 @@ func GeluErfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		x2, err = x2.Mul(h)
+		x2, err = x2.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²/2: %w", err)
 		}
@@ -2949,15 +2860,11 @@ func GeluErfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		c, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // 2/√(2π)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create coeff: %w", err)
-		}
-		r, err := h.Mul(x)
+		r, err := x.MulScalar(0.5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute half*x: %w", err)
 		}
-		r, err = r.Mul(c)
+		r, err = r.MulScalar(0.7978845608028654)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute coeff term: %w", err)
 		}
@@ -2999,7 +2906,7 @@ func ReluBackward[T spark.D]() BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		z, err := Full[T](0, x.Shape(), x.Device())
+		z, err := Zeros[T](x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zero: %w", err)
 		}
@@ -3041,7 +2948,7 @@ func EluBackward[T spark.D](alpha float64) BackwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		z, err := Full[T](0, x.Shape(), x.Device())
+		z, err := Zeros[T](x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zero: %w", err)
 		}
@@ -3049,7 +2956,7 @@ func EluBackward[T spark.D](alpha float64) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute mask: %w", err)
 		}
-		o, err := Full[T](1, x.Shape(), x.Device())
+		o, err := Ones[T](x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
@@ -3057,11 +2964,7 @@ func EluBackward[T spark.D](alpha float64) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		a, err := Full[T](alpha, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create alpha: %w", err)
-		}
-		ae, err := a.Mul(e)
+		ae, err := e.MulScalar(alpha)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute alpha*exp: %w", err)
 		}
@@ -3103,11 +3006,11 @@ func SiluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
 		}
-		o, err := Full[T](1, x.Shape(), x.Device())
+		n, err := s.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		n, err := o.Sub(s)
+		n, err = n.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1-sigmoid: %w", err)
 		}
@@ -3157,11 +3060,7 @@ func PowfBackward[T spark.D](p float64) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x^(param-1): %w", err)
 		}
-		d, err := Full[T](p, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create param: %w", err)
-		}
-		d, err = d.Mul(e)
+		d, err := e.MulScalar(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
@@ -3199,11 +3098,11 @@ func SigmoidBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
 		}
-		o, err := Full[T](1, x.Shape(), x.Device())
+		n, err := s.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		n, err := o.Sub(s)
+		n, err = n.AddScalar(1.0)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1-sigmoid: %w", err)
 		}
