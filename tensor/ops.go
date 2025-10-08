@@ -1494,7 +1494,7 @@ func ConvTranspose2dBackward[T spark.D](params *spark.ConvT2DParams) BackwardFun
 }
 
 // AvgPool2dForward returns a ForwardFunc for 2D average pooling.
-func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
+func AvgPool2dForward[T spark.D](kH, kW, sH, sW int) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1503,8 +1503,20 @@ func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
 		if x.Rank() != 4 {
 			return nil, fmt.Errorf("tensor must be 4D, got %dD", x.Rank())
 		}
-		shape := spark.NewShapeFrom([]int{params.Batch, params.Ch, params.OutH(), params.OutW()})
-		data, err := x.storage.AvgPool2d(x.layout, params)
+		b, c, h, w, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("expected 4D tensor for avg_pool2d, got: %w", err)
+		}
+		if h < kH || w < kW {
+			return nil, fmt.Errorf("kernel size (%d,%d) larger than input (%d,%d)", kH, kW, h, w)
+		}
+		if kH <= 0 || kW <= 0 || sH <= 0 || sW <= 0 {
+			return nil, fmt.Errorf("kernel and stride must be positive")
+		}
+		hOut := (h-kH)/sH + 1
+		wOut := (w-kW)/sW + 1
+		shape := spark.NewShapeFrom([]int{b, c, hOut, wOut})
+		data, err := x.storage.AvgPool2d(x.layout, kH, kW, sH, sW)
 		if err != nil {
 			return nil, fmt.Errorf("failed to avgpool2d: %w", err)
 		}
@@ -1513,22 +1525,20 @@ func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
 }
 
 // AvgPool2dBackward returns a BackwardFunc for 2D average pooling gradients.
-func AvgPool2dBackward[T spark.D](params *spark.Pool2DParams) BackwardFunc[T] {
+func AvgPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		if params.KH != params.HStride || params.KW != params.WStride {
-			return nil, fmt.Errorf("kernel size must equal stride: kh=%d, stride_h=%d, kw=%d, stride_w=%d",
-				params.KH, params.HStride, params.KW, params.WStride)
-		}
 		x := inputs[0].Detach()
-		dims := x.Dims()
-		batch, ch, h, w := dims[0], dims[1], dims[2], dims[3]
+		b, c, h, w, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("expected 4D tensor for avg_pool2d, got: %w", err)
+		}
 		outH, outW := grad.Dims()[2], grad.Dims()[3]
 		upsampleParams := &spark.UpsampleParams{
-			Batch:  batch,
-			Ch:     ch,
+			Batch:  b,
+			Ch:     c,
 			InH:    outH,
 			InW:    outW,
 			HOut:   h,
@@ -1540,7 +1550,7 @@ func AvgPool2dBackward[T spark.D](params *spark.Pool2DParams) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to upsample grad: %w", err)
 		}
-		scale := 1.0 / float64(params.KH*params.KW)
+		scale := 1.0 / float64(kH*kW)
 		scaleTensor, err := Full[T](scale, dx.Shape(), dx.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create scale tensor: %w", err)

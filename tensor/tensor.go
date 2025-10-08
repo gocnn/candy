@@ -317,6 +317,36 @@ func (t *Tensor[T]) Dim(dim int) int {
 	return t.layout.Dim(dim)
 }
 
+// Dims0 checks if the shape has 0 dimensions (scalar).
+func (s *Tensor[T]) Dims0() error {
+	return s.layout.Dims0()
+}
+
+// Dims1 extracts the single dimension from a 1D shape.
+func (s *Tensor[T]) Dims1() (int, error) {
+	return s.layout.Dims1()
+}
+
+// Dims2 extracts the two dimensions from a 2D shape.
+func (s *Tensor[T]) Dims2() (int, int, error) {
+	return s.layout.Dims2()
+}
+
+// Dims3 extracts the three dimensions from a 3D shape.
+func (s *Tensor[T]) Dims3() (int, int, int, error) {
+	return s.layout.Dims3()
+}
+
+// Dims4 extracts the four dimensions from a 4D shape.
+func (s *Tensor[T]) Dims4() (int, int, int, int, error) {
+	return s.layout.Dims4()
+}
+
+// Dims5 extracts the five dimensions from a 5D shape.
+func (s *Tensor[T]) Dims5() (int, int, int, int, int, error) {
+	return s.layout.Dims5()
+}
+
 // Rank returns the tensor's rank.
 func (t *Tensor[T]) Rank() int {
 	return t.layout.Rank()
@@ -865,13 +895,13 @@ func (t *Tensor[T]) MustConvTranspose2d(kernel *Tensor[T], params *spark.ConvT2D
 }
 
 // AvgPool2d performs 2D average pooling.
-func (t *Tensor[T]) AvgPool2d(params *spark.Pool2DParams) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, AvgPool2dForward[T](params), AvgPool2dBackward[T](params))
+func (t *Tensor[T]) AvgPool2d(kH, kW, sH, sW int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, AvgPool2dForward[T](kH, kW, sH, sW), AvgPool2dBackward[T](kH, kW, sH, sW))
 }
 
 // MustAvgPool2d performs 2D average pooling, panicking on error.
-func (t *Tensor[T]) MustAvgPool2d(params *spark.Pool2DParams) *Tensor[T] {
-	result, err := t.AvgPool2d(params)
+func (t *Tensor[T]) MustAvgPool2d(kH, kW, sH, sW int) *Tensor[T] {
+	result, err := t.AvgPool2d(kH, kW, sH, sW)
 	if err != nil {
 		panic(err)
 	}
