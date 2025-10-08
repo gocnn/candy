@@ -46,6 +46,36 @@ func ApplyOp[T spark.D](inputs []*Tensor[T], forward ForwardFunc[T], backward Ba
 	return result, nil
 }
 
+// ReduceBroadcastGrad reduces a broadcasted gradient to the target shape.
+func ReduceBroadcastGrad[T spark.D](g *Tensor[T], dims []int) (*Tensor[T], error) {
+	gDims := g.Dims()
+	offset := len(gDims) - len(dims)
+	sumDims := make([]int, 0, len(gDims))
+	for i := range offset {
+		sumDims = append(sumDims, i)
+	}
+	for i, d := range dims {
+		if gDims[i+offset] != d {
+			sumDims = append(sumDims, i+offset)
+		}
+	}
+	r := g
+	var err error
+	if len(sumDims) > 0 {
+		r, err = g.SumKeepDim(sumDims)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sum dims: %w", err)
+		}
+	}
+	for range offset {
+		r, err = r.Squeeze(0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to squeeze dim: %w", err)
+		}
+	}
+	return r, nil
+}
+
 // AffineForward returns a ForwardFunc for affine transformation: y = scale * x + bias.
 func AffineForward[T spark.D](scale, bias float64) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
@@ -319,88 +349,779 @@ func MinBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// EqForward performs element-wise equality: a == b.
-func EqForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// EqForward returns a ForwardFunc for element-wise equality comparison.
+func EqForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		// Validate shapes are compatible
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		// Perform comparison using storage layer
+		data, err := a.storage.Eq(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		// Result is always uint8 for comparison operations
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Eq(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
 }
 
-// NeForward performs element-wise not-equal: a != b.
-func NeForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// EqBackward returns a BackwardFunc for equality comparison (zero gradients).
+func EqBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		// Comparison operations have zero gradients
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Ne(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
 }
 
-// LtForward performs element-wise less-than: a < b.
-func LtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// NeForward returns a ForwardFunc for element-wise inequality comparison.
+func NeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		data, err := a.storage.Ne(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Lt(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
 }
 
-// LeForward performs element-wise less-than-or-equal: a <= b.
-func LeForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// NeBackward returns a BackwardFunc for inequality comparison (zero gradients).
+func NeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Le(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
 }
 
-// GtForward performs element-wise greater-than: a > b.
-func GtForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// LtForward returns a ForwardFunc for element-wise less-than comparison.
+func LtForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		data, err := a.storage.Lt(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Gt(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
 }
 
-// GeForward performs element-wise greater-than-or-equal: a >= b.
-func GeForward[T spark.D](inputs []*Tensor[T]) (*Tensor[T], error) {
-	if len(inputs) != 2 {
-		return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+// LtBackward returns a BackwardFunc for less-than comparison (zero gradients).
+func LtBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
 	}
-	a, b := inputs[0], inputs[1]
-	layout := spark.Contiguous(a.Shape())
-	data, err := a.storage.Ge(b.storage, a.layout, b.layout, layout)
-	if err != nil {
-		return nil, err
+}
+
+// LeForward returns a ForwardFunc for element-wise less-than-or-equal comparison.
+func LeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		data, err := a.storage.Le(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
 	}
-	return NewFrom(data, layout, spark.U8, a.Device()), nil
+}
+
+// LeBackward returns a BackwardFunc for less-than-or-equal comparison (zero gradients).
+func LeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// GtForward returns a ForwardFunc for element-wise greater-than comparison.
+func GtForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		data, err := a.storage.Gt(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+	}
+}
+
+// GtBackward returns a BackwardFunc for greater-than comparison (zero gradients).
+func GtBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// GeForward returns a ForwardFunc for element-wise greater-than-or-equal comparison.
+func GeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+
+		if !a.Shape().Equal(b.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		}
+
+		data, err := a.storage.Ge(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+
+		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+	}
+}
+
+// GeBackward returns a BackwardFunc for greater-than-or-equal comparison (zero gradients).
+func GeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastAddForward returns a ForwardFunc for broadcasted addition: a + b.
+func BroadcastAddForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Add(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to add: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+	}
+}
+
+// BroadcastAddBackward returns a BackwardFunc for broadcasted addition gradients.
+func BroadcastAddBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0].Detach(), inputs[1].Detach()
+		da, err := ReduceBroadcastGrad(grad, a.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+		}
+		db, err := ReduceBroadcastGrad(grad, b.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastSubForward returns a ForwardFunc for broadcasted subtraction: a - b.
+func BroadcastSubForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Sub(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to sub: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+	}
+}
+
+// BroadcastSubBackward returns a BackwardFunc for broadcasted subtraction gradients.
+func BroadcastSubBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0].Detach(), inputs[1].Detach()
+		da, err := ReduceBroadcastGrad(grad, a.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+		}
+		// For subtraction: ∂(a-b)/∂b = -1, so negate the gradient
+		negGrad, err := grad.Neg()
+		if err != nil {
+			return nil, fmt.Errorf("failed to negate grad: %w", err)
+		}
+		db, err := ReduceBroadcastGrad(negGrad, b.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastMulForward returns a ForwardFunc for broadcasted multiplication: a * b.
+func BroadcastMulForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Mul(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to mul: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+	}
+}
+
+// BroadcastMulBackward returns a BackwardFunc for broadcasted multiplication gradients.
+func BroadcastMulBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0].Detach(), inputs[1].Detach()
+
+		// ∂(a*b)/∂a = b, so grad_a = grad * b
+		bBcast, err := b.BroadcastAs(grad.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b for grad_a: %w", err)
+		}
+		gradA, err := grad.Mul(bBcast)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute grad_a: %w", err)
+		}
+		da, err := ReduceBroadcastGrad(gradA, a.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+		}
+
+		// ∂(a*b)/∂b = a, so grad_b = grad * a
+		aBcast, err := a.BroadcastAs(grad.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a for grad_b: %w", err)
+		}
+		gradB, err := grad.Mul(aBcast)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute grad_b: %w", err)
+		}
+		db, err := ReduceBroadcastGrad(gradB, b.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastDivForward returns a ForwardFunc for broadcasted division: a / b.
+func BroadcastDivForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Div(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to div: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+	}
+}
+
+// BroadcastDivBackward returns a BackwardFunc for broadcasted division gradients.
+func BroadcastDivBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0].Detach(), inputs[1].Detach()
+
+		// ∂(a/b)/∂a = 1/b, so grad_a = grad / b
+		bBcast, err := b.BroadcastAs(grad.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b for grad_a: %w", err)
+		}
+		gradA, err := grad.Div(bBcast)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute grad_a: %w", err)
+		}
+		da, err := ReduceBroadcastGrad(gradA, a.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+		}
+
+		// ∂(a/b)/∂b = -a/b², so grad_b = -grad * a / b²
+		aBcast, err := a.BroadcastAs(grad.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a for grad_b: %w", err)
+		}
+		bSqr, err := bBcast.Sqr()
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute b²: %w", err)
+		}
+		gradB, err := grad.Mul(aBcast)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute grad*a: %w", err)
+		}
+		gradB, err = gradB.Div(bSqr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute grad*a/b²: %w", err)
+		}
+		gradB, err = gradB.Neg()
+		if err != nil {
+			return nil, fmt.Errorf("failed to negate grad_b: %w", err)
+		}
+		db, err := ReduceBroadcastGrad(gradB, b.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+		}
+
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastEqForward returns a ForwardFunc for broadcasted equality: a == b.
+func BroadcastEqForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Eq(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastEqBackward returns a BackwardFunc for broadcasted equality (zero gradients).
+func BroadcastEqBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastNeForward returns a ForwardFunc for broadcasted inequality: a != b.
+func BroadcastNeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Ne(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastNeBackward returns a BackwardFunc for broadcasted inequality (zero gradients).
+func BroadcastNeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastLtForward returns a ForwardFunc for broadcasted less-than: a < b.
+func BroadcastLtForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Lt(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastLtBackward returns a BackwardFunc for broadcasted less-than (zero gradients).
+func BroadcastLtBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastLeForward returns a ForwardFunc for broadcasted less-equal: a <= b.
+func BroadcastLeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Le(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastLeBackward returns a BackwardFunc for broadcasted less-equal (zero gradients).
+func BroadcastLeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastGtForward returns a ForwardFunc for broadcasted greater-than: a > b.
+func BroadcastGtForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Gt(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastGtBackward returns a BackwardFunc for broadcasted greater-than (zero gradients).
+func BroadcastGtBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
+}
+
+// BroadcastGeForward returns a ForwardFunc for broadcasted greater-equal: a >= b.
+func BroadcastGeForward[T spark.D]() ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
+		}
+		aBcast, err := a.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+		}
+		bBcast, err := b.BroadcastAs(bcastShape)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+		}
+		data, err := aBcast.storage.Ge(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+	}
+}
+
+// BroadcastGeBackward returns a BackwardFunc for broadcasted greater-equal (zero gradients).
+func BroadcastGeBackward[T spark.D]() BackwardFunc[T] {
+	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 2 {
+			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
+		}
+		a, b := inputs[0], inputs[1]
+		da, err := a.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+		}
+		db, err := b.ZerosLike()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+		}
+		return []*Tensor[T]{da, db}, nil
+	}
 }
 
 // MatMulForward returns a ForwardFunc for matrix multiplication: a @ b.
@@ -2151,84 +2872,6 @@ func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 	}
 }
 
-// BroadcastAddForward returns a ForwardFunc for broadcasted addition: a + b.
-func BroadcastAddForward[T spark.D]() ForwardFunc[T] {
-	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
-		if len(inputs) != 2 {
-			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
-		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
-		}
-		aBcast, err := a.BroadcastAs(bcastShape)
-		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
-		}
-		bBcast, err := b.BroadcastAs(bcastShape)
-		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
-		}
-		data, err := aBcast.storage.Add(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
-		if err != nil {
-			return nil, fmt.Errorf("failed to add: %w", err)
-		}
-		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
-	}
-}
-
-// BroadcastAddBackward returns a BackwardFunc for broadcasted addition gradients.
-func BroadcastAddBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
-		if len(inputs) != 2 {
-			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
-		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		da, err := reduceBroadcastGrad(grad, a.Dims())
-		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
-		}
-		db, err := reduceBroadcastGrad(grad, b.Dims())
-		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
-		}
-		return []*Tensor[T]{da, db}, nil
-	}
-}
-
-// reduceBroadcastGrad reduces a broadcasted gradient to the original tensor shape.
-func reduceBroadcastGrad[T spark.D](grad *Tensor[T], targetDims []int) (*Tensor[T], error) {
-	gradDims := grad.Dims()
-	leftDims := len(gradDims) - len(targetDims)
-	sumDims := make([]int, 0, len(gradDims))
-
-	for i := range leftDims {
-		sumDims = append(sumDims, i)
-	}
-	for i, dim := range targetDims {
-		if gradDims[i+leftDims] != dim {
-			sumDims = append(sumDims, i+leftDims)
-		}
-	}
-
-	result := grad
-	var err error
-	if len(sumDims) > 0 {
-		result, err = grad.SumKeepDim(sumDims)
-		if err != nil {
-			return nil, fmt.Errorf("failed to sum dims: %w", err)
-		}
-	}
-	for range leftDims {
-		result, err = result.Squeeze(0)
-		if err != nil {
-			return nil, fmt.Errorf("failed to squeeze dim: %w", err)
-		}
-	}
-	return result, nil
-}
-
 // TransposeForward returns a ForwardFunc for transposing dimensions.
 func TransposeForward[T spark.D](dim1, dim2 int) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
@@ -2402,6 +3045,45 @@ func ReshapeBackward[T spark.D](origShape *spark.Shape) BackwardFunc[T] {
 		dx, err := grad.Reshape(origShape.Dims()...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to reshape grad: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
+// BroadcastAsForward returns a ForwardFunc for broadcasting to a target shape.
+func BroadcastAsForward[T spark.D](s *spark.Shape) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		if x.Shape().Equal(s) {
+			return x, nil
+		}
+		l, err := x.layout.BroadcastAs(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast shape %v to %v: %w", x.Shape(), s, err)
+		}
+		st, err := x.storage.Clone()
+		if err != nil {
+			return nil, fmt.Errorf("failed to clone storage: %w", err)
+		}
+		return NewFrom(st, l, x.dtype, x.device), nil
+	}
+}
+
+// BroadcastAsBackward returns a BackwardFunc for broadcasting gradients.
+func BroadcastAsBackward[T spark.D](s *spark.Shape) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		if g.Shape().Equal(s) {
+			return []*Tensor[T]{g}, nil
+		}
+		dx, err := ReduceBroadcastGrad(g, s.Dims())
+		if err != nil {
+			return nil, fmt.Errorf("failed to reduce grad: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}

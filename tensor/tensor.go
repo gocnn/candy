@@ -522,7 +522,7 @@ func (a *Tensor[T]) MustMin(b *Tensor[T]) *Tensor[T] {
 // Eq compares two tensors element-wise for equality: result = (a == b)
 // Returns a uint8 tensor with 1 for equal elements and 0 for unequal elements.
 func (a *Tensor[T]) Eq(b *Tensor[T]) (*Tensor[T], error) {
-	return EqForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, EqForward[T](), EqBackward[T]())
 }
 
 // MustEq compares two tensors for equality, panicking on error.
@@ -537,7 +537,7 @@ func (a *Tensor[T]) MustEq(b *Tensor[T]) *Tensor[T] {
 // Ne compares two tensors element-wise for inequality: result = (a != b)
 // Returns a uint8 tensor with 1 for unequal elements and 0 for equal elements.
 func (a *Tensor[T]) Ne(b *Tensor[T]) (*Tensor[T], error) {
-	return NeForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, NeForward[T](), NeBackward[T]())
 }
 
 // MustNe compares two tensors for inequality, panicking on error.
@@ -552,7 +552,7 @@ func (a *Tensor[T]) MustNe(b *Tensor[T]) *Tensor[T] {
 // Lt compares two tensors element-wise: result = (a < b)
 // Returns a uint8 tensor with 1 where a < b and 0 otherwise.
 func (a *Tensor[T]) Lt(b *Tensor[T]) (*Tensor[T], error) {
-	return LtForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, LtForward[T](), LtBackward[T]())
 }
 
 // MustLt compares two tensors, panicking on error.
@@ -567,7 +567,7 @@ func (a *Tensor[T]) MustLt(b *Tensor[T]) *Tensor[T] {
 // Le compares two tensors element-wise: result = (a <= b)
 // Returns a uint8 tensor with 1 where a <= b and 0 otherwise.
 func (a *Tensor[T]) Le(b *Tensor[T]) (*Tensor[T], error) {
-	return LeForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, LeForward[T](), LeBackward[T]())
 }
 
 // MustLe compares two tensors, panicking on error.
@@ -582,7 +582,7 @@ func (a *Tensor[T]) MustLe(b *Tensor[T]) *Tensor[T] {
 // Gt compares two tensors element-wise: result = (a > b)
 // Returns a uint8 tensor with 1 where a > b and 0 otherwise.
 func (a *Tensor[T]) Gt(b *Tensor[T]) (*Tensor[T], error) {
-	return GtForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, GtForward[T](), GtBackward[T]())
 }
 
 // MustGt compares two tensors, panicking on error.
@@ -597,7 +597,7 @@ func (a *Tensor[T]) MustGt(b *Tensor[T]) *Tensor[T] {
 // Ge compares two tensors element-wise: result = (a >= b)
 // Returns a uint8 tensor with 1 where a >= b and 0 otherwise.
 func (a *Tensor[T]) Ge(b *Tensor[T]) (*Tensor[T], error) {
-	return GeForward([]*Tensor[T]{a, b})
+	return ApplyOp([]*Tensor[T]{a, b}, GeForward[T](), GeBackward[T]())
 }
 
 // MustGe compares two tensors, panicking on error.
@@ -607,6 +607,146 @@ func (a *Tensor[T]) MustGe(b *Tensor[T]) *Tensor[T] {
 		panic(err)
 	}
 	return result
+}
+
+// BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
+func (a *Tensor[T]) BroadcastAdd(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T](), BroadcastAddBackward[T]())
+}
+
+// MustBroadcastAdd performs broadcasted addition, panicking on error.
+func (a *Tensor[T]) MustBroadcastAdd(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastAdd(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastSub performs broadcasted subtraction: result = broadcast(a) - broadcast(b).
+func (a *Tensor[T]) BroadcastSub(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastSubForward[T](), BroadcastSubBackward[T]())
+}
+
+// MustBroadcastSub performs broadcasted subtraction, panicking on error.
+func (a *Tensor[T]) MustBroadcastSub(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastSub(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastMul performs broadcasted multiplication: result = broadcast(a) * broadcast(b).
+func (a *Tensor[T]) BroadcastMul(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastMulForward[T](), BroadcastMulBackward[T]())
+}
+
+// MustBroadcastMul performs broadcasted multiplication, panicking on error.
+func (a *Tensor[T]) MustBroadcastMul(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastMul(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastDiv performs broadcasted division: result = broadcast(a) / broadcast(b).
+func (a *Tensor[T]) BroadcastDiv(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastDivForward[T](), BroadcastDivBackward[T]())
+}
+
+// MustBroadcastDiv performs broadcasted division, panicking on error.
+func (a *Tensor[T]) MustBroadcastDiv(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastDiv(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastEq performs broadcasted equality comparison: result = broadcast(a) == broadcast(b).
+func (a *Tensor[T]) BroadcastEq(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastEqForward[T](), BroadcastEqBackward[T]())
+}
+
+// MustBroadcastEq performs broadcasted equality comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastEq(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastEq(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastNe performs broadcasted inequality comparison: result = broadcast(a) != broadcast(b).
+func (a *Tensor[T]) BroadcastNe(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastNeForward[T](), BroadcastNeBackward[T]())
+}
+
+// MustBroadcastNe performs broadcasted inequality comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastNe(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastNe(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastLt performs broadcasted less-than comparison: result = broadcast(a) < broadcast(b).
+func (a *Tensor[T]) BroadcastLt(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastLtForward[T](), BroadcastLtBackward[T]())
+}
+
+// MustBroadcastLt performs broadcasted less-than comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastLt(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastLt(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastLe performs broadcasted less-equal comparison: result = broadcast(a) <= broadcast(b).
+func (a *Tensor[T]) BroadcastLe(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastLeForward[T](), BroadcastLeBackward[T]())
+}
+
+// MustBroadcastLe performs broadcasted less-equal comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastLe(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastLe(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastGt performs broadcasted greater-than comparison: result = broadcast(a) > broadcast(b).
+func (a *Tensor[T]) BroadcastGt(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastGtForward[T](), BroadcastGtBackward[T]())
+}
+
+// MustBroadcastGt performs broadcasted greater-than comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastGt(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastGt(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// BroadcastGe performs broadcasted greater-equal comparison: result = broadcast(a) >= broadcast(b).
+func (a *Tensor[T]) BroadcastGe(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastGeForward[T](), BroadcastGeBackward[T]())
+}
+
+// MustBroadcastGe performs broadcasted greater-equal comparison, panicking on error.
+func (a *Tensor[T]) MustBroadcastGe(b *Tensor[T]) *Tensor[T] {
+	t, err := a.BroadcastGe(b)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 // MatMul performs matrix multiplication: C = A × B
@@ -1168,20 +1308,6 @@ func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 	return result
 }
 
-// BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
-func (a *Tensor[T]) BroadcastAdd(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T](), BroadcastAddBackward[T]())
-}
-
-// MustBroadcastAdd performs broadcasted addition, panicking on error.
-func (a *Tensor[T]) MustBroadcastAdd(b *Tensor[T]) *Tensor[T] {
-	t, err := a.BroadcastAdd(b)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
 // Transpose returns a tensor that is a transposed version of the input.
 func (t *Tensor[T]) Transpose(dim1, dim2 int) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, TransposeForward[T](dim1, dim2), TransposeBackward[T](dim1, dim2))
@@ -1220,17 +1346,16 @@ func (t *Tensor[T]) BroadcastAs(shape *spark.Shape) (*Tensor[T], error) {
 	if t.layout.Shape().Equal(shape) {
 		return t, nil
 	}
+	return ApplyOp([]*Tensor[T]{t}, BroadcastAsForward[T](shape), BroadcastAsBackward[T](t.layout.Shape()))
+}
 
-	newLayout, err := t.layout.BroadcastAs(shape)
+// MustBroadcastAs broadcasts the tensor to the target shape, panicking on error.
+func (t *Tensor[T]) MustBroadcastAs(shape *spark.Shape) *Tensor[T] {
+	result, err := t.BroadcastAs(shape)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	storage, err := t.storage.Clone()
-	if err != nil {
-		return nil, err
-	}
-	return NewFrom(storage, newLayout, t.dtype, t.device), nil
+	return result
 }
 
 // Expand broadcasts the tensor to the target shape.
