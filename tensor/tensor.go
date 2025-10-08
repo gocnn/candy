@@ -964,14 +964,118 @@ func (t *Tensor[T]) MustUpsampleNearest2d(targetH, targetW int) *Tensor[T] {
 	return result
 }
 
-// Copy creates a copy of the tensor.
-func (t *Tensor[T]) Copy() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, CopyForward[T](), CopyBackward[T]())
+// SumDim computes the sum along the specified dimensions.
+// The dimensions to sum over are specified in dims.
+// If keepdim is true, the summed dimensions are retained with size 1.
+// If keepdim is false, the summed dimensions are removed.
+func (t *Tensor[T]) SumDim(dims []int, keepdim bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SumDimForward[T](dims, keepdim), SumDimBackward[T](dims, keepdim))
 }
 
-// MustCopy creates a copy of the tensor, panicking on error.
-func (t *Tensor[T]) MustCopy() *Tensor[T] {
-	result, err := t.Copy()
+// MustSumDim computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSumDim(dims []int, keepdim bool) *Tensor[T] {
+	t, err := t.SumDim(dims, keepdim)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Sum computes the sum along the specified dimensions, removing the dimensions with size 1.
+func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
+	return t.SumDim(dims, false)
+}
+
+// MustSum computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
+	t, err := t.Sum(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// SumKeepDim computes the sum along the specified dimensions, keeping the dimensions with size 1.
+func (t *Tensor[T]) SumKeepDim(dims []int) (*Tensor[T], error) {
+	return t.SumDim(dims, true)
+}
+
+// MustSumKeepDim computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSumKeepDim(dims []int) *Tensor[T] {
+	t, err := t.SumKeepDim(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// SumAll computes the sum of all elements in the tensor.
+func (t *Tensor[T]) SumAll() (*Tensor[T], error) {
+	dims := make([]int, t.Rank())
+	for i := range dims {
+		dims[i] = i
+	}
+	return t.SumDim(dims, false)
+}
+
+// MustSumAll computes the sum of all elements in the tensor, panicking on error.
+func (t *Tensor[T]) MustSumAll() *Tensor[T] {
+	t, err := t.SumAll()
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MeanAll computes the mean of all elements in the tensor.
+func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
+	sum, err := t.SumAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum all elements: %w", err)
+	}
+	elemCount := float64(t.Shape().ElemCount())
+	divisor, err := Full[T](elemCount, sum.Shape(), sum.Device())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create divisor: %w", err)
+	}
+	mean, err := sum.Div(divisor)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute mean: %w", err)
+	}
+	return mean, nil
+}
+
+// MustMeanAll computes the mean of all elements in the tensor, panicking on error.
+func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
+	result, err := t.MeanAll()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FastMin computes the minimum over the last dimension.
+func (t *Tensor[T]) FastMin() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FastMinForward[T](), FastMinBackward[T]())
+}
+
+// MustFastMin computes the minimum over the last dimension, panicking on error.
+func (t *Tensor[T]) MustFastMin() *Tensor[T] {
+	result, err := t.FastMin()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FastMax computes the maximum over the last dimension.
+func (t *Tensor[T]) FastMax() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FastMaxForward[T](), FastMaxBackward[T]())
+}
+
+// MustFastMax computes the maximum over the last dimension, panicking on error.
+func (t *Tensor[T]) MustFastMax() *Tensor[T] {
+	result, err := t.FastMax()
 	if err != nil {
 		panic(err)
 	}
@@ -1002,6 +1106,20 @@ func (t *Tensor[T]) WhereCond(trueVal, falseVal *Tensor[T]) (*Tensor[T], error) 
 // MustWhereCond performs conditional selection, panicking on error.
 func (t *Tensor[T]) MustWhereCond(trueVal, falseVal *Tensor[T]) *Tensor[T] {
 	result, err := t.WhereCond(trueVal, falseVal)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Copy creates a copy of the tensor.
+func (t *Tensor[T]) Copy() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, CopyForward[T](), CopyBackward[T]())
+}
+
+// MustCopy creates a copy of the tensor, panicking on error.
+func (t *Tensor[T]) MustCopy() *Tensor[T] {
+	result, err := t.Copy()
 	if err != nil {
 		panic(err)
 	}
@@ -1324,101 +1442,6 @@ func (t *Tensor[T]) Sign() (*Tensor[T], error) {
 // MustSign computes the sign of each element, panicking on error.
 func (t *Tensor[T]) MustSign() *Tensor[T] {
 	result, err := t.Sign()
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
-// SumDim computes the sum along the specified dimensions.
-// The dimensions to sum over are specified in dims.
-// If keepdim is true, the summed dimensions are retained with size 1.
-// If keepdim is false, the summed dimensions are removed.
-func (t *Tensor[T]) SumDim(dims []int, keepdim bool) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SumDimForward[T](dims, keepdim), SumDimBackward[T](dims, keepdim))
-}
-
-// MustSumDim computes the sum along the specified dimensions, panicking on error.
-func (t *Tensor[T]) MustSumDim(dims []int, keepdim bool) *Tensor[T] {
-	t, err := t.SumDim(dims, keepdim)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// Sum computes the sum along the specified dimensions, removing the dimensions with size 1.
-func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
-	return t.SumDim(dims, false)
-}
-
-// MustSum computes the sum along the specified dimensions, panicking on error.
-func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
-	t, err := t.Sum(dims)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// SumKeepDim computes the sum along the specified dimensions, keeping the dimensions with size 1.
-func (t *Tensor[T]) SumKeepDim(dims []int) (*Tensor[T], error) {
-	return t.SumDim(dims, true)
-}
-
-// MustSumKeepDim computes the sum along the specified dimensions, panicking on error.
-func (t *Tensor[T]) MustSumKeepDim(dims []int) *Tensor[T] {
-	t, err := t.SumKeepDim(dims)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// SumAll computes the sum of all elements in the tensor.
-func (t *Tensor[T]) SumAll() (*Tensor[T], error) {
-	dims := make([]int, t.Rank())
-	for i := range dims {
-		dims[i] = i
-	}
-	return t.SumDim(dims, false)
-}
-
-// MustSumAll computes the sum of all elements in the tensor, panicking on error.
-func (t *Tensor[T]) MustSumAll() *Tensor[T] {
-	t, err := t.SumAll()
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// MeanAll computes the mean of all elements in the tensor.
-func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
-	// Sum all elements
-	sum, err := t.SumAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to sum all elements: %w", err)
-	}
-
-	// Divide by element count
-	elemCount := float64(t.Shape().ElemCount())
-	divisor, err := Full[T](elemCount, sum.Shape(), sum.Device())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create divisor: %w", err)
-	}
-
-	mean, err := sum.Div(divisor)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compute mean: %w", err)
-	}
-
-	return mean, nil
-}
-
-// MustMeanAll computes the mean of all elements in the tensor, panicking on error.
-func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
-	result, err := t.MeanAll()
 	if err != nil {
 		panic(err)
 	}

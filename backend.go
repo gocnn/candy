@@ -108,19 +108,19 @@ type BackendStorage[T D] interface {
 	Softmax(layout *Layout) (BackendStorage[T], error)
 
 	// RmsNorm performs RMS normalization along the last dimension.
-	RmsNorm(layout *Layout, eps T, alpha []T) (BackendStorage[T], error)
+	RmsNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, eps T) (BackendStorage[T], error)
 
 	// LayerNorm performs Layer normalization along the last dimension.
-	LayerNorm(layout *Layout, eps T, alpha, beta []T) (BackendStorage[T], error)
+	LayerNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, beta BackendStorage[T], betaLayout *Layout, eps T) (BackendStorage[T], error)
 
 	// RopeI performs rotary position embedding (rope_i variant).
-	RopeI(layout *Layout, bh, td, strideB int, cos, sin []T) (BackendStorage[T], error)
+	RopeI(layout *Layout, cos BackendStorage[T], cosLayout *Layout, sin BackendStorage[T], sinLayout *Layout) (BackendStorage[T], error)
 
 	// Rope performs rotary position embedding (rope variant).
-	Rope(layout *Layout, bh, td, d, strideB int, cos, sin []T) (BackendStorage[T], error)
+	Rope(layout *Layout, cos BackendStorage[T], cosLayout *Layout, sin BackendStorage[T], sinLayout *Layout) (BackendStorage[T], error)
 
 	// RopeThd performs rotary position embedding (rope_thd variant).
-	RopeThd(layout *Layout, b, t, h, d, strideB int, cos, sin []T) (BackendStorage[T], error)
+	RopeThd(layout *Layout, cos BackendStorage[T], cosLayout *Layout, sin BackendStorage[T], sinLayout *Layout) (BackendStorage[T], error)
 
 	// WhereCond performs element-wise selection based on condition.
 	WhereCond(condLayout *Layout, t BackendStorage[T], tLayout *Layout, f BackendStorage[T], fLayout *Layout) (BackendStorage[T], error)
