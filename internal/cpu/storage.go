@@ -206,7 +206,7 @@ func (s *CpuStorage[T]) Div(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Max performs element-wise maximum of two tensors.
-func (s *CpuStorage[T]) Max(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Maximum(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -225,7 +225,7 @@ func (s *CpuStorage[T]) Max(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	}
 
 	result := New(make([]T, resLayout.ElemCount()))
-	kernels.BMaxStrided(
+	kernels.BMaximumStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims
@@ -241,7 +241,7 @@ func (s *CpuStorage[T]) Max(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Min performs element-wise minimum of two tensors.
-func (s *CpuStorage[T]) Min(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Minimum(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -260,7 +260,7 @@ func (s *CpuStorage[T]) Min(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	}
 
 	result := New(make([]T, resLayout.ElemCount()))
-	kernels.BMinStrided(
+	kernels.BMinimumStrided(
 		lhsLayout.ElemCount(), // numel
 		lhsLayout.Rank(),      // ndims
 		lhsLayout.Dims(),      // dims

@@ -529,35 +529,23 @@ func BDivStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY []int
 }
 
 // BMax performs y = max(x1, x2) for any supported numeric type
-func BMax[T D](numel int, x1, x2, y []T) {
+func BMaximum[T D](numel int, x1, x2, y []T) {
 	for i := range numel {
-		if x1[i] > x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = max(x1[i], x2[i])
 	}
 }
 
 // BMaximumF32 performs y = max(x1, x2) for float32
 func BMaximumF32(numel int, x1, x2, y []float32) {
 	for i := range numel {
-		if x1[i] > x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = max(x1[i], x2[i])
 	}
 }
 
 // BMaximumF64 performs y = max(x1, x2) for float64
 func BMaximumF64(numel int, x1, x2, y []float64) {
 	for i := range numel {
-		if x1[i] > x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = max(x1[i], x2[i])
 	}
 }
 
@@ -583,19 +571,15 @@ func BMaximumI64(numel int, x1, x2, y []int64) {
 }
 
 // BMaxStrided performs y = max(x1, x2) for any supported numeric type with strided memory
-func BMaxStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
+func BMaximumStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
-		BMax(numel, x1, x2, y)
+		BMaximum(numel, x1, x2, y)
 		return
 	}
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
@@ -608,11 +592,7 @@ func BMaximumStridedF32(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
@@ -625,11 +605,7 @@ func BMaximumStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
@@ -642,11 +618,7 @@ func BMaximumStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
@@ -659,11 +631,7 @@ func BMaximumStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
@@ -676,94 +644,62 @@ func BMaximumStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] > x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = max(x1[idx1], x2[idx2])
 	}
 }
 
 // BMin performs y = min(x1, x2) for any supported numeric type
-func BMin[T D](numel int, x1, x2, y []T) {
+func BMinimum[T D](numel int, x1, x2, y []T) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinimumF32 performs y = min(x1, x2) for float32
 func BMinimumF32(numel int, x1, x2, y []float32) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinimumF64 performs y = min(x1, x2) for float64
 func BMinimumF64(numel int, x1, x2, y []float64) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinimumU8 performs y = min(x1, x2) for uint8
 func BMinimumU8(numel int, x1, x2, y []uint8) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinimumU32 performs y = min(x1, x2) for uint32
 func BMinimumU32(numel int, x1, x2, y []uint32) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinimumI64 performs y = min(x1, x2) for int64
 func BMinimumI64(numel int, x1, x2, y []int64) {
 	for i := range numel {
-		if x1[i] < x2[i] {
-			y[i] = x1[i]
-		} else {
-			y[i] = x2[i]
-		}
+		y[i] = min(x1[i], x2[i])
 	}
 }
 
 // BMinStrided performs y = min(x1, x2) for any supported numeric type with strided memory
-func BMinStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
+func BMinimumStrided[T D](numel, ndims int, dims, stridesX1, stridesX2, stridesY []int, x1, x2, y []T) {
 	if IsContiguous(ndims, dims, stridesX1) && IsContiguous(ndims, dims, stridesX2) && IsContiguous(ndims, dims, stridesY) {
-		BMin(numel, x1, x2, y)
+		BMinimum(numel, x1, x2, y)
 		return
 	}
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 
@@ -776,11 +712,7 @@ func BMinimumStridedF32(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 
@@ -793,11 +725,7 @@ func BMinimumStridedF64(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 
@@ -810,11 +738,7 @@ func BMinimumStridedU8(numel, ndims int, dims, stridesX1, stridesX2, stridesY []
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 
@@ -827,11 +751,7 @@ func BMinimumStridedU32(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 
@@ -844,11 +764,7 @@ func BMinimumStridedI64(numel, ndims int, dims, stridesX1, stridesX2, stridesY [
 	for i := range numel {
 		idx1 := GetStridedIndex(i, ndims, dims, stridesX1)
 		idx2 := GetStridedIndex(i, ndims, dims, stridesX2)
-		if x1[idx1] < x2[idx2] {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x1[idx1]
-		} else {
-			y[GetStridedIndex(i, ndims, dims, stridesY)] = x2[idx2]
-		}
+		y[GetStridedIndex(i, ndims, dims, stridesY)] = min(x1[idx1], x2[idx2])
 	}
 }
 

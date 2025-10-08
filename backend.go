@@ -29,11 +29,11 @@ type BackendStorage[T D] interface {
 	// Div performs element-wise division between this and another storage.
 	Div(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
-	// Max performs element-wise maximum of two tensors.
-	Max(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
+	// Maximum performs element-wise maximum of two tensors.
+	Maximum(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
-	// Min performs element-wise minimum of two tensors.
-	Min(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
+	// Minimum performs element-wise minimum of two tensors.
+	Minimum(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
 
 	// Eq performs element-wise equality comparison of two tensors.
 	Eq(rhs BackendStorage[T], lhsLayout, rhsLayout, resLayout *Layout) (BackendStorage[T], error)
