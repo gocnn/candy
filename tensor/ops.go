@@ -62,7 +62,7 @@ func ReduceBroadcastGrad[T spark.D](g *Tensor[T], dims []int) (*Tensor[T], error
 	r := g
 	if len(sd) > 0 {
 		var err error
-		r, err = g.SumKeepDim(sd)
+		r, err = g.SumKeep(sd)
 		if err != nil {
 			return nil, fmt.Errorf("failed to sum dims: %w", err)
 		}
