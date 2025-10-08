@@ -1328,8 +1328,8 @@ func SumStridedI64(numel, ndims int, dims, strides, sumDims []int, inp, out []in
 	}
 }
 
-// Softmax performs softmax along the last dimension for type T (contiguous memory)
-func Softmax[T D](numel, ndims int, dims []int, src, dst []T) {
+// FastSoftmax performs softmax along the last dimension for type T (contiguous memory)
+func FastSoftmax[T D](numel, ndims int, dims []int, src, dst []T) {
 	var zero T
 	switch any(zero).(type) {
 	case float32, float64:
@@ -1361,8 +1361,8 @@ func Softmax[T D](numel, ndims int, dims []int, src, dst []T) {
 	}
 }
 
-// SoftmaxF32 performs softmax along the last dimension for float32 (contiguous memory)
-func SoftmaxF32(numel int, ndims int, dims []int, src, dst []float32) {
+// FastSoftmaxF32 performs softmax along the last dimension for float32 (contiguous memory)
+func FastSoftmaxF32(numel int, ndims int, dims []int, src, dst []float32) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1388,8 +1388,8 @@ func SoftmaxF32(numel int, ndims int, dims []int, src, dst []float32) {
 	}
 }
 
-// SoftmaxF64 performs softmax along the last dimension for float64 (contiguous memory)
-func SoftmaxF64(numel int, ndims int, dims []int, src, dst []float64) {
+// FastSoftmaxF64 performs softmax along the last dimension for float64 (contiguous memory)
+func FastSoftmaxF64(numel int, ndims int, dims []int, src, dst []float64) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1415,23 +1415,23 @@ func SoftmaxF64(numel int, ndims int, dims []int, src, dst []float64) {
 	}
 }
 
-// SoftmaxU8 performs softmax along the last dimension for uint8 (contiguous memory)
-func SoftmaxU8(numel, ndims int, dims []int, src, dst []uint8) {
+// FastSoftmaxU8 performs softmax along the last dimension for uint8 (contiguous memory)
+func FastSoftmaxU8(numel, ndims int, dims []int, src, dst []uint8) {
 	panic("uint8 softmax not implemented")
 }
 
-// SoftmaxU32 performs softmax along the last dimension for uint32 (contiguous memory)
-func SoftmaxU32(numel, ndims int, dims []int, src, dst []uint32) {
+// FastSoftmaxU32 performs softmax along the last dimension for uint32 (contiguous memory)
+func FastSoftmaxU32(numel, ndims int, dims []int, src, dst []uint32) {
 	panic("uint32 softmax not implemented")
 }
 
-// SoftmaxI64 performs softmax along the last dimension for int64 (contiguous memory)
-func SoftmaxI64(numel, ndims int, dims []int, src, dst []int64) {
+// FastSoftmaxI64 performs softmax along the last dimension for int64 (contiguous memory)
+func FastSoftmaxI64(numel, ndims int, dims []int, src, dst []int64) {
 	panic("int64 softmax not implemented")
 }
 
-// SoftmaxStrided performs strided softmax along the last dimension for type T
-func SoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
+// FastSoftmaxStrided performs strided softmax along the last dimension for type T
+func FastSoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 	var zero T
 	switch any(zero).(type) {
 	case float32, float64:
@@ -1439,7 +1439,7 @@ func SoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 		panic("softmax_strided: unsupported type")
 	}
 	if IsContiguous(ndims, dims, strides) {
-		Softmax(numel, ndims, dims, src, dst)
+		FastSoftmax(numel, ndims, dims, src, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1470,10 +1470,10 @@ func SoftmaxStrided[T D](numel, ndims int, dims, strides []int, src, dst []T) {
 	}
 }
 
-// SoftmaxStridedF32 performs strided softmax along the last dimension for float32
-func SoftmaxStridedF32(numel int, ndims int, dims, strides []int, src, dst []float32) {
+// FastSoftmaxStridedF32 performs strided softmax along the last dimension for float32
+func FastSoftmaxStridedF32(numel int, ndims int, dims, strides []int, src, dst []float32) {
 	if IsContiguous(ndims, dims, strides) {
-		SoftmaxF32(numel, ndims, dims, src, dst)
+		FastSoftmaxF32(numel, ndims, dims, src, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1504,10 +1504,10 @@ func SoftmaxStridedF32(numel int, ndims int, dims, strides []int, src, dst []flo
 	}
 }
 
-// SoftmaxStridedF64 performs strided softmax along the last dimension for float64
-func SoftmaxStridedF64(numel int, ndims int, dims, strides []int, src, dst []float64) {
+// FastSoftmaxStridedF64 performs strided softmax along the last dimension for float64
+func FastSoftmaxStridedF64(numel int, ndims int, dims, strides []int, src, dst []float64) {
 	if IsContiguous(ndims, dims, strides) {
-		SoftmaxF64(numel, ndims, dims, src, dst)
+		FastSoftmaxF64(numel, ndims, dims, src, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1538,23 +1538,23 @@ func SoftmaxStridedF64(numel int, ndims int, dims, strides []int, src, dst []flo
 	}
 }
 
-// SoftmaxStridedU8 performs strided softmax along the last dimension for uint8
-func SoftmaxStridedU8(numel, ndims int, dims, strides []int, src, dst []uint8) {
+// FastSoftmaxStridedU8 performs strided softmax along the last dimension for uint8
+func FastSoftmaxStridedU8(numel, ndims int, dims, strides []int, src, dst []uint8) {
 	panic("uint8 softmax not implemented")
 }
 
-// SoftmaxStridedU32 performs strided softmax along the last dimension for uint32
-func SoftmaxStridedU32(numel, ndims int, dims, strides []int, src, dst []uint32) {
+// FastSoftmaxStridedU32 performs strided softmax along the last dimension for uint32
+func FastSoftmaxStridedU32(numel, ndims int, dims, strides []int, src, dst []uint32) {
 	panic("uint32 softmax not implemented")
 }
 
-// SoftmaxStridedI64 performs strided softmax along the last dimension for int64
-func SoftmaxStridedI64(numel, ndims int, dims, strides []int, src, dst []int64) {
+// FastSoftmaxStridedI64 performs strided softmax along the last dimension for int64
+func FastSoftmaxStridedI64(numel, ndims int, dims, strides []int, src, dst []int64) {
 	panic("int64 softmax not implemented")
 }
 
-// RmsNorm performs RMS normalization along the last dimension for type T (contiguous memory)
-func RmsNorm[T D](numel, ndims int, dims []int, eps T, alpha, x, dst []T) {
+// FastRmsNorm performs RMS normalization along the last dimension for type T (contiguous memory)
+func FastRmsNorm[T D](numel, ndims int, dims []int, eps T, alpha, x, dst []T) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1577,8 +1577,8 @@ func RmsNorm[T D](numel, ndims int, dims []int, eps T, alpha, x, dst []T) {
 	}
 }
 
-// RmsNormF32 performs RMS normalization along the last dimension for float32 (contiguous memory)
-func RmsNormF32(numel int, ndims int, dims []int, eps float32, alpha, x, dst []float32) {
+// FastRmsNormF32 performs RMS normalization along the last dimension for float32 (contiguous memory)
+func FastRmsNormF32(numel int, ndims int, dims []int, eps float32, alpha, x, dst []float32) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1601,8 +1601,8 @@ func RmsNormF32(numel int, ndims int, dims []int, eps float32, alpha, x, dst []f
 	}
 }
 
-// RmsNormF64 performs RMS normalization along the last dimension for float64 (contiguous memory)
-func RmsNormF64(numel int, ndims int, dims []int, eps float64, alpha, x, dst []float64) {
+// FastRmsNormF64 performs RMS normalization along the last dimension for float64 (contiguous memory)
+func FastRmsNormF64(numel int, ndims int, dims []int, eps float64, alpha, x, dst []float64) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1625,8 +1625,8 @@ func RmsNormF64(numel int, ndims int, dims []int, eps float64, alpha, x, dst []f
 	}
 }
 
-// RmsNormU8 performs RMS normalization along the last dimension for uint8 (contiguous memory)
-func RmsNormU8(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint8) {
+// FastRmsNormU8 performs RMS normalization along the last dimension for uint8 (contiguous memory)
+func FastRmsNormU8(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint8) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1651,8 +1651,8 @@ func RmsNormU8(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint8)
 	}
 }
 
-// RmsNormU32 performs RMS normalization along the last dimension for uint32 (contiguous memory)
-func RmsNormU32(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint32) {
+// FastRmsNormU32 performs RMS normalization along the last dimension for uint32 (contiguous memory)
+func FastRmsNormU32(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint32) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1677,8 +1677,8 @@ func RmsNormU32(numel, ndims int, dims []int, eps float64, alpha, x, dst []uint3
 	}
 }
 
-// RmsNormI64 performs RMS normalization along the last dimension for int64 (contiguous memory)
-func RmsNormI64(numel, ndims int, dims []int, eps float64, alpha, x, dst []int64) {
+// FastRmsNormI64 performs RMS normalization along the last dimension for int64 (contiguous memory)
+func FastRmsNormI64(numel, ndims int, dims []int, eps float64, alpha, x, dst []int64) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1703,10 +1703,10 @@ func RmsNormI64(numel, ndims int, dims []int, eps float64, alpha, x, dst []int64
 	}
 }
 
-// RmsNormStrided performs strided RMS normalization along the last dimension for type T
-func RmsNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, x, dst []T) {
+// FastRmsNormStrided performs strided RMS normalization along the last dimension for type T
+func FastRmsNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, x, dst []T) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNorm(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNorm(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1733,10 +1733,10 @@ func RmsNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, x,
 	}
 }
 
-// RmsNormStridedF32 performs strided RMS normalization along the last dimension for float32
-func RmsNormStridedF32(numel int, ndims int, dims, strides []int, eps float32, alpha, x, dst []float32) {
+// FastRmsNormStridedF32 performs strided RMS normalization along the last dimension for float32
+func FastRmsNormStridedF32(numel int, ndims int, dims, strides []int, eps float32, alpha, x, dst []float32) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNormF32(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNormF32(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1763,10 +1763,10 @@ func RmsNormStridedF32(numel int, ndims int, dims, strides []int, eps float32, a
 	}
 }
 
-// RmsNormStridedF64 performs strided RMS normalization along the last dimension for float64
-func RmsNormStridedF64(numel int, ndims int, dims, strides []int, eps float64, alpha, x, dst []float64) {
+// FastRmsNormStridedF64 performs strided RMS normalization along the last dimension for float64
+func FastRmsNormStridedF64(numel int, ndims int, dims, strides []int, eps float64, alpha, x, dst []float64) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNormF64(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNormF64(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1793,10 +1793,10 @@ func RmsNormStridedF64(numel int, ndims int, dims, strides []int, eps float64, a
 	}
 }
 
-// RmsNormStridedU8 performs strided RMS normalization along the last dimension for uint8
-func RmsNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []uint8) {
+// FastRmsNormStridedU8 performs strided RMS normalization along the last dimension for uint8
+func FastRmsNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []uint8) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNormU8(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNormU8(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1825,10 +1825,10 @@ func RmsNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alpha,
 	}
 }
 
-// RmsNormStridedU32 performs strided RMS normalization along the last dimension for uint32
-func RmsNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []uint32) {
+// FastRmsNormStridedU32 performs strided RMS normalization along the last dimension for uint32
+func FastRmsNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []uint32) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNormU32(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNormU32(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1857,10 +1857,10 @@ func RmsNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alpha
 	}
 }
 
-// RmsNormStridedI64 performs strided RMS normalization along the last dimension for int64
-func RmsNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []int64) {
+// FastRmsNormStridedI64 performs strided RMS normalization along the last dimension for int64
+func FastRmsNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alpha, x, dst []int64) {
 	if IsContiguous(ndims, dims, strides) {
-		RmsNormI64(numel, ndims, dims, eps, alpha, x, dst)
+		FastRmsNormI64(numel, ndims, dims, eps, alpha, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -1889,8 +1889,8 @@ func RmsNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alpha
 	}
 }
 
-// LayerNorm performs Layer normalization along the last dimension for type T (contiguous memory)
-func LayerNorm[T D](numel, ndims int, dims []int, eps T, alpha, beta, x, dst []T) {
+// FastLayerNorm performs Layer normalization along the last dimension for type T (contiguous memory)
+func FastLayerNorm[T D](numel, ndims int, dims []int, eps T, alpha, beta, x, dst []T) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1920,8 +1920,8 @@ func LayerNorm[T D](numel, ndims int, dims []int, eps T, alpha, beta, x, dst []T
 	}
 }
 
-// LayerNormF32 performs Layer normalization along the last dimension for float32 (contiguous memory)
-func LayerNormF32(numel int, ndims int, dims []int, eps float32, alpha, beta, x, dst []float32) {
+// FastLayerNormF32 performs Layer normalization along the last dimension for float32 (contiguous memory)
+func FastLayerNormF32(numel int, ndims int, dims []int, eps float32, alpha, beta, x, dst []float32) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1951,8 +1951,8 @@ func LayerNormF32(numel int, ndims int, dims []int, eps float32, alpha, beta, x,
 	}
 }
 
-// LayerNormF64 performs Layer normalization along the last dimension for float64 (contiguous memory)
-func LayerNormF64(numel int, ndims int, dims []int, eps float64, alpha, beta, x, dst []float64) {
+// FastLayerNormF64 performs Layer normalization along the last dimension for float64 (contiguous memory)
+func FastLayerNormF64(numel int, ndims int, dims []int, eps float64, alpha, beta, x, dst []float64) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -1982,8 +1982,8 @@ func LayerNormF64(numel int, ndims int, dims []int, eps float64, alpha, beta, x,
 	}
 }
 
-// LayerNormU8 performs Layer normalization along the last dimension for uint8 (contiguous memory)
-func LayerNormU8(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []uint8) {
+// FastLayerNormU8 performs Layer normalization along the last dimension for uint8 (contiguous memory)
+func FastLayerNormU8(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []uint8) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -2015,8 +2015,8 @@ func LayerNormU8(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst 
 	}
 }
 
-// LayerNormU32 performs Layer normalization along the last dimension for uint32 (contiguous memory)
-func LayerNormU32(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []uint32) {
+// FastLayerNormU32 performs Layer normalization along the last dimension for uint32 (contiguous memory)
+func FastLayerNormU32(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []uint32) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -2048,8 +2048,8 @@ func LayerNormU32(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst
 	}
 }
 
-// LayerNormI64 performs Layer normalization along the last dimension for int64 (contiguous memory)
-func LayerNormI64(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []int64) {
+// FastLayerNormI64 performs Layer normalization along the last dimension for int64 (contiguous memory)
+func FastLayerNormI64(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst []int64) {
 	ncols := dims[ndims-1]
 	rows := numel / ncols
 	for row := range rows {
@@ -2081,10 +2081,10 @@ func LayerNormI64(numel, ndims int, dims []int, eps float64, alpha, beta, x, dst
 	}
 }
 
-// LayerNormStrided performs strided Layer normalization along the last dimension for type T
-func LayerNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, beta, x, dst []T) {
+// FastLayerNormStrided performs strided Layer normalization along the last dimension for type T
+func FastLayerNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, beta, x, dst []T) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNorm(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNorm(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2118,10 +2118,10 @@ func LayerNormStrided[T D](numel, ndims int, dims, strides []int, eps T, alpha, 
 	}
 }
 
-// LayerNormStridedF32 performs strided Layer normalization along the last dimension for float32
-func LayerNormStridedF32(numel int, ndims int, dims, strides []int, eps float32, alpha, beta, x, dst []float32) {
+// FastLayerNormStridedF32 performs strided Layer normalization along the last dimension for float32
+func FastLayerNormStridedF32(numel int, ndims int, dims, strides []int, eps float32, alpha, beta, x, dst []float32) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNormF32(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNormF32(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2155,10 +2155,10 @@ func LayerNormStridedF32(numel int, ndims int, dims, strides []int, eps float32,
 	}
 }
 
-// LayerNormStridedF64 performs strided Layer normalization along the last dimension for float64
-func LayerNormStridedF64(numel int, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []float64) {
+// FastLayerNormStridedF64 performs strided Layer normalization along the last dimension for float64
+func FastLayerNormStridedF64(numel int, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []float64) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNormF64(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNormF64(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2192,10 +2192,10 @@ func LayerNormStridedF64(numel int, ndims int, dims, strides []int, eps float64,
 	}
 }
 
-// LayerNormStridedU8 performs strided Layer normalization along the last dimension for uint8
-func LayerNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []uint8) {
+// FastLayerNormStridedU8 performs strided Layer normalization along the last dimension for uint8
+func FastLayerNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []uint8) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNormU8(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNormU8(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2231,10 +2231,10 @@ func LayerNormStridedU8(numel, ndims int, dims, strides []int, eps float64, alph
 	}
 }
 
-// LayerNormStridedU32 performs strided Layer normalization along the last dimension for uint32
-func LayerNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []uint32) {
+// FastLayerNormStridedU32 performs strided Layer normalization along the last dimension for uint32
+func FastLayerNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []uint32) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNormU32(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNormU32(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]
@@ -2270,10 +2270,10 @@ func LayerNormStridedU32(numel, ndims int, dims, strides []int, eps float64, alp
 	}
 }
 
-// LayerNormStridedI64 performs strided Layer normalization along the last dimension for int64
-func LayerNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []int64) {
+// FastLayerNormStridedI64 performs strided Layer normalization along the last dimension for int64
+func FastLayerNormStridedI64(numel, ndims int, dims, strides []int, eps float64, alpha, beta, x, dst []int64) {
 	if IsContiguous(ndims, dims, strides) {
-		LayerNormI64(numel, ndims, dims, eps, alpha, beta, x, dst)
+		FastLayerNormI64(numel, ndims, dims, eps, alpha, beta, x, dst)
 		return
 	}
 	ncols := dims[ndims-1]

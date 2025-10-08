@@ -572,7 +572,7 @@ func (a *Tensor[T]) Maximum(b *Tensor[T]) (*Tensor[T], error) {
 }
 
 // MustMax performs element-wise maximum of two tensors, panicking on error.
-func (a *Tensor[T]) MustMax(b *Tensor[T]) *Tensor[T] {
+func (a *Tensor[T]) MustMaximum(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Maximum(b)
 	if err != nil {
 		panic(err)
@@ -586,7 +586,7 @@ func (a *Tensor[T]) Minimum(b *Tensor[T]) (*Tensor[T], error) {
 }
 
 // MustMin performs element-wise minimum of two tensors, panicking on error.
-func (a *Tensor[T]) MustMin(b *Tensor[T]) *Tensor[T] {
+func (a *Tensor[T]) MustMinimum(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Minimum(b)
 	if err != nil {
 		panic(err)
@@ -964,6 +964,20 @@ func (t *Tensor[T]) MustUpsampleNearest2d(targetH, targetW int) *Tensor[T] {
 	return result
 }
 
+// Gather performs gather along the specified dimension.
+func (t *Tensor[T]) Gather(indexes *Tensor[T], dim int) (*Tensor[T], error) {
+	return nil, nil
+}
+
+// MustGather performs gather along the specified dimension, panicking on error.
+func (t *Tensor[T]) MustGather(indexes *Tensor[T], dim int) *Tensor[T] {
+	result, err := t.Gather(indexes, dim)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // SumDim computes the sum along the specified dimensions.
 // The dimensions to sum over are specified in dims.
 // If keepdim is true, the summed dimensions are retained with size 1.
@@ -1054,6 +1068,66 @@ func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 	return result
 }
 
+// MaxDim computes the max along the specified dimensions.
+func (t *Tensor[T]) MaxDim(dims []int, keepdim bool) (*Tensor[T], error) {
+	return nil, nil
+}
+
+// MustMaxDim computes the max along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMaxDim(dims []int, keepdim bool) *Tensor[T] {
+	t, err := t.MaxDim(dims, keepdim)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Max computes the max along the specified dimensions, removing the dimensions with size 1.
+func (t *Tensor[T]) Max(dims []int) (*Tensor[T], error) {
+	return t.MaxDim(dims, false)
+}
+
+// MustMax computes the max along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMax(dims []int) *Tensor[T] {
+	t, err := t.Max(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MaxKeepDim computes the max along the specified dimensions, keeping the dimensions with size 1.
+func (t *Tensor[T]) MaxKeepDim(dims []int) (*Tensor[T], error) {
+	return t.MaxDim(dims, true)
+}
+
+// MustMaxKeepDim computes the max along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMaxKeepDim(dims []int) *Tensor[T] {
+	t, err := t.MaxKeepDim(dims)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// MaxAll computes the max of all elements in the tensor.
+func (t *Tensor[T]) MaxAll() (*Tensor[T], error) {
+	dims := make([]int, t.Rank())
+	for i := range dims {
+		dims[i] = i
+	}
+	return t.MaxDim(dims, false)
+}
+
+// MustMaxAll computes the max of all elements in the tensor, panicking on error.
+func (t *Tensor[T]) MaxSumAll() *Tensor[T] {
+	t, err := t.MaxAll()
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // FastMin computes the minimum over the last dimension.
 func (t *Tensor[T]) FastMin() (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, FastMinForward[T](), FastMinBackward[T]())
@@ -1082,14 +1156,28 @@ func (t *Tensor[T]) MustFastMax() *Tensor[T] {
 	return result
 }
 
-// Softmax performs softmax activation along the last dimension.
-func (t *Tensor[T]) Softmax() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SoftmaxForward[T](), SoftmaxBackward[T]())
+// FastSoftmax performs softmax activation along the last dimension.
+func (t *Tensor[T]) FastSoftmax() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FastSoftmaxForward[T](), FastSoftmaxBackward[T]())
 }
 
-// MustSoftmax performs softmax activation, panicking on error.
-func (t *Tensor[T]) MustSoftmax() *Tensor[T] {
-	result, err := t.Softmax()
+// MustFastSoftmax performs softmax activation, panicking on error.
+func (t *Tensor[T]) MustFastSoftmax() *Tensor[T] {
+	result, err := t.FastSoftmax()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// LogSoftmax performs logsoftmax activation along the last dimension.
+func (t *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
+	return nil, nil
+}
+
+// MustLogSoftmax performs logsoftmax activation, panicking on error.
+func (t *Tensor[T]) MustLogSoftmax(dim int) *Tensor[T] {
+	result, err := t.LogSoftmax(dim)
 	if err != nil {
 		panic(err)
 	}

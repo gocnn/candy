@@ -1658,8 +1658,8 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendS
 	return result, nil
 }
 
-// Softmax performs softmax along the last dimension
-func (s *CpuStorage[T]) Softmax(layout *spark.Layout) (spark.BackendStorage[T], error) {
+// FastSoftmax performs softmax along the last dimension
+func (s *CpuStorage[T]) FastSoftmax(layout *spark.Layout) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1670,7 +1670,7 @@ func (s *CpuStorage[T]) Softmax(layout *spark.Layout) (spark.BackendStorage[T], 
 	}
 
 	result := New(make([]T, numel))
-	kernels.SoftmaxStrided(
+	kernels.FastSoftmaxStrided(
 		numel,
 		layout.Rank(),
 		layout.Dims(),
@@ -1682,8 +1682,8 @@ func (s *CpuStorage[T]) Softmax(layout *spark.Layout) (spark.BackendStorage[T], 
 	return result, nil
 }
 
-// RmsNorm performs RMS normalization along the last dimension
-func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
+// FastRmsNorm performs RMS normalization along the last dimension
+func (s *CpuStorage[T]) FastRmsNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1712,7 +1712,7 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, alpha spark.BackendStorage
 	}
 
 	result := New(make([]T, numel))
-	kernels.RmsNormStrided(
+	kernels.FastRmsNormStrided(
 		numel,
 		layout.Rank(),
 		layout.Dims(),
@@ -1726,8 +1726,8 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, alpha spark.BackendStorage
 	return result, nil
 }
 
-// LayerNorm performs Layer normalization along the last dimension
-func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, beta spark.BackendStorage[T], betaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
+// FastLayerNorm performs Layer normalization along the last dimension
+func (s *CpuStorage[T]) FastLayerNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, beta spark.BackendStorage[T], betaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1767,7 +1767,7 @@ func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, alpha spark.BackendStora
 	}
 
 	result := New(make([]T, numel))
-	kernels.LayerNormStrided(
+	kernels.FastLayerNormStrided(
 		numel,
 		layout.Rank(),
 		layout.Dims(),

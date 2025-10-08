@@ -1662,7 +1662,7 @@ func TestSumStridedF64(t *testing.T) {
 	}
 }
 
-func TestSoftmaxF32(t *testing.T) {
+func TestFastSoftmaxF32(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -1708,7 +1708,7 @@ func TestSoftmaxF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.SoftmaxF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
+			kernels.FastSoftmaxF32(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1716,7 +1716,7 @@ func TestSoftmaxF32(t *testing.T) {
 	}
 }
 
-func TestSoftmaxF64(t *testing.T) {
+func TestFastSoftmaxF64(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -1762,7 +1762,7 @@ func TestSoftmaxF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.SoftmaxF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
+			kernels.FastSoftmaxF64(tt.numel, tt.ndims, tt.dims, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1770,7 +1770,7 @@ func TestSoftmaxF64(t *testing.T) {
 	}
 }
 
-func TestSoftmaxStridedF32(t *testing.T) {
+func TestFastSoftmaxStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -1830,7 +1830,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.SoftmaxStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastSoftmaxStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1838,7 +1838,7 @@ func TestSoftmaxStridedF32(t *testing.T) {
 	}
 }
 
-func TestSoftmaxStridedF64(t *testing.T) {
+func TestFastSoftmaxStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -1898,7 +1898,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.SoftmaxStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
+			kernels.FastSoftmaxStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1906,7 +1906,7 @@ func TestSoftmaxStridedF64(t *testing.T) {
 	}
 }
 
-func TestRmsNormF32(t *testing.T) {
+func TestFastRmsNormF32(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -1962,7 +1962,7 @@ func TestRmsNormF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.RmsNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
+			kernels.FastRmsNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -1970,7 +1970,7 @@ func TestRmsNormF32(t *testing.T) {
 	}
 }
 
-func TestRmsNormF64(t *testing.T) {
+func TestFastRmsNormF64(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -2026,7 +2026,7 @@ func TestRmsNormF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.RmsNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
+			kernels.FastRmsNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2034,7 +2034,7 @@ func TestRmsNormF64(t *testing.T) {
 	}
 }
 
-func TestRmsNormStridedF32(t *testing.T) {
+func TestFastRmsNormStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -2095,7 +2095,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.RmsNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
+			kernels.FastRmsNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2103,7 +2103,7 @@ func TestRmsNormStridedF32(t *testing.T) {
 	}
 }
 
-func TestRmsNormStridedF64(t *testing.T) {
+func TestFastRmsNormStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -2164,7 +2164,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.RmsNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
+			kernels.FastRmsNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2172,7 +2172,7 @@ func TestRmsNormStridedF64(t *testing.T) {
 	}
 }
 
-func TestLayerNormF32(t *testing.T) {
+func TestFastLayerNormF32(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -2244,7 +2244,7 @@ func TestLayerNormF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.LayerNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.FastLayerNormF32(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2252,7 +2252,7 @@ func TestLayerNormF32(t *testing.T) {
 	}
 }
 
-func TestLayerNormF64(t *testing.T) {
+func TestFastLayerNormF64(t *testing.T) {
 	tests := []struct {
 		name  string
 		numel int
@@ -2324,7 +2324,7 @@ func TestLayerNormF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.LayerNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.FastLayerNormF64(tt.numel, tt.ndims, tt.dims, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2332,7 +2332,7 @@ func TestLayerNormF64(t *testing.T) {
 	}
 }
 
-func TestLayerNormStridedF32(t *testing.T) {
+func TestFastLayerNormStridedF32(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -2410,7 +2410,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float32, tt.numel)
-			kernels.LayerNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.FastLayerNormStridedF32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
@@ -2418,7 +2418,7 @@ func TestLayerNormStridedF32(t *testing.T) {
 	}
 }
 
-func TestLayerNormStridedF64(t *testing.T) {
+func TestFastLayerNormStridedF64(t *testing.T) {
 	tests := []struct {
 		name    string
 		numel   int
@@ -2496,7 +2496,7 @@ func TestLayerNormStridedF64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := make([]float64, tt.numel)
-			kernels.LayerNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
+			kernels.FastLayerNormStridedF64(tt.numel, tt.ndims, tt.dims, tt.strides, tt.eps, tt.alpha, tt.beta, tt.src, dst)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
