@@ -84,6 +84,36 @@ func (l *Layout) Dim(dim int) int {
 	return l.shape.Dim(dim)
 }
 
+// Dims0 checks if the shape has 0 dimensions (scalar).
+func (s *Layout) Dims0() error {
+	return s.shape.Dims0()
+}
+
+// Dims1 extracts the single dimension from a 1D shape.
+func (s *Layout) Dims1() (int, error) {
+	return s.shape.Dims1()
+}
+
+// Dims2 extracts the two dimensions from a 2D shape.
+func (s *Layout) Dims2() (int, int, error) {
+	return s.shape.Dims2()
+}
+
+// Dims3 extracts the three dimensions from a 3D shape.
+func (s *Layout) Dims3() (int, int, int, error) {
+	return s.shape.Dims3()
+}
+
+// Dims4 extracts the four dimensions from a 4D shape.
+func (s *Layout) Dims4() (int, int, int, int, error) {
+	return s.shape.Dims4()
+}
+
+// Dims5 extracts the five dimensions from a 5D shape.
+func (s *Layout) Dims5() (int, int, int, int, int, error) {
+	return s.shape.Dims5()
+}
+
 // ElemCount returns the total number of elements in the layout.
 func (l *Layout) ElemCount() int {
 	return l.shape.ElemCount()

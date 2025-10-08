@@ -48,29 +48,30 @@ func ApplyOp[T spark.D](inputs []*Tensor[T], forward ForwardFunc[T], backward Ba
 
 // ReduceBroadcastGrad reduces a broadcasted gradient to the target shape.
 func ReduceBroadcastGrad[T spark.D](g *Tensor[T], dims []int) (*Tensor[T], error) {
-	gDims := g.Dims()
-	offset := len(gDims) - len(dims)
-	sumDims := make([]int, 0, len(gDims))
-	for i := range offset {
-		sumDims = append(sumDims, i)
+	gd := g.Dims()
+	n := len(gd) - len(dims)
+	sd := make([]int, 0, len(gd))
+	for i := range n {
+		sd = append(sd, i)
 	}
 	for i, d := range dims {
-		if gDims[i+offset] != d {
-			sumDims = append(sumDims, i+offset)
+		if gd[i+n] != d {
+			sd = append(sd, i+n)
 		}
 	}
 	r := g
-	var err error
-	if len(sumDims) > 0 {
-		r, err = g.SumKeepDim(sumDims)
+	if len(sd) > 0 {
+		var err error
+		r, err = g.SumKeepDim(sd)
 		if err != nil {
 			return nil, fmt.Errorf("failed to sum dims: %w", err)
 		}
 	}
-	for range offset {
+	for range n {
+		var err error
 		r, err = r.Squeeze(0)
 		if err != nil {
-			return nil, fmt.Errorf("failed to squeeze dim: %w", err)
+			return nil, fmt.Errorf("failed to squeeze: %w", err)
 		}
 	}
 	return r, nil
@@ -85,7 +86,7 @@ func AffineForward[T spark.D](scale, bias float64) ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Affine(x.layout, T(scale), T(bias))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute affine: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -93,1099 +94,1038 @@ func AffineForward[T spark.D](scale, bias float64) ForwardFunc[T] {
 
 // AffineBackward returns a BackwardFunc for affine transformation gradients: ∂y/∂x = scale.
 func AffineBackward[T spark.D](scale, bias float64) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		scaleTensor, err := Full[T](scale, grad.Shape(), grad.Device())
+		s, err := Full[T](scale, g.Shape(), g.Device())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create scale: %w", err)
 		}
-		dx, err := grad.Mul(scaleTensor)
+		dx, err := g.Mul(s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
 }
 
-// AddForward returns a ForwardFunc for element-wise addition: c = a + b.
+// AddForward returns a ForwardFunc for element-wise addition: x + y.
 func AddForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Add(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Add(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to add: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// AddBackward returns a BackwardFunc for addition gradients: ∂c/∂a = 1, ∂c/∂b = 1.
+// AddBackward returns a BackwardFunc for addition gradients: ∂z/∂x = 1, ∂z/∂y = 1.
 func AddBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		return []*Tensor[T]{grad, grad}, nil
+		return []*Tensor[T]{g, g}, nil
 	}
 }
 
-// SubForward returns a ForwardFunc for element-wise subtraction: c = a - b.
+// SubForward returns a ForwardFunc for element-wise subtraction: x - y.
 func SubForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Sub(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Sub(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to subtract: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// SubBackward returns a BackwardFunc for subtraction gradients: ∂c/∂a = 1, ∂c/∂b = -1.
+// SubBackward returns a BackwardFunc for subtraction gradients: ∂z/∂x = 1, ∂z/∂y = -1.
 func SubBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		db, err := grad.Neg()
+		dy, err := g.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate gradient: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		return []*Tensor[T]{grad, db}, nil
+		return []*Tensor[T]{g, dy}, nil
 	}
 }
 
-// MulForward returns a ForwardFunc for element-wise multiplication: c = a * b.
+// MulForward returns a ForwardFunc for element-wise multiplication: x * y.
 func MulForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Mul(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Mul(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to multiply: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// MulBackward returns a BackwardFunc for multiplication gradients: ∂c/∂a = b, ∂c/∂b = a.
+// MulBackward returns a BackwardFunc for multiplication gradients: ∂z/∂x = y, ∂z/∂y = x.
 func MulBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		da, err := grad.Mul(b)
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		dx, err := g.Mul(y)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute da: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		db, err := grad.Mul(a)
+		dy, err := g.Mul(x)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute db: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// DivForward returns a ForwardFunc for element-wise division: c = a / b.
+// DivForward returns a ForwardFunc for element-wise division: x / y.
 func DivForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Div(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Div(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to divide: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// DivBackward returns a BackwardFunc for division gradients: ∂c/∂a = 1/b, ∂c/∂b = -a/b².
+// DivBackward returns a BackwardFunc for division gradients: ∂z/∂x = 1/y, ∂z/∂y = -x/y².
 func DivBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		da, err := grad.Div(b)
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		dx, err := g.Div(y)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute da: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		b2, err := b.Sqr()
+		y2, err := y.Sqr()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute b²: %w", err)
+			return nil, fmt.Errorf("failed to compute y²: %w", err)
 		}
-		aOverB2, err := a.Div(b2)
+		xy2, err := x.Div(y2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute a/b²: %w", err)
+			return nil, fmt.Errorf("failed to compute x/y²: %w", err)
 		}
-		negAOverB2, err := aOverB2.Neg()
+		dy, err := xy2.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate a/b²: %w", err)
+			return nil, fmt.Errorf("failed to negate x/y²: %w", err)
 		}
-		db, err := grad.Mul(negAOverB2)
+		dy, err = g.Mul(dy)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute db: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// MaxForward returns a ForwardFunc for element-wise maximum: c = max(a, b).
+// MaxForward returns a ForwardFunc for element-wise maximum: max(x, y).
 func MaxForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Max(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Max(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute max: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// MaxBackward returns a BackwardFunc for maximum gradients: ∂c/∂a = (a >= b) ? grad : 0, ∂c/∂b = (b > a) ? grad : 0.
+// MaxBackward returns a BackwardFunc for maximum gradients: ∂z/∂x = (x >= y) ? g : 0, ∂z/∂y = (y > x) ? g : 0.
 func MaxBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-
-		// Create masks: a_mask = (a >= b), b_mask = (b > a)
-		aMask, err := a.Ge(b)
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		mx, err := x.Ge(y)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute a >= b: %w", err)
+			return nil, fmt.Errorf("failed to compute x >= y: %w", err)
 		}
-		bMask, err := b.Gt(a)
+		my, err := y.Gt(x)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute b > a: %w", err)
+			return nil, fmt.Errorf("failed to compute y > x: %w", err)
 		}
-
-		zeros, err := Zeros[T](grad.Shape(), grad.Device())
+		z, err := Zeros[T](g.Shape(), g.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		da, err := aMask.WhereCond(grad, zeros)
+		dx, err := mx.WhereCond(g, z)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute da: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		db, err := bMask.WhereCond(grad, zeros)
+		dy, err := my.WhereCond(g, z)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute db: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// MinForward returns a ForwardFunc for element-wise minimum: c = min(a, b).
+// MinForward returns a ForwardFunc for element-wise minimum: min(x, y).
 func MinForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		layout := spark.Contiguous(a.layout.Shape())
-		data, err := a.storage.Min(b.storage, a.layout, b.layout, layout)
+		x, y := inputs[0], inputs[1]
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Min(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute min: %w", err)
 		}
-		return NewFrom(data, layout, a.dtype, a.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
-// MinBackward returns a BackwardFunc for minimum gradients: ∂c/∂a = (a <= b) ? grad : 0, ∂c/∂b = (b < a) ? grad : 0.
+// MinBackward returns a BackwardFunc for minimum gradients: ∂z/∂x = (x <= y) ? g : 0, ∂z/∂y = (y < x) ? g : 0.
 func MinBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-
-		// Create masks: a_mask = (a <= b), b_mask = (b < a)
-		aMask, err := a.Le(b)
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		mx, err := x.Le(y)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute a <= b: %w", err)
+			return nil, fmt.Errorf("failed to compute x <= y: %w", err)
 		}
-		bMask, err := b.Lt(a)
+		my, err := y.Lt(x)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute b < a: %w", err)
+			return nil, fmt.Errorf("failed to compute y < x: %w", err)
 		}
-
-		zeros, err := Zeros[T](grad.Shape(), grad.Device())
+		z, err := Zeros[T](g.Shape(), g.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		da, err := aMask.WhereCond(grad, zeros)
+		dx, err := mx.WhereCond(g, z)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute da: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		db, err := bMask.WhereCond(grad, zeros)
+		dy, err := my.WhereCond(g, z)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute db: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// EqForward returns a ForwardFunc for element-wise equality comparison.
+// EqForward returns a ForwardFunc for element-wise equality: x == y.
 func EqForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		// Validate shapes are compatible
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		// Perform comparison using storage layer
-		data, err := a.storage.Eq(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Eq(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute eq: %w", err)
 		}
-
-		// Result is always uint8 for comparison operations
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// EqBackward returns a BackwardFunc for equality comparison (zero gradients).
+// EqBackward returns a BackwardFunc for equality gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func EqBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		// Comparison operations have zero gradients
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// NeForward returns a ForwardFunc for element-wise inequality comparison.
+// NeForward returns a ForwardFunc for element-wise inequality: x != y.
 func NeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		data, err := a.storage.Ne(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Ne(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute ne: %w", err)
 		}
-
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// NeBackward returns a BackwardFunc for inequality comparison (zero gradients).
+// NeBackward returns a BackwardFunc for inequality gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func NeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// LtForward returns a ForwardFunc for element-wise less-than comparison.
+// LtForward returns a ForwardFunc for element-wise less-than: x < y.
 func LtForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		data, err := a.storage.Lt(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Lt(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute lt: %w", err)
 		}
-
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// LtBackward returns a BackwardFunc for less-than comparison (zero gradients).
+// LtBackward returns a BackwardFunc for less-than gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func LtBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// LeForward returns a ForwardFunc for element-wise less-than-or-equal comparison.
+// LeForward returns a ForwardFunc for element-wise less-than-or-equal: x <= y.
 func LeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		data, err := a.storage.Le(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Le(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute le: %w", err)
 		}
-
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// LeBackward returns a BackwardFunc for less-than-or-equal comparison (zero gradients).
+// LeBackward returns a BackwardFunc for less-than-or-equal gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func LeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// GtForward returns a ForwardFunc for element-wise greater-than comparison.
+// GtForward returns a ForwardFunc for element-wise greater-than: x > y.
 func GtForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		data, err := a.storage.Gt(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Gt(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute gt: %w", err)
 		}
-
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// GtBackward returns a BackwardFunc for greater-than comparison (zero gradients).
+// GtBackward returns a BackwardFunc for greater-than gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func GtBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// GeForward returns a ForwardFunc for element-wise greater-than-or-equal comparison.
+// GeForward returns a ForwardFunc for element-wise greater-than-or-equal: x >= y.
 func GeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-
-		if !a.Shape().Equal(b.Shape()) {
-			return nil, fmt.Errorf("shape mismatch: %v vs %v", a.Shape(), b.Shape())
+		x, y := inputs[0], inputs[1]
+		if !x.Shape().Equal(y.Shape()) {
+			return nil, fmt.Errorf("shape mismatch: %v vs %v", x.Shape(), y.Shape())
 		}
-
-		data, err := a.storage.Ge(b.storage, a.layout, b.layout, spark.Contiguous(a.Shape()))
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Ge(y.storage, x.layout, y.layout, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute ge: %w", err)
 		}
-
-		return NewFrom(data, spark.Contiguous(a.Shape()), spark.U8, a.device), nil
+		return NewFrom(data, s, spark.U8, x.device), nil
 	}
 }
 
-// GeBackward returns a BackwardFunc for greater-than-or-equal comparison (zero gradients).
+// GeBackward returns a BackwardFunc for greater-than-or-equal gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func GeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastAddForward returns a ForwardFunc for broadcasted addition: a + b.
+// BroadcastAddForward returns a ForwardFunc for broadcasted addition: x + y.
 func BroadcastAddForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Add(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Add(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
 			return nil, fmt.Errorf("failed to add: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
-// BroadcastAddBackward returns a BackwardFunc for broadcasted addition gradients.
+// BroadcastAddBackward returns a BackwardFunc for broadcasted addition gradients: ∂z/∂x = 1, ∂z/∂y = 1.
 func BroadcastAddBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		da, err := ReduceBroadcastGrad(grad, a.Dims())
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		dx, err := ReduceBroadcastGrad(g, x.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		db, err := ReduceBroadcastGrad(grad, b.Dims())
+		dy, err := ReduceBroadcastGrad(g, y.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastSubForward returns a ForwardFunc for broadcasted subtraction: a - b.
+// BroadcastSubForward returns a ForwardFunc for broadcasted subtraction: x - y.
 func BroadcastSubForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Sub(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Sub(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to sub: %w", err)
+			return nil, fmt.Errorf("failed to subtract: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
-// BroadcastSubBackward returns a BackwardFunc for broadcasted subtraction gradients.
+// BroadcastSubBackward returns a BackwardFunc for broadcasted subtraction gradients: ∂z/∂x = 1, ∂z/∂y = -1.
 func BroadcastSubBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		da, err := ReduceBroadcastGrad(grad, a.Dims())
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		dx, err := ReduceBroadcastGrad(g, x.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		// For subtraction: ∂(a-b)/∂b = -1, so negate the gradient
-		negGrad, err := grad.Neg()
+		ng, err := g.Neg()
 		if err != nil {
 			return nil, fmt.Errorf("failed to negate grad: %w", err)
 		}
-		db, err := ReduceBroadcastGrad(negGrad, b.Dims())
+		dy, err := ReduceBroadcastGrad(ng, y.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastMulForward returns a ForwardFunc for broadcasted multiplication: a * b.
+// BroadcastMulForward returns a ForwardFunc for broadcasted multiplication: x * y.
 func BroadcastMulForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Mul(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Mul(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to mul: %w", err)
+			return nil, fmt.Errorf("failed to multiply: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
-// BroadcastMulBackward returns a BackwardFunc for broadcasted multiplication gradients.
+// BroadcastMulBackward returns a BackwardFunc for broadcasted multiplication gradients: ∂z/∂x = y, ∂z/∂y = x.
 func BroadcastMulBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-
-		// ∂(a*b)/∂a = b, so grad_a = grad * b
-		bBcast, err := b.BroadcastAs(grad.Shape())
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		yb, err := y.BroadcastAs(g.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b for grad_a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y for dx: %w", err)
 		}
-		gradA, err := grad.Mul(bBcast)
+		gx, err := g.Mul(yb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad_a: %w", err)
+			return nil, fmt.Errorf("failed to compute g*y: %w", err)
 		}
-		da, err := ReduceBroadcastGrad(gradA, a.Dims())
+		dx, err := ReduceBroadcastGrad(gx, x.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-
-		// ∂(a*b)/∂b = a, so grad_b = grad * a
-		aBcast, err := a.BroadcastAs(grad.Shape())
+		xb, err := x.BroadcastAs(g.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a for grad_b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x for dy: %w", err)
 		}
-		gradB, err := grad.Mul(aBcast)
+		gy, err := g.Mul(xb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad_b: %w", err)
+			return nil, fmt.Errorf("failed to compute g*x: %w", err)
 		}
-		db, err := ReduceBroadcastGrad(gradB, b.Dims())
+		dy, err := ReduceBroadcastGrad(gy, y.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastDivForward returns a ForwardFunc for broadcasted division: a / b.
+// BroadcastDivForward returns a ForwardFunc for broadcasted division: x / y.
 func BroadcastDivForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Div(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Div(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to div: %w", err)
+			return nil, fmt.Errorf("failed to divide: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), a.dtype, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
-// BroadcastDivBackward returns a BackwardFunc for broadcasted division gradients.
+// BroadcastDivBackward returns a BackwardFunc for broadcasted division gradients: ∂z/∂x = 1/y, ∂z/∂y = -x/y².
 func BroadcastDivBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-
-		// ∂(a/b)/∂a = 1/b, so grad_a = grad / b
-		bBcast, err := b.BroadcastAs(grad.Shape())
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		yb, err := y.BroadcastAs(g.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b for grad_a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y for dx: %w", err)
 		}
-		gradA, err := grad.Div(bBcast)
+		gx, err := g.Div(yb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad_a: %w", err)
+			return nil, fmt.Errorf("failed to compute g/y: %w", err)
 		}
-		da, err := ReduceBroadcastGrad(gradA, a.Dims())
+		dx, err := ReduceBroadcastGrad(gx, x.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for a: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-
-		// ∂(a/b)/∂b = -a/b², so grad_b = -grad * a / b²
-		aBcast, err := a.BroadcastAs(grad.Shape())
+		y2, err := yb.Sqr()
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a for grad_b: %w", err)
+			return nil, fmt.Errorf("failed to compute y²: %w", err)
 		}
-		bSqr, err := bBcast.Sqr()
+		xb, err := x.BroadcastAs(g.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute b²: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x for dy: %w", err)
 		}
-		gradB, err := grad.Mul(aBcast)
+		gy, err := g.Mul(xb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad*a: %w", err)
+			return nil, fmt.Errorf("failed to compute g*x: %w", err)
 		}
-		gradB, err = gradB.Div(bSqr)
+		gy, err = gy.Div(y2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad*a/b²: %w", err)
+			return nil, fmt.Errorf("failed to compute g*x/y²: %w", err)
 		}
-		gradB, err = gradB.Neg()
+		gy, err = gy.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate grad_b: %w", err)
+			return nil, fmt.Errorf("failed to negate g*x/y²: %w", err)
 		}
-		db, err := ReduceBroadcastGrad(gradB, b.Dims())
+		dy, err := ReduceBroadcastGrad(gy, y.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad for b: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastEqForward returns a ForwardFunc for broadcasted equality: a == b.
+// BroadcastEqForward returns a ForwardFunc for broadcasted equality: x == y.
 func BroadcastEqForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Eq(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Eq(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute eq: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastEqBackward returns a BackwardFunc for broadcasted equality (zero gradients).
+// BroadcastEqBackward returns a BackwardFunc for broadcasted equality gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastEqBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastNeForward returns a ForwardFunc for broadcasted inequality: a != b.
+// BroadcastNeForward returns a ForwardFunc for broadcasted inequality: x != y.
 func BroadcastNeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Ne(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Ne(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute ne: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastNeBackward returns a BackwardFunc for broadcasted inequality (zero gradients).
+// BroadcastNeBackward returns a BackwardFunc for broadcasted inequality gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastNeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastLtForward returns a ForwardFunc for broadcasted less-than: a < b.
+// BroadcastLtForward returns a ForwardFunc for broadcasted less-than: x < y.
 func BroadcastLtForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Lt(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Lt(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute lt: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastLtBackward returns a BackwardFunc for broadcasted less-than (zero gradients).
+// BroadcastLtBackward returns a BackwardFunc for broadcasted less-than gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastLtBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastLeForward returns a ForwardFunc for broadcasted less-equal: a <= b.
+// BroadcastLeForward returns a ForwardFunc for broadcasted less-than-or-equal: x <= y.
 func BroadcastLeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Le(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Le(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute le: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastLeBackward returns a BackwardFunc for broadcasted less-equal (zero gradients).
+// BroadcastLeBackward returns a BackwardFunc for broadcasted less-than-or-equal gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastLeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastGtForward returns a ForwardFunc for broadcasted greater-than: a > b.
+// BroadcastGtForward returns a ForwardFunc for broadcasted greater-than: x > y.
 func BroadcastGtForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Gt(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Gt(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute gt: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastGtBackward returns a BackwardFunc for broadcasted greater-than (zero gradients).
+// BroadcastGtBackward returns a BackwardFunc for broadcasted greater-than gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastGtBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// BroadcastGeForward returns a ForwardFunc for broadcasted greater-equal: a >= b.
+// BroadcastGeForward returns a ForwardFunc for broadcasted greater-than-or-equal: x >= y.
 func BroadcastGeForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		bcastShape, err := a.Shape().BroadcastShapeBinaryOp(b.Shape())
+		x, y := inputs[0], inputs[1]
+		s, err := x.Shape().BroadcastShapeBinaryOp(y.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute broadcast shape: %w", err)
 		}
-		aBcast, err := a.BroadcastAs(bcastShape)
+		xb, err := x.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast a: %w", err)
+			return nil, fmt.Errorf("failed to broadcast x: %w", err)
 		}
-		bBcast, err := b.BroadcastAs(bcastShape)
+		yb, err := y.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast b: %w", err)
+			return nil, fmt.Errorf("failed to broadcast y: %w", err)
 		}
-		data, err := aBcast.storage.Ge(bBcast.storage, aBcast.layout, bBcast.layout, spark.Contiguous(bcastShape))
+		data, err := xb.storage.Ge(yb.storage, xb.layout, yb.layout, spark.Contiguous(s))
 		if err != nil {
-			return nil, fmt.Errorf("failed to compare: %w", err)
+			return nil, fmt.Errorf("failed to compute ge: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(bcastShape), spark.U8, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), spark.U8, x.device), nil
 	}
 }
 
-// BroadcastGeBackward returns a BackwardFunc for broadcasted greater-equal (zero gradients).
+// BroadcastGeBackward returns a BackwardFunc for broadcasted greater-than-or-equal gradients: ∂z/∂x = 0, ∂z/∂y = 0.
 func BroadcastGeBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		da, err := a.ZerosLike()
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for a: %w", err)
+			return nil, fmt.Errorf("failed to create dx: %w", err)
 		}
-		db, err := b.ZerosLike()
+		dy, err := Zeros[T](inputs[1].Shape(), inputs[1].Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zero grad for b: %w", err)
+			return nil, fmt.Errorf("failed to create dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
-// MatMulForward returns a ForwardFunc for matrix multiplication: a @ b.
+// MatMulForward returns a ForwardFunc for matrix multiplication: x @ y.
 func MatMulForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0], inputs[1]
-		if a.Rank() < 2 || b.Rank() < 2 {
-			return nil, fmt.Errorf("tensors must have at least 2 dims")
+		x, y := inputs[0], inputs[1]
+		if x.Rank() < 2 || y.Rank() < 2 {
+			return nil, fmt.Errorf("tensors must have rank >= 2")
 		}
-		aDims, bDims := a.Dims(), b.Dims()
-		if len(aDims) != len(bDims) {
-			return nil, fmt.Errorf("tensors must have same rank: %d vs %d", len(aDims), len(bDims))
+		xd, yd := x.Dims(), y.Dims()
+		if len(xd) != len(yd) {
+			return nil, fmt.Errorf("tensors must have same rank: %d vs %d", len(xd), len(yd))
 		}
-		batchShape := spark.NewShapeFrom(aDims[:len(aDims)-2])
-		if !batchShape.Equal(spark.NewShapeFrom(bDims[:len(bDims)-2])) {
-			return nil, fmt.Errorf("batch dims mismatch: %v vs %v", batchShape, spark.NewShapeFrom(bDims[:len(bDims)-2]))
+		bs := spark.NewShapeFrom(xd[:len(xd)-2])
+		if !bs.Equal(spark.NewShapeFrom(yd[:len(yd)-2])) {
+			return nil, fmt.Errorf("batch dims mismatch: %v vs %v", bs, spark.NewShapeFrom(yd[:len(yd)-2]))
 		}
-		m, k1 := aDims[len(aDims)-2], aDims[len(aDims)-1]
-		k2, n := bDims[len(bDims)-2], bDims[len(bDims)-1]
-		if k1 != k2 {
-			return nil, fmt.Errorf("inner dims mismatch: %d != %d", k1, k2)
+		m, k := xd[len(xd)-2], xd[len(xd)-1]
+		if k != yd[len(yd)-2] {
+			return nil, fmt.Errorf("inner dims mismatch: %d vs %d", k, yd[len(yd)-2])
 		}
-		batchSize := batchShape.ElemCount()
-		resultDims := append(batchShape.Dims(), m, n)
-		data, err := a.storage.MatMul(a.layout, b.storage, b.layout, batchSize, m, n, k1)
+		s := spark.NewShapeFrom(append(bs.Dims(), m, yd[len(yd)-1]))
+		data, err := x.storage.MatMul(x.layout, y.storage, y.layout, bs.ElemCount(), m, yd[len(yd)-1], k)
 		if err != nil {
 			return nil, fmt.Errorf("failed to matmul: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(spark.NewShapeFrom(resultDims)), a.dtype, a.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
-// MatMulBackward returns a BackwardFunc for matrix multiplication gradients.
+// MatMulBackward returns a BackwardFunc for matrix multiplication gradients: ∂z/∂x = g @ yᵀ, ∂z/∂y = xᵀ @ g.
 func MatMulBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		a, b := inputs[0].Detach(), inputs[1].Detach()
-		bT, err := b.Transpose(-1, -2)
+		x, y := inputs[0].Detach(), inputs[1].Detach()
+		yt, err := y.Transpose(-1, -2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose b: %w", err)
+			return nil, fmt.Errorf("failed to transpose y: %w", err)
 		}
-		da, err := grad.MatMul(bT)
+		dx, err := g.MatMul(yt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute da: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		aT, err := a.Transpose(-1, -2)
+		xt, err := x.Transpose(-1, -2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose a: %w", err)
+			return nil, fmt.Errorf("failed to transpose x: %w", err)
 		}
-		db, err := aT.MatMul(grad)
+		dy, err := xt.MatMul(g)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute db: %w", err)
+			return nil, fmt.Errorf("failed to compute dy: %w", err)
 		}
-		return []*Tensor[T]{da, db}, nil
+		return []*Tensor[T]{dx, dy}, nil
 	}
 }
 
 // Conv1dForward returns a ForwardFunc for 1D convolution.
-func Conv1dForward[T spark.D](params *spark.Conv1DParams) ForwardFunc[T] {
+func Conv1dForward[T spark.D](p *spark.Conv1DParams) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -1194,75 +1134,71 @@ func Conv1dForward[T spark.D](params *spark.Conv1DParams) ForwardFunc[T] {
 		if x.Rank() != 3 || w.Rank() != 3 {
 			return nil, fmt.Errorf("tensors must be 3D")
 		}
-		outLen := params.OutLen()
-		shape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, outLen})
-		layout := spark.Contiguous(shape)
-		data, err := x.storage.Conv1d(x.layout, w.storage, w.layout, params)
+		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, p.OutLen()})
+		data, err := x.storage.Conv1d(x.layout, w.storage, w.layout, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to conv1d: %w", err)
 		}
-		return NewFrom(data, layout, x.dtype, x.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
 // Conv1dBackward returns a BackwardFunc for 1D convolution gradients.
-func Conv1dBackward[T spark.D](params *spark.Conv1DParams) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func Conv1dBackward[T spark.D](p *spark.Conv1DParams) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, w := inputs[0].Detach(), inputs[1].Detach()
-		gradLen := grad.Shape().Dims()[2]
-		kSize := params.KSize
-		outSize := (gradLen-1)*params.Stride + params.Dilate*(kSize-1) + 1 - 2*params.Pad
-		outPadding := params.InLen - outSize
-		gradParams := &spark.ConvT1DParams{
-			Batch:  params.Batch,
-			InCh:   params.OutCh,
-			InLen:  gradLen,
-			OutCh:  params.InCh,
-			KSize:  params.KSize,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			OutPad: outPadding,
-			Dilate: params.Dilate,
+		l := g.Dims()[2]
+		o := (l-1)*p.Stride + p.Dilate*(p.KSize-1) + 1 - 2*p.Pad
+		gradP := &spark.ConvT1DParams{
+			Batch:  p.Batch,
+			InCh:   p.OutCh,
+			InLen:  l,
+			OutCh:  p.InCh,
+			KSize:  p.KSize,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			OutPad: p.InLen - o,
+			Dilate: p.Dilate,
 		}
-		dx, err := grad.ConvTranspose1d(w, gradParams)
+		dx, err := g.ConvTranspose1d(w, gradP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		xT, err := x.Transpose(0, 1)
+		xt, err := x.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose x: %w", err)
 		}
-		gradT, err := grad.Transpose(0, 1)
+		gt, err := g.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose grad: %w", err)
 		}
-		kernelParams := &spark.Conv1DParams{
-			Batch:  params.InCh,
-			InCh:   params.Batch,
-			InLen:  params.InLen,
-			OutCh:  params.OutCh,
-			KSize:  gradLen,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			Dilate: params.Dilate,
+		kernelP := &spark.Conv1DParams{
+			Batch:  p.InCh,
+			InCh:   p.Batch,
+			InLen:  p.InLen,
+			OutCh:  p.OutCh,
+			KSize:  l,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			Dilate: p.Dilate,
 		}
-		dwT, err := xT.Conv1d(gradT, kernelParams)
+		dwt, err := xt.Conv1d(gt, kernelP)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute dwT: %w", err)
+			return nil, fmt.Errorf("failed to compute dwt: %w", err)
 		}
-		dw, err := dwT.Transpose(0, 1)
+		dw, err := dwt.Transpose(0, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose dwT: %w", err)
+			return nil, fmt.Errorf("failed to transpose dwt: %w", err)
 		}
 		return []*Tensor[T]{dx, dw}, nil
 	}
 }
 
 // ConvTranspose1dForward returns a ForwardFunc for 1D transposed convolution.
-func ConvTranspose1dForward[T spark.D](params *spark.ConvT1DParams) ForwardFunc[T] {
+func ConvTranspose1dForward[T spark.D](p *spark.ConvT1DParams) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -1271,70 +1207,68 @@ func ConvTranspose1dForward[T spark.D](params *spark.ConvT1DParams) ForwardFunc[
 		if x.Rank() != 3 || w.Rank() != 3 {
 			return nil, fmt.Errorf("tensors must be 3D")
 		}
-		outLen := params.OutLen()
-		shape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, outLen})
-		layout := spark.Contiguous(shape)
-		data, err := x.storage.ConvTranspose1d(x.layout, w.storage, w.layout, params)
+		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, p.OutLen()})
+		data, err := x.storage.ConvTranspose1d(x.layout, w.storage, w.layout, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convTranspose1d: %w", err)
 		}
-		return NewFrom(data, layout, x.dtype, x.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
 // ConvTranspose1dBackward returns a BackwardFunc for 1D transposed convolution gradients.
-func ConvTranspose1dBackward[T spark.D](params *spark.ConvT1DParams) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func ConvTranspose1dBackward[T spark.D](p *spark.ConvT1DParams) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, w := inputs[0].Detach(), inputs[1].Detach()
-		gradParams := &spark.Conv1DParams{
-			Batch:  params.Batch,
-			InCh:   params.OutCh,
-			InLen:  grad.Shape().Dims()[2],
-			OutCh:  params.InCh,
-			KSize:  params.KSize,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			Dilate: params.Dilate,
+		gradP := &spark.Conv1DParams{
+			Batch:  p.Batch,
+			InCh:   p.OutCh,
+			InLen:  g.Dims()[2],
+			OutCh:  p.InCh,
+			KSize:  p.KSize,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			Dilate: p.Dilate,
 		}
-		dx, err := grad.Conv1d(w, gradParams)
+		dx, err := g.Conv1d(w, gradP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		gradT, err := grad.Transpose(0, 1)
+		gt, err := g.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose grad: %w", err)
 		}
-		xT, err := x.Transpose(0, 1)
+		xt, err := x.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose x: %w", err)
 		}
-		kernelParams := &spark.Conv1DParams{
-			Batch:  params.OutCh,
-			InCh:   params.Batch,
-			InLen:  params.InLen,
-			OutCh:  params.InCh,
-			KSize:  grad.Shape().Dims()[2],
-			Stride: params.Dilate,
-			Pad:    params.Pad,
-			Dilate: params.Stride,
+		kernelP := &spark.Conv1DParams{
+			Batch:  p.OutCh,
+			InCh:   p.Batch,
+			InLen:  p.InLen,
+			OutCh:  p.InCh,
+			KSize:  g.Dims()[2],
+			Stride: p.Dilate,
+			Pad:    p.Pad,
+			Dilate: p.Stride,
 		}
-		dwT, err := gradT.Conv1d(xT, kernelParams)
+		dwt, err := gt.Conv1d(xt, kernelP)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute dwT: %w", err)
+			return nil, fmt.Errorf("failed to compute dwt: %w", err)
 		}
-		dw, err := dwT.Transpose(0, 1)
+		dw, err := dwt.Transpose(0, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose dwT: %w", err)
+			return nil, fmt.Errorf("failed to transpose dwt: %w", err)
 		}
 		return []*Tensor[T]{dx, dw}, nil
 	}
 }
 
 // Conv2dForward returns a ForwardFunc for 2D convolution.
-func Conv2dForward[T spark.D](params *spark.Conv2DParams) ForwardFunc[T] {
+func Conv2dForward[T spark.D](p *spark.Conv2DParams) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -1343,82 +1277,76 @@ func Conv2dForward[T spark.D](params *spark.Conv2DParams) ForwardFunc[T] {
 		if x.Rank() != 4 || w.Rank() != 4 {
 			return nil, fmt.Errorf("tensors must be 4D")
 		}
-		hOut, wOut := params.OutH(), params.OutW()
-		shape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, hOut, wOut})
-		layout := spark.Contiguous(shape)
-		data, err := x.storage.Conv2d(x.layout, w.storage, w.layout, params)
+		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, p.OutH(), p.OutW()})
+		data, err := x.storage.Conv2d(x.layout, w.storage, w.layout, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to conv2d: %w", err)
 		}
-		return NewFrom(data, layout, x.dtype, x.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
 // Conv2dBackward returns a BackwardFunc for 2D convolution gradients.
-func Conv2dBackward[T spark.D](params *spark.Conv2DParams) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func Conv2dBackward[T spark.D](p *spark.Conv2DParams) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, w := inputs[0].Detach(), inputs[1].Detach()
-		gradH, gradW := grad.Shape().Dims()[2], grad.Shape().Dims()[3]
-		kH, kW := params.KH, params.KW
-		outSizeH := (gradH-1)*params.Stride + params.Dilate*(kH-1) + 1 - 2*params.Pad
-		outSizeW := (gradW-1)*params.Stride + params.Dilate*(kW-1) + 1 - 2*params.Pad
-		outPadH := params.InH - outSizeH
-		outPadW := params.InW - outSizeW
-		outPad := max(outPadH, outPadW)
-		gradParams := &spark.ConvT2DParams{
-			Batch:  params.Batch,
-			InCh:   params.OutCh,
-			InH:    gradH,
-			InW:    gradW,
-			OutCh:  params.InCh,
-			KH:     params.KH,
-			KW:     params.KW,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			OutPad: outPad,
-			Dilate: params.Dilate,
+		gh, gw := g.Dims()[2], g.Dims()[3]
+		oh := (gh-1)*p.Stride + p.Dilate*(p.KH-1) + 1 - 2*p.Pad
+		ow := (gw-1)*p.Stride + p.Dilate*(p.KW-1) + 1 - 2*p.Pad
+		gradP := &spark.ConvT2DParams{
+			Batch:  p.Batch,
+			InCh:   p.OutCh,
+			InH:    gh,
+			InW:    gw,
+			OutCh:  p.InCh,
+			KH:     p.KH,
+			KW:     p.KW,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			OutPad: max(p.InH-oh, p.InW-ow),
+			Dilate: p.Dilate,
 		}
-		dx, err := grad.ConvTranspose2d(w, gradParams)
+		dx, err := g.ConvTranspose2d(w, gradP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		xT, err := x.Transpose(0, 1)
+		xt, err := x.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose x: %w", err)
 		}
-		gradT, err := grad.Transpose(0, 1)
+		gt, err := g.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose grad: %w", err)
 		}
-		kernelParams := &spark.Conv2DParams{
-			Batch:  params.InCh,
-			InCh:   params.Batch,
-			InH:    params.InH,
-			InW:    params.InW,
-			OutCh:  params.OutCh,
-			KH:     gradH,
-			KW:     gradW,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			Dilate: params.Dilate,
+		kernelP := &spark.Conv2DParams{
+			Batch:  p.InCh,
+			InCh:   p.Batch,
+			InH:    p.InH,
+			InW:    p.InW,
+			OutCh:  p.OutCh,
+			KH:     gh,
+			KW:     gw,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			Dilate: p.Dilate,
 		}
-		dwT, err := xT.Conv2d(gradT, kernelParams)
+		dwt, err := xt.Conv2d(gt, kernelP)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute dwT: %w", err)
+			return nil, fmt.Errorf("failed to compute dwt: %w", err)
 		}
-		dw, err := dwT.Transpose(0, 1)
+		dw, err := dwt.Transpose(0, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose dwT: %w", err)
+			return nil, fmt.Errorf("failed to transpose dwt: %w", err)
 		}
 		return []*Tensor[T]{dx, dw}, nil
 	}
 }
 
 // ConvTranspose2dForward returns a ForwardFunc for 2D transposed convolution.
-func ConvTranspose2dForward[T spark.D](params *spark.ConvT2DParams) ForwardFunc[T] {
+func ConvTranspose2dForward[T spark.D](p *spark.ConvT2DParams) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
@@ -1427,74 +1355,72 @@ func ConvTranspose2dForward[T spark.D](params *spark.ConvT2DParams) ForwardFunc[
 		if x.Rank() != 4 || w.Rank() != 4 {
 			return nil, fmt.Errorf("tensors must be 4D")
 		}
-		hOut, wOut := params.OutH(), params.OutW()
-		shape := spark.NewShapeFrom([]int{params.Batch, params.OutCh, hOut, wOut})
-		layout := spark.Contiguous(shape)
-		data, err := x.storage.ConvTranspose2d(x.layout, w.storage, w.layout, params)
+		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, p.OutH(), p.OutW()})
+		data, err := x.storage.ConvTranspose2d(x.layout, w.storage, w.layout, p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convTranspose2d: %w", err)
 		}
-		return NewFrom(data, layout, x.dtype, x.device), nil
+		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
 	}
 }
 
 // ConvTranspose2dBackward returns a BackwardFunc for 2D transposed convolution gradients.
-func ConvTranspose2dBackward[T spark.D](params *spark.ConvT2DParams) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func ConvTranspose2dBackward[T spark.D](p *spark.ConvT2DParams) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
 		x, w := inputs[0].Detach(), inputs[1].Detach()
-		gradParams := &spark.Conv2DParams{
-			Batch:  params.Batch,
-			InCh:   params.OutCh,
-			InH:    grad.Shape().Dims()[2],
-			InW:    grad.Shape().Dims()[3],
-			OutCh:  params.InCh,
-			KH:     params.KH,
-			KW:     params.KW,
-			Stride: params.Stride,
-			Pad:    params.Pad,
-			Dilate: params.Dilate,
+		gradP := &spark.Conv2DParams{
+			Batch:  p.Batch,
+			InCh:   p.OutCh,
+			InH:    g.Dims()[2],
+			InW:    g.Dims()[3],
+			OutCh:  p.InCh,
+			KH:     p.KH,
+			KW:     p.KW,
+			Stride: p.Stride,
+			Pad:    p.Pad,
+			Dilate: p.Dilate,
 		}
-		dx, err := grad.Conv2d(w, gradParams)
+		dx, err := g.Conv2d(w, gradP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
-		gradT, err := grad.Transpose(0, 1)
+		gt, err := g.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose grad: %w", err)
 		}
-		xT, err := x.Transpose(0, 1)
+		xt, err := x.Transpose(0, 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transpose x: %w", err)
 		}
-		kernelParams := &spark.Conv2DParams{
-			Batch:  params.OutCh,
-			InCh:   params.Batch,
-			InH:    params.InH,
-			InW:    params.InW,
-			OutCh:  params.InCh,
-			KH:     grad.Shape().Dims()[2],
-			KW:     grad.Shape().Dims()[3],
-			Stride: params.Dilate,
-			Pad:    params.Pad,
-			Dilate: params.Stride,
+		kernelP := &spark.Conv2DParams{
+			Batch:  p.OutCh,
+			InCh:   p.Batch,
+			InH:    p.InH,
+			InW:    p.InW,
+			OutCh:  p.InCh,
+			KH:     g.Dims()[2],
+			KW:     g.Dims()[3],
+			Stride: p.Dilate,
+			Pad:    p.Pad,
+			Dilate: p.Stride,
 		}
-		dwT, err := gradT.Conv2d(xT, kernelParams)
+		dwt, err := gt.Conv2d(xt, kernelP)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute dwT: %w", err)
+			return nil, fmt.Errorf("failed to compute dwt: %w", err)
 		}
-		dw, err := dwT.Transpose(0, 1)
+		dw, err := dwt.Transpose(0, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose dwT: %w", err)
+			return nil, fmt.Errorf("failed to transpose dwt: %w", err)
 		}
 		return []*Tensor[T]{dx, dw}, nil
 	}
 }
 
 // AvgPool2dForward returns a ForwardFunc for 2D average pooling.
-func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
+func AvgPool2dForward[T spark.D](kH, kW, sH, sW int) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1503,8 +1429,20 @@ func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
 		if x.Rank() != 4 {
 			return nil, fmt.Errorf("tensor must be 4D, got %dD", x.Rank())
 		}
-		shape := spark.NewShapeFrom([]int{params.Batch, params.Ch, params.OutH(), params.OutW()})
-		data, err := x.storage.AvgPool2d(x.layout, params)
+		b, c, h, w, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("expected 4D tensor for avg_pool2d, got: %w", err)
+		}
+		if h < kH || w < kW {
+			return nil, fmt.Errorf("kernel size (%d,%d) larger than input (%d,%d)", kH, kW, h, w)
+		}
+		if kH <= 0 || kW <= 0 || sH <= 0 || sW <= 0 {
+			return nil, fmt.Errorf("kernel and stride must be positive")
+		}
+		hOut := (h-kH)/sH + 1
+		wOut := (w-kW)/sW + 1
+		shape := spark.NewShapeFrom([]int{b, c, hOut, wOut})
+		data, err := x.storage.AvgPool2d(x.layout, kH, kW, sH, sW)
 		if err != nil {
 			return nil, fmt.Errorf("failed to avgpool2d: %w", err)
 		}
@@ -1513,34 +1451,21 @@ func AvgPool2dForward[T spark.D](params *spark.Pool2DParams) ForwardFunc[T] {
 }
 
 // AvgPool2dBackward returns a BackwardFunc for 2D average pooling gradients.
-func AvgPool2dBackward[T spark.D](params *spark.Pool2DParams) BackwardFunc[T] {
+func AvgPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		if params.KH != params.HStride || params.KW != params.WStride {
-			return nil, fmt.Errorf("kernel size must equal stride: kh=%d, stride_h=%d, kw=%d, stride_w=%d",
-				params.KH, params.HStride, params.KW, params.WStride)
-		}
 		x := inputs[0].Detach()
-		dims := x.Dims()
-		batch, ch, h, w := dims[0], dims[1], dims[2], dims[3]
-		outH, outW := grad.Dims()[2], grad.Dims()[3]
-		upsampleParams := &spark.UpsampleParams{
-			Batch:  batch,
-			Ch:     ch,
-			InH:    outH,
-			InW:    outW,
-			HOut:   h,
-			WOut:   w,
-			HScale: float64(h) / float64(outH),
-			WScale: float64(w) / float64(outW),
+		_, _, h, w, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("expected 4D tensor for avg_pool2d, got: %w", err)
 		}
-		dx, err := grad.UpsampleNearest2d(upsampleParams)
+		dx, err := grad.UpsampleNearest2d(h, w)
 		if err != nil {
 			return nil, fmt.Errorf("failed to upsample grad: %w", err)
 		}
-		scale := 1.0 / float64(params.KH*params.KW)
+		scale := 1.0 / float64(kH*kW)
 		scaleTensor, err := Full[T](scale, dx.Shape(), dx.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create scale tensor: %w", err)
@@ -1553,8 +1478,8 @@ func AvgPool2dBackward[T spark.D](params *spark.Pool2DParams) BackwardFunc[T] {
 	}
 }
 
-// UpsampleNearest2dForward returns a ForwardFunc for 2D nearest neighbor upsampling.
-func UpsampleNearest2dForward[T spark.D](params *spark.UpsampleParams) ForwardFunc[T] {
+// MaxPool2dForward returns a ForwardFunc for 2D max pooling.
+func MaxPool2dForward[T spark.D](kH, kW, sH, sW int) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1563,51 +1488,128 @@ func UpsampleNearest2dForward[T spark.D](params *spark.UpsampleParams) ForwardFu
 		if x.Rank() != 4 {
 			return nil, fmt.Errorf("tensor must be 4D, got %dD", x.Rank())
 		}
-		shape := spark.NewShapeFrom([]int{params.Batch, params.Ch, params.HOut, params.WOut})
-		data, err := x.storage.UpsampleNearest2d(x.layout, params)
+		b, c, h, w, err := x.Shape().Dims4()
 		if err != nil {
-			return nil, fmt.Errorf("failed to upsampleNearest2d: %w", err)
+			return nil, fmt.Errorf("failed to get 4D shape: %w", err)
+		}
+		if h < kH || w < kW {
+			return nil, fmt.Errorf("kernel (%d,%d) larger than input (%d,%d)", kH, kW, h, w)
+		}
+		if kH <= 0 || kW <= 0 || sH <= 0 || sW <= 0 {
+			return nil, fmt.Errorf("kernel and stride must be positive")
+		}
+		hOut := (h-kH)/sH + 1
+		wOut := (w-kW)/sW + 1
+		shape := spark.NewShapeFrom([]int{b, c, hOut, wOut})
+		data, err := x.storage.MaxPool2d(x.layout, kH, kW, sH, sW)
+		if err != nil {
+			return nil, fmt.Errorf("failed to maxpool2d: %w", err)
+		}
+		return NewFrom(data, spark.Contiguous(shape), x.dtype, x.device), nil
+	}
+}
+
+// MaxPool2dBackward returns a BackwardFunc for 2D max pooling gradients.
+func MaxPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		if kH != sH || kW != sW {
+			return nil, fmt.Errorf("kernel must equal stride: kH=%d, sH=%d, kW=%d, sW=%d", kH, sH, kW, sW)
+		}
+		x := inputs[0].Detach()
+		_, _, h, w, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get 4D shape: %w", err)
+		}
+		p, err := x.MaxPool2d(kH, kW, sH, sW)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute maxpool: %w", err)
+		}
+		pu, err := p.UpsampleNearest2d(h, w)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upsample maxpool: %w", err)
+		}
+		m, err := x.Eq(pu)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create mask: %w", err)
+		}
+		ma, err := m.AvgPool2d(kH, kW, sH, sW)
+		if err != nil {
+			return nil, fmt.Errorf("failed to average mask: %w", err)
+		}
+		sg, err := g.Mul(ma)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scale grad: %w", err)
+		}
+		gu, err := sg.UpsampleNearest2d(h, w)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upsample grad: %w", err)
+		}
+		dx, err := gu.Mul(m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply mask: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
+// UpsampleNearest2dForward returns a ForwardFunc for 2D nearest neighbor upsampling.
+func UpsampleNearest2dForward[T spark.D](h, w int) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		if x.Rank() != 4 {
+			return nil, fmt.Errorf("tensor must be 4D, got %dD", x.Rank())
+		}
+		if h <= 0 || w <= 0 {
+			return nil, fmt.Errorf("target dims must be positive, got (%d,%d)", h, w)
+		}
+		b, c, _, _, err := x.Shape().Dims4()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get 4D shape: %w", err)
+		}
+		shape := spark.NewShapeFrom([]int{b, c, h, w})
+		data, err := x.storage.UpsampleNearest2d(x.layout, h, w)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upsample: %w", err)
 		}
 		return NewFrom(data, spark.Contiguous(shape), x.dtype, x.device), nil
 	}
 }
 
 // UpsampleNearest2dBackward returns a BackwardFunc for 2D nearest neighbor upsampling gradients.
-func UpsampleNearest2dBackward[T spark.D](params *spark.UpsampleParams) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func UpsampleNearest2dBackward[T spark.D](h, w int) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		dims := x.Dims()
-		c, h, w := dims[1], dims[2], dims[3]
-		targetH, targetW := params.HOut, params.WOut
-		if targetH%h != 0 || targetW%w != 0 {
-			return nil, fmt.Errorf("non-integer scale factors: target=(%d,%d), input=(%d,%d)", targetH, targetW, h, w)
-		}
-		scaleH, scaleW := targetH/h, targetW/w
-		if scaleH != scaleW {
-			return nil, fmt.Errorf("non-uniform scaling: scale_h=%d, scale_w=%d", scaleH, scaleW)
-		}
-		kernel, err := Full[T](1.0, spark.NewShape(c, 1, scaleH, scaleW), x.Device())
+		_, _, srcH, srcW, err := x.Shape().Dims4()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create kernel: %w", err)
+			return nil, fmt.Errorf("failed to get 4D shape: %w", err)
 		}
-		convParams := &spark.Conv2DParams{
-			Batch:  params.Batch,
-			InCh:   c,
-			InH:    targetH,
-			InW:    targetW,
-			OutCh:  c,
-			KH:     scaleH,
-			KW:     scaleW,
-			Stride: scaleH,
-			Pad:    0,
-			Dilate: 1,
+		if h%srcH != 0 || w%srcW != 0 {
+			return nil, fmt.Errorf("non-integer scales: target=(%d,%d), input=(%d,%d)", h, w, srcH, srcW)
 		}
-		dx, err := grad.Conv2d(kernel, convParams)
+		sh, sw := h/srcH, w/srcW
+		if sh != sw {
+			return nil, fmt.Errorf("non-uniform scales: scale_h=%d, scale_w=%d", sh, sw)
+		}
+		p, err := g.AvgPool2d(sh, sw, sh, sw)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute dx: %w", err)
+			return nil, fmt.Errorf("failed to avgpool grad: %w", err)
+		}
+		s, err := Full[T](float64(sh*sw), p.Shape(), p.Device())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create scale: %w", err)
+		}
+		dx, err := p.Mul(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scale grad: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -1622,7 +1624,7 @@ func SoftmaxForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Softmax(x.layout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to softmax: %w", err)
+			return nil, fmt.Errorf("failed to compute softmax: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1630,32 +1632,32 @@ func SoftmaxForward[T spark.D]() ForwardFunc[T] {
 
 // SoftmaxBackward returns a BackwardFunc for softmax gradients.
 func SoftmaxBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		softmaxX, err := x.Softmax()
+		s, err := x.Softmax()
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute softmax: %w", err)
 		}
-		gradSoftmax, err := grad.Mul(softmaxX)
+		gs, err := g.Mul(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad * softmax: %w", err)
+			return nil, fmt.Errorf("failed to compute g*s: %w", err)
 		}
-		sumGrad, err := gradSoftmax.Sum([]int{x.Rank() - 1})
+		r, err := gs.Sum([]int{x.Rank() - 1})
 		if err != nil {
-			return nil, fmt.Errorf("failed to sum grad: %w", err)
+			return nil, fmt.Errorf("failed to sum: %w", err)
 		}
-		sumGradBcast, err := sumGrad.BroadcastAs(x.Shape())
+		rb, err := r.BroadcastAs(x.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast sum: %w", err)
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
 		}
-		gradDiff, err := grad.Sub(sumGradBcast)
+		d, err := g.Sub(rb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute grad difference: %w", err)
+			return nil, fmt.Errorf("failed to compute g-rb: %w", err)
 		}
-		dx, err := softmaxX.Mul(gradDiff)
+		dx, err := s.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1663,63 +1665,63 @@ func SoftmaxBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// WhereCondForward returns a ForwardFunc for conditional selection: condition ? trueVal : falseVal.
-func WhereCondForward[T spark.D](cond *Tensor[T]) ForwardFunc[T] {
+// WhereCondForward returns a ForwardFunc for conditional selection: c ? t : f.
+func WhereCondForward[T spark.D](c *Tensor[T]) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		tVal, fVal := inputs[0], inputs[1]
-		shape, err := cond.Shape().BroadcastShapeBinaryOp(tVal.Shape())
+		t, f := inputs[0], inputs[1]
+		s, err := c.Shape().BroadcastShapeBinaryOp(t.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast with trueVal: %w", err)
+			return nil, fmt.Errorf("failed to broadcast with true: %w", err)
 		}
-		shape, err = shape.BroadcastShapeBinaryOp(fVal.Shape())
+		s, err = s.BroadcastShapeBinaryOp(f.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast with falseVal: %w", err)
+			return nil, fmt.Errorf("failed to broadcast with false: %w", err)
 		}
-		condLayout, err := cond.layout.BroadcastAs(shape)
+		cl, err := c.layout.BroadcastAs(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to broadcast cond: %w", err)
 		}
-		tLayout, err := tVal.layout.BroadcastAs(shape)
+		tl, err := t.layout.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast trueVal: %w", err)
+			return nil, fmt.Errorf("failed to broadcast true: %w", err)
 		}
-		fLayout, err := fVal.layout.BroadcastAs(shape)
+		fl, err := f.layout.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast falseVal: %w", err)
+			return nil, fmt.Errorf("failed to broadcast false: %w", err)
 		}
-		data, err := cond.storage.WhereCond(condLayout, tVal.storage, tLayout, fVal.storage, fLayout)
+		data, err := c.storage.WhereCond(cl, t.storage, tl, f.storage, fl)
 		if err != nil {
-			return nil, fmt.Errorf("failed to whereCond: %w", err)
+			return nil, fmt.Errorf("failed to compute where: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(shape), tVal.dtype, tVal.device), nil
+		return NewFrom(data, spark.Contiguous(s), t.dtype, t.device), nil
 	}
 }
 
 // WhereCondBackward returns a BackwardFunc for conditional selection gradients.
-func WhereCondBackward[T spark.D](cond *Tensor[T]) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func WhereCondBackward[T spark.D](c *Tensor[T]) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 2 {
 			return nil, fmt.Errorf("expected 2 inputs, got %d", len(inputs))
 		}
-		gradD := grad.Detach()
-		zeros, err := Zeros[T](grad.Shape(), grad.Device())
+		gd := g.Detach()
+		z, err := Zeros[T](g.Shape(), g.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		tGrad, err := cond.storage.WhereCond(cond.layout, gradD.storage, gradD.layout, zeros.storage, zeros.layout)
+		dt, err := c.storage.WhereCond(c.layout, gd.storage, gd.layout, z.storage, z.layout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute trueVal grad: %w", err)
+			return nil, fmt.Errorf("failed to compute dt: %w", err)
 		}
-		fGrad, err := cond.storage.WhereCond(cond.layout, zeros.storage, zeros.layout, gradD.storage, gradD.layout)
+		df, err := c.storage.WhereCond(c.layout, z.storage, z.layout, gd.storage, gd.layout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute falseVal grad: %w", err)
+			return nil, fmt.Errorf("failed to compute df: %w", err)
 		}
 		return []*Tensor[T]{
-			NewFrom(tGrad, grad.layout.Clone(), grad.dtype, grad.device),
-			NewFrom(fGrad, grad.layout.Clone(), grad.dtype, grad.device),
+			NewFrom(dt, g.layout.Clone(), g.dtype, g.device),
+			NewFrom(df, g.layout.Clone(), g.dtype, g.device),
 		}, nil
 	}
 }
@@ -1731,22 +1733,22 @@ func CopyForward[T spark.D]() ForwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		layout := spark.Contiguous(x.Shape())
-		data, err := x.storage.Copy(layout, x.storage)
+		s := spark.Contiguous(x.Shape())
+		data, err := x.storage.Copy(s, x.storage)
 		if err != nil {
-			return nil, fmt.Errorf("failed to clone: %w", err)
+			return nil, fmt.Errorf("failed to copy: %w", err)
 		}
-		return NewFrom(data, layout, x.dtype, x.device), nil
+		return NewFrom(data, s, x.dtype, x.device), nil
 	}
 }
 
 // CopyBackward returns a BackwardFunc for clone gradients: ∂y/∂x = 1.
 func CopyBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		return []*Tensor[T]{grad}, nil
+		return []*Tensor[T]{g}, nil
 	}
 }
 
@@ -1759,7 +1761,7 @@ func NegForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Neg(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute neg: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1767,13 +1769,13 @@ func NegForward[T spark.D]() ForwardFunc[T] {
 
 // NegBackward returns a BackwardFunc for negation gradients: ∂(-x)/∂x = -1.
 func NegBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		dx, err := grad.Neg()
+		dx, err := g.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate: %w", err)
+			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -1788,7 +1790,7 @@ func RecipForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Recip(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute recip: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1796,28 +1798,28 @@ func RecipForward[T spark.D]() ForwardFunc[T] {
 
 // RecipBackward returns a BackwardFunc for reciprocal gradients: ∂(1/x)/∂x = -1/x².
 func RecipBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
 		x2, err := x.Sqr()
 		if err != nil {
-			return nil, fmt.Errorf("failed to square x: %w", err)
+			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		r, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		recipX2, err := one.Div(x2)
+		r, err = r.Div(x2)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1/x²: %w", err)
 		}
-		negRecipX2, err := recipX2.Neg()
+		r, err = r.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate 1/x²: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		dx, err := grad.Mul(negRecipX2)
+		dx, err := g.Mul(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1834,7 +1836,7 @@ func ExpForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Exp(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1842,16 +1844,16 @@ func ExpForward[T spark.D]() ForwardFunc[T] {
 
 // ExpBackward returns a BackwardFunc for exponential gradients: ∂exp(x)/∂x = exp(x).
 func ExpBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		expX, err := x.Exp()
+		e, err := x.Exp()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute exp(x): %w", err)
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		dx, err := grad.Mul(expX)
+		dx, err := g.Mul(e)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1868,7 +1870,7 @@ func LogForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Log(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute log: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1876,20 +1878,20 @@ func LogForward[T spark.D]() ForwardFunc[T] {
 
 // LogBackward returns a BackwardFunc for logarithm gradients: ∂log(x)/∂x = 1/x.
 func LogBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		r, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		recipX, err := one.Div(x)
+		r, err = r.Div(x)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 1/x: %w", err)
 		}
-		dx, err := grad.Mul(recipX)
+		dx, err := g.Mul(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1906,7 +1908,7 @@ func SinForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Sin(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute sin: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1914,16 +1916,16 @@ func SinForward[T spark.D]() ForwardFunc[T] {
 
 // SinBackward returns a BackwardFunc for sine gradients: ∂sin(x)/∂x = cos(x).
 func SinBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		cosX, err := x.Cos()
+		c, err := x.Cos()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute cos(x): %w", err)
+			return nil, fmt.Errorf("failed to compute cos: %w", err)
 		}
-		dx, err := grad.Mul(cosX)
+		dx, err := g.Mul(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1940,7 +1942,7 @@ func CosForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Cos(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute cos: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1948,20 +1950,20 @@ func CosForward[T spark.D]() ForwardFunc[T] {
 
 // CosBackward returns a BackwardFunc for cosine gradients: ∂cos(x)/∂x = -sin(x).
 func CosBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		sinX, err := x.Sin()
+		s, err := x.Sin()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute sin(x): %w", err)
+			return nil, fmt.Errorf("failed to compute sin: %w", err)
 		}
-		negSinX, err := sinX.Neg()
+		s, err = s.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate sin(x): %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		dx, err := grad.Mul(negSinX)
+		dx, err := g.Mul(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -1978,7 +1980,7 @@ func TanhForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Tanh(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute tanh: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -1986,28 +1988,28 @@ func TanhForward[T spark.D]() ForwardFunc[T] {
 
 // TanhBackward returns a BackwardFunc for hyperbolic tangent gradients: ∂tanh(x)/∂x = 1 - tanh²(x).
 func TanhBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		tanhX, err := x.Tanh()
+		t, err := x.Tanh()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute tanh(x): %w", err)
+			return nil, fmt.Errorf("failed to compute tanh: %w", err)
 		}
-		tanhX2, err := tanhX.Sqr()
+		t2, err := t.Sqr()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute tanh²(x): %w", err)
+			return nil, fmt.Errorf("failed to compute tanh²: %w", err)
 		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		d, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		deriv, err := one.Sub(tanhX2)
+		d, err = d.Sub(t2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 - tanh²(x): %w", err)
+			return nil, fmt.Errorf("failed to compute 1-tanh²: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2024,15 +2026,15 @@ func ErfForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Erf(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute erf: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// ErfBackward returns a BackwardFunc for error function gradients: ∂erf(x)/∂x = (2/√π) * exp(-x²).
+// ErfBackward returns a BackwardFunc for error function gradients: ∂erf(x)/∂x = (2/√π)exp(-x²).
 func ErfBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
@@ -2041,23 +2043,23 @@ func ErfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		negX2, err := x2.Neg()
+		n, err := x2.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate x²: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		expNegX2, err := negX2.Exp()
+		e, err := n.Exp()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute exp(-x²): %w", err)
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		coeff, err := Full[T](1.1283791670955126, x.Shape(), x.Device()) // 2/√π
+		c, err := Full[T](1.1283791670955126, x.Shape(), x.Device()) // 2/√π
 		if err != nil {
 			return nil, fmt.Errorf("failed to create coeff: %w", err)
 		}
-		deriv, err := coeff.Mul(expNegX2)
+		d, err := c.Mul(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute (2/√π) * exp(-x²): %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2074,7 +2076,7 @@ func CeilForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Ceil(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute ceil: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2082,15 +2084,15 @@ func CeilForward[T spark.D]() ForwardFunc[T] {
 
 // CeilBackward returns a BackwardFunc for ceiling gradients: ∂ceil(x)/∂x = 0.
 func CeilBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		zeros, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		return []*Tensor[T]{zeros}, nil
+		return []*Tensor[T]{dx}, nil
 	}
 }
 
@@ -2103,7 +2105,7 @@ func FloorForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Floor(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute floor: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2111,15 +2113,15 @@ func FloorForward[T spark.D]() ForwardFunc[T] {
 
 // FloorBackward returns a BackwardFunc for floor gradients: ∂floor(x)/∂x = 0.
 func FloorBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		zeros, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		return []*Tensor[T]{zeros}, nil
+		return []*Tensor[T]{dx}, nil
 	}
 }
 
@@ -2132,7 +2134,7 @@ func RoundForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Round(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute round: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2140,15 +2142,15 @@ func RoundForward[T spark.D]() ForwardFunc[T] {
 
 // RoundBackward returns a BackwardFunc for rounding gradients: ∂round(x)/∂x = 0.
 func RoundBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		zeros, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		return []*Tensor[T]{zeros}, nil
+		return []*Tensor[T]{dx}, nil
 	}
 }
 
@@ -2161,15 +2163,15 @@ func NormcdfForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Normcdf(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute normcdf: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// NormcdfBackward returns a BackwardFunc for normal CDF gradients: ∂Φ(x)/∂x = φ(x) = (1/√(2π)) * exp(-x²/2).
+// NormcdfBackward returns a BackwardFunc for normal CDF gradients: ∂Φ(x)/∂x = φ(x) = (1/√(2π))exp(-x²/2).
 func NormcdfBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
@@ -2178,31 +2180,31 @@ func NormcdfBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		half, err := Full[T](0.5, x.Shape(), x.Device())
+		h, err := Full[T](0.5, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create half: %w", err)
 		}
-		negHalfX2, err := x2.Mul(half)
+		n, err := x2.Mul(h)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²/2: %w", err)
 		}
-		negHalfX2, err = negHalfX2.Neg()
+		n, err = n.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate x²/2: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		expTerm, err := negHalfX2.Exp()
+		e, err := n.Exp()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute exp(-x²/2): %w", err)
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		coeff, err := Full[T](0.3989422804014327, x.Shape(), x.Device()) // 1/√(2π)
+		c, err := Full[T](0.3989422804014327, x.Shape(), x.Device()) // 1/√(2π)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create coeff: %w", err)
 		}
-		deriv, err := coeff.Mul(expTerm)
+		d, err := c.Mul(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute (1/√(2π)) * exp(-x²/2): %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2219,7 +2221,7 @@ func AbsForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Abs(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute abs: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2227,16 +2229,16 @@ func AbsForward[T spark.D]() ForwardFunc[T] {
 
 // AbsBackward returns a BackwardFunc for absolute value gradients: ∂|x|/∂x = sign(x).
 func AbsBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		signX, err := x.Sign()
+		s, err := x.Sign()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute sign(x): %w", err)
+			return nil, fmt.Errorf("failed to compute sign: %w", err)
 		}
-		dx, err := grad.Mul(signX)
+		dx, err := g.Mul(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2253,7 +2255,7 @@ func SqrForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Sqr(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute sqr: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2261,20 +2263,20 @@ func SqrForward[T spark.D]() ForwardFunc[T] {
 
 // SqrBackward returns a BackwardFunc for square gradients: ∂(x²)/∂x = 2x.
 func SqrBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		twoX, err := Full[T](2.0, x.Shape(), x.Device())
+		d, err := Full[T](2, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create twoX: %w", err)
+			return nil, fmt.Errorf("failed to create two: %w", err)
 		}
-		twoX, err = twoX.Mul(x)
+		d, err = d.Mul(x)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 2x: %w", err)
 		}
-		dx, err := grad.Mul(twoX)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2291,7 +2293,7 @@ func SqrtForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Sqrt(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute sqrt: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2299,24 +2301,24 @@ func SqrtForward[T spark.D]() ForwardFunc[T] {
 
 // SqrtBackward returns a BackwardFunc for square root gradients: ∂√x/∂x = 1/(2√x).
 func SqrtBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		sqrtX, err := x.Sqrt()
+		s, err := x.Sqrt()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute √x: %w", err)
+			return nil, fmt.Errorf("failed to compute sqrt: %w", err)
 		}
-		denom, err := Full[T](2.0, x.Shape(), x.Device())
+		d, err := Full[T](2, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create denom: %w", err)
+			return nil, fmt.Errorf("failed to create two: %w", err)
 		}
-		denom, err = denom.Mul(sqrtX)
+		d, err = d.Mul(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 2√x: %w", err)
 		}
-		dx, err := grad.Div(denom)
+		dx, err := g.Div(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2324,7 +2326,7 @@ func SqrtBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// GeluForward returns a ForwardFunc for element-wise GELU activation: gelu(x).
+// GeluForward returns a ForwardFunc for element-wise GELU: gelu(x).
 func GeluForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2333,7 +2335,7 @@ func GeluForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Gelu(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute gelu: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2341,30 +2343,14 @@ func GeluForward[T spark.D]() ForwardFunc[T] {
 
 // GeluBackward returns a BackwardFunc for GELU gradients.
 func GeluBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		sqrt2OverPi, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // √(2/π)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create sqrt2OverPi: %w", err)
-		}
 		c, err := Full[T](0.044715, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create c: %w", err)
-		}
-		half, err := Full[T](0.5, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create half: %w", err)
-		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create one: %w", err)
-		}
-		three, err := Full[T](3.0, x.Shape(), x.Device())
-		if err != nil {
-			return nil, fmt.Errorf("failed to create three: %w", err)
+			return nil, fmt.Errorf("failed to create coeff: %w", err)
 		}
 		x2, err := x.Sqr()
 		if err != nil {
@@ -2378,67 +2364,83 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute c*x³: %w", err)
 		}
-		inner, err := x.Add(cx3)
+		i, err := x.Add(cx3)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute x + c*x³: %w", err)
+			return nil, fmt.Errorf("failed to compute x+c*x³: %w", err)
 		}
-		tanhArg, err := sqrt2OverPi.Mul(inner)
+		s, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // √(2/π)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute √(2/π)*(x + c*x³): %w", err)
+			return nil, fmt.Errorf("failed to create sqrt2/pi: %w", err)
 		}
-		tanhX, err := tanhArg.Tanh()
+		a, err := s.Mul(i)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute tanh(...): %w", err)
+			return nil, fmt.Errorf("failed to compute a: %w", err)
 		}
-		onePlusTanh, err := one.Add(tanhX)
+		t, err := a.Tanh()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 + tanh(...): %w", err)
+			return nil, fmt.Errorf("failed to compute tanh: %w", err)
 		}
-		firstTerm, err := half.Mul(onePlusTanh)
+		o, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute first term: %w", err)
+			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		tanh2, err := tanhX.Sqr()
+		p, err := o.Add(t)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute tanh²(...): %w", err)
+			return nil, fmt.Errorf("failed to compute 1+tanh: %w", err)
 		}
-		sech2, err := one.Sub(tanh2)
+		h, err := Full[T](0.5, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute sech²(...): %w", err)
+			return nil, fmt.Errorf("failed to create half: %w", err)
 		}
-		threeC, err := three.Mul(c)
+		f, err := h.Mul(p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute first: %w", err)
+		}
+		t2, err := t.Sqr()
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute tanh²: %w", err)
+		}
+		o, err = o.Sub(t2)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute sech²: %w", err)
+		}
+		n, err := Full[T](3, x.Shape(), x.Device())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create three: %w", err)
+		}
+		n, err = n.Mul(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 3*c: %w", err)
 		}
-		threeCx2, err := threeC.Mul(x2)
+		n, err = n.Mul(x2)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute 3*c*x²: %w", err)
 		}
-		onePlusThreeCx2, err := one.Add(threeCx2)
+		n, err = o.Add(n)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 + 3*c*x²: %w", err)
+			return nil, fmt.Errorf("failed to compute 1+3*c*x²: %w", err)
 		}
-		secondTerm, err := half.Mul(x)
+		r, err := h.Mul(x)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute half*x: %w", err)
 		}
-		secondTerm, err = secondTerm.Mul(sech2)
+		r, err = r.Mul(o)
 		if err != nil {
-			return nil, fmt.Errorf("failed to multiply by sech²: %w", err)
+			return nil, fmt.Errorf("failed to compute sech² term: %w", err)
 		}
-		secondTerm, err = secondTerm.Mul(sqrt2OverPi)
+		r, err = r.Mul(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to multiply by √(2/π): %w", err)
+			return nil, fmt.Errorf("failed to compute sqrt2/pi term: %w", err)
 		}
-		secondTerm, err = secondTerm.Mul(onePlusThreeCx2)
+		r, err = r.Mul(n)
 		if err != nil {
-			return nil, fmt.Errorf("failed to multiply by (1 + 3*c*x²): %w", err)
+			return nil, fmt.Errorf("failed to compute second: %w", err)
 		}
-		deriv, err := firstTerm.Add(secondTerm)
+		d, err := f.Add(r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute derivative: %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2446,7 +2448,7 @@ func GeluBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// GeluErfForward returns a ForwardFunc for ERF-based GELU activation: gelu_erf(x).
+// GeluErfForward returns a ForwardFunc for element-wise GELU (erf-based): gelu_erf(x).
 func GeluErfForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2455,84 +2457,84 @@ func GeluErfForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.GeluErf(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute gelu_erf: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// GeluErfBackward returns a BackwardFunc for ERF-based GELU gradients.
+// GeluErfBackward returns a BackwardFunc for GELU (erf-based) gradients.
 func GeluErfBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		half, err := Full[T](0.5, x.Shape(), x.Device())
+		h, err := Full[T](0.5, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create half: %w", err)
 		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		o, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		sqrt2, err := Full[T](1.4142135623730951, x.Shape(), x.Device()) // √2
+		s, err := Full[T](1.4142135623730951, x.Shape(), x.Device()) // √2
 		if err != nil {
 			return nil, fmt.Errorf("failed to create sqrt2: %w", err)
 		}
-		xOverSqrt2, err := x.Div(sqrt2)
+		xs, err := x.Div(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x/√2: %w", err)
 		}
-		erfVal, err := xOverSqrt2.Erf()
+		e, err := xs.Erf()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute erf(x/√2): %w", err)
+			return nil, fmt.Errorf("failed to compute erf: %w", err)
 		}
-		onePlusErf, err := one.Add(erfVal)
+		p, err := o.Add(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 + erf(...): %w", err)
+			return nil, fmt.Errorf("failed to compute 1+erf: %w", err)
 		}
-		firstTerm, err := half.Mul(onePlusErf)
+		f, err := h.Mul(p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute first term: %w", err)
+			return nil, fmt.Errorf("failed to compute first: %w", err)
 		}
 		x2, err := x.Sqr()
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²: %w", err)
 		}
-		x2Half, err := x2.Mul(half)
+		x2, err = x2.Mul(h)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x²/2: %w", err)
 		}
-		negX2Half, err := x2Half.Neg()
+		n, err := x2.Neg()
 		if err != nil {
-			return nil, fmt.Errorf("failed to negate x²/2: %w", err)
+			return nil, fmt.Errorf("failed to negate: %w", err)
 		}
-		expTerm, err := negX2Half.Exp()
+		e, err = n.Exp()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute exp(-x²/2): %w", err)
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		twoOverSqrt2Pi, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // 2/√(2π)
+		c, err := Full[T](0.7978845608028654, x.Shape(), x.Device()) // 2/√(2π)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create twoOverSqrt2Pi: %w", err)
+			return nil, fmt.Errorf("failed to create coeff: %w", err)
 		}
-		secondTerm, err := half.Mul(x)
+		r, err := h.Mul(x)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute half*x: %w", err)
 		}
-		secondTerm, err = secondTerm.Mul(twoOverSqrt2Pi)
+		r, err = r.Mul(c)
 		if err != nil {
-			return nil, fmt.Errorf("failed to multiply by 2/√(2π): %w", err)
+			return nil, fmt.Errorf("failed to compute coeff term: %w", err)
 		}
-		secondTerm, err = secondTerm.Mul(expTerm)
+		r, err = r.Mul(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to multiply by exp(-x²/2): %w", err)
+			return nil, fmt.Errorf("failed to compute exp term: %w", err)
 		}
-		deriv, err := firstTerm.Add(secondTerm)
+		d, err := f.Add(r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute derivative: %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2549,32 +2551,32 @@ func ReluForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Relu(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute relu: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// ReluBackward returns a BackwardFunc for ReLU gradients: grad * (x > 0 ? 1 : 0).
+// ReluBackward returns a BackwardFunc for ReLU gradients: ∂relu(x)/∂x = x > 0 ? 1 : 0.
 func ReluBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		zero, err := Full[T](0.0, x.Shape(), x.Device())
+		z, err := Full[T](0, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zero: %w", err)
 		}
-		mask, err := x.Gt(zero)
+		m, err := x.Gt(z)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute mask: %w", err)
 		}
-		zeros, err := Zeros[T](grad.Shape(), grad.Device())
+		z, err = Zeros[T](g.Shape(), g.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		dx, err := mask.WhereCond(grad, zeros)
+		dx, err := m.WhereCond(g, z)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2582,7 +2584,7 @@ func ReluBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// EluForward returns a ForwardFunc for element-wise ELU activation: elu(x, alpha).
+// EluForward returns a ForwardFunc for element-wise ELU: x if x >= 0, alpha*(exp(x)-1) if x < 0.
 func EluForward[T spark.D](alpha float64) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2591,48 +2593,48 @@ func EluForward[T spark.D](alpha float64) ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Elu(x.layout, T(alpha))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute elu: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// EluBackward returns a BackwardFunc for ELU gradients: 1 if x >= 0, alpha * exp(x) if x < 0.
+// EluBackward returns a BackwardFunc for ELU gradients: ∂elu(x)/∂x = 1 if x >= 0, alpha*exp(x) if x < 0.
 func EluBackward[T spark.D](alpha float64) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		zero, err := Full[T](0.0, x.Shape(), x.Device())
+		z, err := Full[T](0, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zero: %w", err)
 		}
-		mask, err := x.Ge(zero)
+		m, err := x.Ge(z)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute mask: %w", err)
 		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		o, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		expX, err := x.Exp()
+		e, err := x.Exp()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute exp(x): %w", err)
+			return nil, fmt.Errorf("failed to compute exp: %w", err)
 		}
-		alphaT, err := Full[T](alpha, x.Shape(), x.Device())
+		a, err := Full[T](alpha, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create alphaT: %w", err)
+			return nil, fmt.Errorf("failed to create alpha: %w", err)
 		}
-		alphaExpX, err := alphaT.Mul(expX)
+		ae, err := a.Mul(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute alpha*exp(x): %w", err)
+			return nil, fmt.Errorf("failed to compute alpha*exp: %w", err)
 		}
-		deriv, err := mask.WhereCond(one, alphaExpX)
+		d, err := m.WhereCond(o, ae)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute derivative: %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2640,7 +2642,7 @@ func EluBackward[T spark.D](alpha float64) BackwardFunc[T] {
 	}
 }
 
-// SiluForward returns a ForwardFunc for element-wise SiLU activation: x * sigmoid(x).
+// SiluForward returns a ForwardFunc for element-wise SiLU: x * sigmoid(x).
 func SiluForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2649,44 +2651,44 @@ func SiluForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Silu(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute silu: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// SiluBackward returns a BackwardFunc for SiLU gradients: sigmoid(x) + x * sigmoid(x) * (1 - sigmoid(x)).
+// SiluBackward returns a BackwardFunc for SiLU gradients: ∂silu(x)/∂x = sigmoid(x) + x*sigmoid(x)*(1-sigmoid(x)).
 func SiluBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		sigmoidX, err := x.Sigmoid()
+		s, err := x.Sigmoid()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute sigmoid(x): %w", err)
+			return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
 		}
-		one, err := Full[T](1.0, x.Shape(), x.Device())
+		o, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		oneMinusSigmoid, err := one.Sub(sigmoidX)
+		n, err := o.Sub(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 - sigmoid(x): %w", err)
+			return nil, fmt.Errorf("failed to compute 1-sigmoid: %w", err)
 		}
-		xSigmoid, err := x.Mul(sigmoidX)
+		xs, err := x.Mul(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute x*sigmoid(x): %w", err)
+			return nil, fmt.Errorf("failed to compute x*sigmoid: %w", err)
 		}
-		xSigmoidTerm, err := xSigmoid.Mul(oneMinusSigmoid)
+		r, err := xs.Mul(n)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute x*sigmoid(x)*(1 - sigmoid(x)): %w", err)
+			return nil, fmt.Errorf("failed to compute x*sigmoid*(1-sigmoid): %w", err)
 		}
-		deriv, err := sigmoidX.Add(xSigmoidTerm)
+		d, err := s.Add(r)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute derivative: %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2695,41 +2697,40 @@ func SiluBackward[T spark.D]() BackwardFunc[T] {
 }
 
 // PowfForward returns a ForwardFunc for element-wise power: x^param.
-func PowfForward[T spark.D](param float64) ForwardFunc[T] {
+func PowfForward[T spark.D](p float64) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		data, err := x.storage.Powf(x.layout, T(param))
+		data, err := x.storage.Powf(x.layout, T(p))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute pow: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// PowfBackward returns a BackwardFunc for power gradients: ∂(x^param)/∂x = param * x^(param-1).
-func PowfBackward[T spark.D](param float64) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+// PowfBackward returns a BackwardFunc for power gradients: ∂(x^param)/∂x = param*x^(param-1).
+func PowfBackward[T spark.D](p float64) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		paramMinusOne := param - 1.0
-		xPowParamM1, err := x.Powf(paramMinusOne)
+		e, err := x.Powf(p - 1)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute x^(param-1): %w", err)
 		}
-		deriv, err := Full[T](param, x.Shape(), x.Device())
+		d, err := Full[T](p, x.Shape(), x.Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create param: %w", err)
 		}
-		deriv, err = deriv.Mul(xPowParamM1)
+		d, err = d.Mul(e)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute param * x^(param-1): %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2737,7 +2738,7 @@ func PowfBackward[T spark.D](param float64) BackwardFunc[T] {
 	}
 }
 
-// SigmoidForward returns a ForwardFunc for element-wise sigmoid: σ(x) = 1/(1+e^(-x)).
+// SigmoidForward returns a ForwardFunc for element-wise sigmoid: σ(x) = 1/(1+exp(-x)).
 func SigmoidForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2746,36 +2747,36 @@ func SigmoidForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Sigmoid(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 
-// SigmoidBackward returns a BackwardFunc for sigmoid gradients: ∂σ(x)/∂x = σ(x) * (1 - σ(x)).
+// SigmoidBackward returns a BackwardFunc for sigmoid gradients: ∂σ(x)/∂x = σ(x)*(1-σ(x)).
 func SigmoidBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		sigmoidX, err := x.Sigmoid()
+		s, err := x.Sigmoid()
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute sigmoid(x): %w", err)
+			return nil, fmt.Errorf("failed to compute sigmoid: %w", err)
 		}
-		oneMinusSigmoid, err := Full[T](1.0, x.Shape(), x.Device())
+		o, err := Full[T](1, x.Shape(), x.Device())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create oneMinusSigmoid: %w", err)
+			return nil, fmt.Errorf("failed to create one: %w", err)
 		}
-		oneMinusSigmoid, err = oneMinusSigmoid.Sub(sigmoidX)
+		n, err := o.Sub(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute 1 - sigmoid(x): %w", err)
+			return nil, fmt.Errorf("failed to compute 1-sigmoid: %w", err)
 		}
-		deriv, err := sigmoidX.Mul(oneMinusSigmoid)
+		d, err := s.Mul(n)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compute derivative: %w", err)
+			return nil, fmt.Errorf("failed to compute deriv: %w", err)
 		}
-		dx, err := grad.Mul(deriv)
+		dx, err := g.Mul(d)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute dx: %w", err)
 		}
@@ -2783,7 +2784,7 @@ func SigmoidBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// SignForward returns a ForwardFunc for element-wise sign: 1 if x > 0, 0 if x = 0, -1 if x < 0.
+// SignForward returns a ForwardFunc for element-wise sign: sign(x).
 func SignForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
@@ -2792,7 +2793,7 @@ func SignForward[T spark.D]() ForwardFunc[T] {
 		x := inputs[0]
 		data, err := x.storage.Sign(x.layout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compute sign: %w", err)
 		}
 		return NewFrom(data, x.layout.Clone(), x.dtype, x.device), nil
 	}
@@ -2800,73 +2801,73 @@ func SignForward[T spark.D]() ForwardFunc[T] {
 
 // SignBackward returns a BackwardFunc for sign gradients: ∂sign(x)/∂x = 0.
 func SignBackward[T spark.D]() BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		zeros, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
+		dx, err := Zeros[T](inputs[0].Shape(), inputs[0].Device())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zeros: %w", err)
 		}
-		return []*Tensor[T]{zeros}, nil
+		return []*Tensor[T]{dx}, nil
 	}
 }
 
-// SumDimForward returns a ForwardFunc for sum along specified dimensions.
+// SumDimForward returns a ForwardFunc for summing along specified dimensions.
 func SumDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		resolvedDims, err := spark.ResolveAxes(dims, x.Shape())
+		d, err := spark.ResolveAxes(dims, x.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve dims: %w", err)
 		}
-		data, err := x.storage.Sum(x.layout, resolvedDims)
+		data, err := x.storage.Sum(x.layout, d)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to sum: %w", err)
 		}
-		outputDims := make([]int, len(x.Dims()))
-		copy(outputDims, x.Dims())
-		for _, dim := range resolvedDims {
-			outputDims[dim] = 1
+		s := make([]int, len(x.Dims()))
+		copy(s, x.Dims())
+		for _, i := range d {
+			s[i] = 1
 		}
-		outputShape := spark.NewShapeFrom(outputDims)
-		sum := NewFrom(data, spark.Contiguous(outputShape), x.dtype, x.device)
+		shape := spark.NewShapeFrom(s)
+		r := NewFrom(data, spark.Contiguous(shape), x.dtype, x.device)
 		if keepdim {
-			return sum, nil
+			return r, nil
 		}
-		return sum.SqueezeDims(resolvedDims)
+		return r.SqueezeDims(d)
 	}
 }
 
 // SumDimBackward returns a BackwardFunc for sum gradients.
 func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		resolvedDims, err := spark.ResolveAxes(dims, x.Shape())
+		d, err := spark.ResolveAxes(dims, x.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve dims: %w", err)
 		}
-		targetGrad := grad
+		r := g
 		if !keepdim {
-			targetDims := make([]int, len(x.Dims()))
-			copy(targetDims, x.Dims())
-			for _, dim := range resolvedDims {
-				targetDims[dim] = 1
+			s := make([]int, len(x.Dims()))
+			copy(s, x.Dims())
+			for _, i := range d {
+				s[i] = 1
 			}
-			targetGrad, err = grad.Reshape(targetDims...)
+			r, err = g.Reshape(s...)
 			if err != nil {
-				return nil, fmt.Errorf("failed to reshape grad: %w", err)
+				return nil, fmt.Errorf("failed to reshape: %w", err)
 			}
 		}
-		dx, err := targetGrad.BroadcastAs(x.Shape())
+		dx, err := r.BroadcastAs(x.Shape())
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast grad: %w", err)
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -2890,23 +2891,23 @@ func TransposeForward[T spark.D](dim1, dim2 int) ForwardFunc[T] {
 		if d1 == d2 {
 			return x, nil
 		}
-		layout, err := x.layout.Transpose(d1, d2)
+		l, err := x.layout.Transpose(d1, d2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose layout: %w", err)
+			return nil, fmt.Errorf("failed to transpose: %w", err)
 		}
-		return NewFrom(x.storage, layout, x.dtype, x.device), nil
+		return NewFrom(x.storage, l, x.dtype, x.device), nil
 	}
 }
 
 // TransposeBackward returns a BackwardFunc for transpose gradients.
 func TransposeBackward[T spark.D](dim1, dim2 int) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		dx, err := grad.Transpose(dim1, dim2)
+		dx, err := g.Transpose(dim1, dim2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to transpose grad: %w", err)
+			return nil, fmt.Errorf("failed to transpose: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -2919,47 +2920,43 @@ func SqueezeForward[T spark.D](dim int) ForwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		rank := x.Rank()
-		d, err := spark.ResolveAxis(dim, rank)
+		d, err := spark.ResolveAxis(dim, x.Rank())
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve dim: %w", err)
 		}
-		if x.Shape().Dim(d) != 1 {
+		if x.Dim(d) != 1 {
 			return x, nil
 		}
-		dims := make([]int, 0, rank-1)
-		strides := make([]int, 0, rank-1)
-		for i := range rank {
+		s := make([]int, 0, x.Rank()-1)
+		t := make([]int, 0, x.Rank()-1)
+		for i := 0; i < x.Rank(); i++ {
 			if i == d {
 				continue
 			}
-			dims = append(dims, x.Dims()[i])
-			strides = append(strides, x.Stride()[i])
+			s = append(s, x.Dims()[i])
+			t = append(t, x.Stride()[i])
 		}
-		shape := spark.NewShapeFrom(dims)
-		layout := spark.NewLayout(shape, strides, x.layout.StartOffset())
-		return NewFrom(x.storage, layout, x.dtype, x.device), nil
+		return NewFrom(x.storage, spark.NewLayout(spark.NewShapeFrom(s), t, x.layout.StartOffset()), x.dtype, x.device), nil
 	}
 }
 
 // SqueezeBackward returns a BackwardFunc for squeeze gradients.
 func SqueezeBackward[T spark.D](dim int) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		rank := x.Rank()
-		d, err := spark.ResolveAxis(dim, rank)
+		d, err := spark.ResolveAxis(dim, x.Rank())
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve dim: %w", err)
 		}
-		if x.Shape().Dim(d) != 1 {
-			return []*Tensor[T]{grad}, nil
+		if x.Dim(d) != 1 {
+			return []*Tensor[T]{g}, nil
 		}
-		dx, err := grad.Unsqueeze(d)
+		dx, err := g.Unsqueeze(d)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unsqueeze grad: %w", err)
+			return nil, fmt.Errorf("failed to unsqueeze: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -2972,79 +2969,74 @@ func UnsqueezeForward[T spark.D](dim int) ForwardFunc[T] {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		rank := x.Rank()
 		d := dim
 		if d < 0 {
-			d += rank + 1
+			d += x.Rank() + 1
 		}
-		if d < 0 || d > rank {
-			return nil, fmt.Errorf("dim out of range [-%d, %d], got %d", rank+1, rank, dim)
+		if d < 0 || d > x.Rank() {
+			return nil, fmt.Errorf("dim out of range [-%d, %d], got %d", x.Rank()+1, x.Rank(), dim)
 		}
-		dims := make([]int, 0, rank+1)
-		dims = append(dims, x.Dims()[:d]...)
-		dims = append(dims, 1)
-		dims = append(dims, x.Dims()[d:]...)
-		strides := make([]int, 0, rank+1)
-		strides = append(strides, x.Stride()[:d]...)
+		s := make([]int, 0, x.Rank()+1)
+		t := make([]int, 0, x.Rank()+1)
+		s = append(s, x.Dims()[:d]...)
+		s = append(s, 1)
+		s = append(s, x.Dims()[d:]...)
+		t = append(t, x.Stride()[:d]...)
 		stride := 1
-		if d < rank {
+		if d < x.Rank() {
 			stride = x.Stride()[d]
 		}
-		strides = append(strides, stride)
-		strides = append(strides, x.Stride()[d:]...)
-		shape := spark.NewShapeFrom(dims)
-		layout := spark.NewLayout(shape, strides, x.layout.StartOffset())
-		return NewFrom(x.storage, layout, x.dtype, x.device), nil
+		t = append(t, stride)
+		t = append(t, x.Stride()[d:]...)
+		return NewFrom(x.storage, spark.NewLayout(spark.NewShapeFrom(s), t, x.layout.StartOffset()), x.dtype, x.device), nil
 	}
 }
 
 // UnsqueezeBackward returns a BackwardFunc for unsqueeze gradients.
 func UnsqueezeBackward[T spark.D](dim int) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		rank := x.Rank()
 		d := dim
 		if d < 0 {
-			d += rank + 1
+			d += x.Rank() + 1
 		}
-		dx, err := grad.Squeeze(d)
+		dx, err := g.Squeeze(d)
 		if err != nil {
-			return nil, fmt.Errorf("failed to squeeze grad: %w", err)
+			return nil, fmt.Errorf("failed to squeeze: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
 }
 
-// ReshapeForward returns a ForwardFunc for reshaping to new shape.
-func ReshapeForward[T spark.D](newShape *spark.Shape) ForwardFunc[T] {
+// ReshapeForward returns a ForwardFunc for reshaping to a new shape.
+func ReshapeForward[T spark.D](s *spark.Shape) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		if newShape.ElemCount() != x.layout.Shape().ElemCount() {
-			return nil, fmt.Errorf("element count mismatch: %d != %d", newShape.ElemCount(), x.layout.Shape().ElemCount())
+		if s.ElemCount() != x.Shape().ElemCount() {
+			return nil, fmt.Errorf("element count mismatch: %d vs %d", s.ElemCount(), x.Shape().ElemCount())
 		}
 		if !x.layout.IsContiguous() {
-			return nil, fmt.Errorf("non-contiguous tensors not supported")
+			return nil, fmt.Errorf("non-contiguous tensor not supported")
 		}
-		layout := spark.ContiguousWithOffset(newShape, x.layout.StartOffset())
-		return NewFrom(x.storage, layout, x.dtype, x.device), nil
+		return NewFrom(x.storage, spark.ContiguousWithOffset(s, x.layout.StartOffset()), x.dtype, x.device), nil
 	}
 }
 
 // ReshapeBackward returns a BackwardFunc for reshape gradients.
-func ReshapeBackward[T spark.D](origShape *spark.Shape) BackwardFunc[T] {
-	return func(grad *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+func ReshapeBackward[T spark.D](s *spark.Shape) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
-		dx, err := grad.Reshape(origShape.Dims()...)
+		dx, err := g.Reshape(s.Dims()...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to reshape grad: %w", err)
+			return nil, fmt.Errorf("failed to reshape: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
@@ -3062,13 +3054,13 @@ func BroadcastAsForward[T spark.D](s *spark.Shape) ForwardFunc[T] {
 		}
 		l, err := x.layout.BroadcastAs(s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast shape %v to %v: %w", x.Shape(), s, err)
+			return nil, fmt.Errorf("failed to broadcast %v to %v: %w", x.Shape(), s, err)
 		}
-		st, err := x.storage.Clone()
+		data, err := x.storage.Clone()
 		if err != nil {
-			return nil, fmt.Errorf("failed to clone storage: %w", err)
+			return nil, fmt.Errorf("failed to clone: %w", err)
 		}
-		return NewFrom(st, l, x.dtype, x.device), nil
+		return NewFrom(data, l, x.dtype, x.device), nil
 	}
 }
 
@@ -3083,7 +3075,7 @@ func BroadcastAsBackward[T spark.D](s *spark.Shape) BackwardFunc[T] {
 		}
 		dx, err := ReduceBroadcastGrad(g, s.Dims())
 		if err != nil {
-			return nil, fmt.Errorf("failed to reduce grad: %w", err)
+			return nil, fmt.Errorf("failed to reduce: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}
