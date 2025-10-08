@@ -6,18 +6,14 @@ import (
 	"strings"
 )
 
-// String returns a compact, readable string representation of the tensor,
-// mimicking PyTorch-style formatting for improved aesthetics and clarity.
+// String returns a compact, PyTorch-style string representation of the tensor.
 func (t *Tensor[T]) String() string {
 	shape := t.layout.Shape()
-
 	if shape.ElemCount() == 0 {
 		return fmt.Sprintf("tensor([], shape=%v, dtype=%T, device=%s)", shape.Dims(), *new(T), t.device)
 	}
-
 	if shape.Rank() == 0 {
-		data := t.Data()
-		return fmt.Sprintf("tensor(%v, shape=[], dtype=%T, device=%s)", data[0], *new(T), t.device)
+		return fmt.Sprintf("tensor(%v, shape=[], dtype=%T, device=%s)", t.Data()[0], *new(T), t.device)
 	}
 
 	var sb strings.Builder
@@ -27,10 +23,9 @@ func (t *Tensor[T]) String() string {
 	return sb.String()
 }
 
-// format recursively formats tensor dimensions with nested brackets and indentation.
+// format writes nested tensor dimensions to the builder with proper indentation.
 func (t *Tensor[T]) format(sb *strings.Builder, dim int, idx []int) {
 	shape := t.layout.Shape()
-
 	if dim == shape.Rank()-1 {
 		t.formatRow(sb, idx)
 		return
@@ -39,8 +34,7 @@ func (t *Tensor[T]) format(sb *strings.Builder, dim int, idx []int) {
 	sb.WriteByte('[')
 	for i := 0; i < shape.Dims()[dim]; i++ {
 		if i > 0 {
-			sb.WriteString(",\n")
-			sb.WriteString(strings.Repeat(" ", dim+8)) // Aligns with "tensor([" (8 chars).
+			sb.WriteString(",\n" + strings.Repeat(" ", dim+8))
 		}
 		idx[dim] = i
 		t.format(sb, dim+1, idx)
@@ -48,25 +42,24 @@ func (t *Tensor[T]) format(sb *strings.Builder, dim int, idx []int) {
 	sb.WriteByte(']')
 }
 
-// formatRow formats a single row with right-aligned, space-separated values.
+// formatRow writes a single row of values to the builder, right-aligned.
 func (t *Tensor[T]) formatRow(sb *strings.Builder, idx []int) {
 	sb.WriteByte('[')
 	shape := t.layout.Shape()
-	rowSize := shape.Dims()[shape.Rank()-1]
-	maxWidth := t.globalMaxWidth()
+	n := shape.Dims()[shape.Rank()-1]
+	w := t.maxWidth()
 	data := t.Data()
 
-	for i := range rowSize {
+	for i := range n {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
-		flatIdx := t.flatIndex(idx, i)
-		sb.WriteString(t.formatValue(data[flatIdx], maxWidth))
+		sb.WriteString(t.formatValue(data[t.flatIndex(idx, i)], w))
 	}
 	sb.WriteByte(']')
 }
 
-// flatIndex computes the flat index from multi-dimensional indices.
+// flatIndex returns the flat index for multi-dimensional indices.
 func (t *Tensor[T]) flatIndex(idx []int, last int) int {
 	shape := t.layout.Shape()
 	flat := last
@@ -78,37 +71,37 @@ func (t *Tensor[T]) flatIndex(idx []int, last int) int {
 	return flat
 }
 
-// globalMaxWidth determines the maximum string length of formatted values for alignment.
-func (t *Tensor[T]) globalMaxWidth() int {
-	data := t.Data()
-	max := 0
-	for _, v := range data {
-		if w := len(t.formatValue(v, 0)); w > max {
-			max = w
+// maxWidth returns the maximum string length of formatted values for alignment.
+func (t *Tensor[T]) maxWidth() int {
+	w := 0
+	for _, v := range t.Data() {
+		if n := len(t.formatValue(v, 0)); n > w {
+			w = n
 		}
 	}
-	return max
+	return w
 }
 
-// formatValue formats a value to a string, right-aligned to the given width.
-func (t *Tensor[T]) formatValue(v T, width int) string {
-	var s string
-	switch x := any(v).(type) {
-	case float32:
-		s = t.formatFloat(float64(x))
-	case float64:
-		s = t.formatFloat(x)
-	default:
-		s = fmt.Sprintf("%v", v)
-	}
-	if width > len(s) {
-		return strings.Repeat(" ", width-len(s)) + s
+// formatValue returns a right-aligned string for a tensor value.
+func (t *Tensor[T]) formatValue(v T, w int) string {
+	s := t.formatFloat(v)
+	if w > len(s) {
+		return strings.Repeat(" ", w-len(s)) + s
 	}
 	return s
 }
 
-// formatFloat formats a float with PyTorch-like precision and notation.
-func (t *Tensor[T]) formatFloat(f float64) string {
+// formatFloat returns a PyTorch-style string for a float value.
+func (t *Tensor[T]) formatFloat(v T) string {
+	var f float64
+	switch x := any(v).(type) {
+	case float32:
+		f = float64(x)
+	case float64:
+		f = x
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 	if math.IsNaN(f) {
 		return "nan"
 	}
@@ -119,6 +112,5 @@ func (t *Tensor[T]) formatFloat(f float64) string {
 		return "-inf"
 	}
 	s := fmt.Sprintf("%.4f", f)
-	s = strings.TrimRight(s, "0") // Trim trailing zeros, keep "." for integer-like floats.
-	return s
+	return strings.TrimRight(s, "0")
 }

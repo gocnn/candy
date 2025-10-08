@@ -137,10 +137,10 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 			continue
 		}
 
-		beta1Tensor := tensor.Full[T](T(p.Beta1), spark.NewShape(), theta.Device())
-		beta1CompTensor := tensor.Full[T](T(1.0-p.Beta1), spark.NewShape(), theta.Device())
-		beta2Tensor := tensor.Full[T](T(p.Beta2), spark.NewShape(), theta.Device())
-		beta2CompTensor := tensor.Full[T](T(1.0-p.Beta2), spark.NewShape(), theta.Device())
+		beta1Tensor := tensor.Full[T](p.Beta1, spark.NewShape(), theta.Device())
+		beta1CompTensor := tensor.Full[T](1.0-p.Beta1, spark.NewShape(), theta.Device())
+		beta2Tensor := tensor.Full[T](p.Beta2, spark.NewShape(), theta.Device())
+		beta2CompTensor := tensor.Full[T](1.0-p.Beta2, spark.NewShape(), theta.Device())
 
 		// Update first moment: m = beta1 * m + (1 - beta1) * grad
 		mScaled, err := av.m.Mul(beta1Tensor)
@@ -175,8 +175,8 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Bias-corrected moments
-		scaleMTensor := tensor.Full[T](T(scaleM), spark.NewShape(), theta.Device())
-		scaleVTensor := tensor.Full[T](T(scaleV), spark.NewShape(), theta.Device())
+		scaleMTensor := tensor.Full[T](scaleM, spark.NewShape(), theta.Device())
+		scaleVTensor := tensor.Full[T](scaleV, spark.NewShape(), theta.Device())
 
 		mHat, err := nextM.Mul(scaleMTensor)
 		if err != nil {
@@ -188,7 +188,7 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Weight decay: theta = theta * (1 - lr * lambda)
-		decayFactor := tensor.Full[T](T(1.0-p.LearningRate*p.WeightDecay), spark.NewShape(), theta.Device())
+		decayFactor := tensor.Full[T](1.0-p.LearningRate*p.WeightDecay, spark.NewShape(), theta.Device())
 		thetaScaled, err := theta.Mul(decayFactor)
 		if err != nil {
 			return fmt.Errorf("apply weight decay: %w", err)
@@ -199,7 +199,7 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		if err != nil {
 			return fmt.Errorf("sqrt second moment: %w", err)
 		}
-		epsTensor := tensor.Full[T](T(p.Epsilon), spark.NewShape(), theta.Device())
+		epsTensor := tensor.Full[T](p.Epsilon, spark.NewShape(), theta.Device())
 		vHatSqrtEps, err := vHatSqrt.BroadcastAdd(epsTensor)
 		if err != nil {
 			return fmt.Errorf("add epsilon: %w", err)
@@ -210,7 +210,7 @@ func (a *AdamW[T]) Step(grads *tensor.GradStore[T]) error {
 		}
 
 		// Update: theta = theta - lr * adjGrad
-		lrTensor := tensor.Full[T](T(p.LearningRate), spark.NewShape(), theta.Device())
+		lrTensor := tensor.Full[T](p.LearningRate, spark.NewShape(), theta.Device())
 		lrAdjGrad, err := adjGrad.Mul(lrTensor)
 		if err != nil {
 			return fmt.Errorf("scale adjusted gradient: %w", err)

@@ -127,7 +127,7 @@ func RandN[T spark.D](mean, std float64, shape *spark.Shape, device spark.Device
 	return NewFrom(storage, spark.Contiguous(shape), spark.DTypeOf[T](), device)
 }
 
-func Full[T spark.D](value T, shape *spark.Shape, device spark.Device) *Tensor[T] {
+func Full[T spark.D](value float64, shape *spark.Shape, device spark.Device) *Tensor[T] {
 	var storage spark.BackendStorage[T]
 	var err error
 
@@ -156,7 +156,7 @@ func (t *Tensor[T]) OnesLike() *Tensor[T] {
 }
 
 // FullLike creates a new tensor with the same shape as the input tensor, filled with the specified value.
-func (t *Tensor[T]) FullLike(value T) *Tensor[T] {
+func (t *Tensor[T]) FullLike(value float64) *Tensor[T] {
 	return Full[T](value, t.layout.Shape(), t.device)
 }
 
@@ -390,7 +390,7 @@ func (t *Tensor[T]) MustAffine(scale, bias float64) *Tensor[T] {
 
 // Add performs element-wise addition of two tensors.
 func (a *Tensor[T]) Add(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T], AddBackward[T])
+	return ApplyOp([]*Tensor[T]{a, b}, AddForward[T](), AddBackward[T]())
 }
 
 // MustAdd performs element-wise addition of two tensors, panicking on error.
@@ -404,7 +404,7 @@ func (a *Tensor[T]) MustAdd(b *Tensor[T]) *Tensor[T] {
 
 // Sub performs element-wise subtraction of two tensors.
 func (t *Tensor[T]) Sub(other *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t, other}, SubForward[T], SubBackward[T])
+	return ApplyOp([]*Tensor[T]{t, other}, SubForward[T](), SubBackward[T]())
 }
 
 // MustSub performs element-wise subtraction of two tensors, panicking on error.
@@ -418,7 +418,7 @@ func (t *Tensor[T]) MustSub(other *Tensor[T]) *Tensor[T] {
 
 // Mul performs element-wise multiplication of two tensors.
 func (a *Tensor[T]) Mul(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, MulForward[T], MulBackward[T])
+	return ApplyOp([]*Tensor[T]{a, b}, MulForward[T](), MulBackward[T]())
 }
 
 // MustMul performs element-wise multiplication of two tensors, panicking on error.
@@ -432,7 +432,7 @@ func (a *Tensor[T]) MustMul(b *Tensor[T]) *Tensor[T] {
 
 // Div performs element-wise division of two tensors.
 func (t *Tensor[T]) Div(other *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t, other}, DivForward[T], DivBackward[T])
+	return ApplyOp([]*Tensor[T]{t, other}, DivForward[T](), DivBackward[T]())
 }
 
 // MustDiv performs element-wise division of two tensors, panicking on error.
@@ -444,14 +444,42 @@ func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
 	return t
 }
 
+// Max performs element-wise maximum of two tensors.
+func (a *Tensor[T]) Max(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, MaxForward[T](), MaxBackward[T]())
+}
+
+// MustMax performs element-wise maximum of two tensors, panicking on error.
+func (a *Tensor[T]) MustMax(b *Tensor[T]) *Tensor[T] {
+	result, err := a.Max(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Min performs element-wise minimum of two tensors.
+func (a *Tensor[T]) Min(b *Tensor[T]) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{a, b}, MinForward[T](), MinBackward[T]())
+}
+
+// MustMin performs element-wise minimum of two tensors, panicking on error.
+func (a *Tensor[T]) MustMin(b *Tensor[T]) *Tensor[T] {
+	result, err := a.Min(b)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Eq compares two tensors element-wise for equality: result = (a == b)
 // Returns a uint8 tensor with 1 for equal elements and 0 for unequal elements.
-func (a *Tensor[T]) Eq(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Eq(b *Tensor[T]) (*Tensor[T], error) {
 	return EqForward([]*Tensor[T]{a, b})
 }
 
 // MustEq compares two tensors for equality, panicking on error.
-func (a *Tensor[T]) MustEq(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustEq(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Eq(b)
 	if err != nil {
 		panic(err)
@@ -461,12 +489,12 @@ func (a *Tensor[T]) MustEq(b *Tensor[T]) *Tensor[uint8] {
 
 // Ne compares two tensors element-wise for inequality: result = (a != b)
 // Returns a uint8 tensor with 1 for unequal elements and 0 for equal elements.
-func (a *Tensor[T]) Ne(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Ne(b *Tensor[T]) (*Tensor[T], error) {
 	return NeForward([]*Tensor[T]{a, b})
 }
 
 // MustNe compares two tensors for inequality, panicking on error.
-func (a *Tensor[T]) MustNe(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustNe(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Ne(b)
 	if err != nil {
 		panic(err)
@@ -476,12 +504,12 @@ func (a *Tensor[T]) MustNe(b *Tensor[T]) *Tensor[uint8] {
 
 // Lt compares two tensors element-wise: result = (a < b)
 // Returns a uint8 tensor with 1 where a < b and 0 otherwise.
-func (a *Tensor[T]) Lt(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Lt(b *Tensor[T]) (*Tensor[T], error) {
 	return LtForward([]*Tensor[T]{a, b})
 }
 
 // MustLt compares two tensors, panicking on error.
-func (a *Tensor[T]) MustLt(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustLt(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Lt(b)
 	if err != nil {
 		panic(err)
@@ -491,12 +519,12 @@ func (a *Tensor[T]) MustLt(b *Tensor[T]) *Tensor[uint8] {
 
 // Le compares two tensors element-wise: result = (a <= b)
 // Returns a uint8 tensor with 1 where a <= b and 0 otherwise.
-func (a *Tensor[T]) Le(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Le(b *Tensor[T]) (*Tensor[T], error) {
 	return LeForward([]*Tensor[T]{a, b})
 }
 
 // MustLe compares two tensors, panicking on error.
-func (a *Tensor[T]) MustLe(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustLe(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Le(b)
 	if err != nil {
 		panic(err)
@@ -506,12 +534,12 @@ func (a *Tensor[T]) MustLe(b *Tensor[T]) *Tensor[uint8] {
 
 // Gt compares two tensors element-wise: result = (a > b)
 // Returns a uint8 tensor with 1 where a > b and 0 otherwise.
-func (a *Tensor[T]) Gt(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Gt(b *Tensor[T]) (*Tensor[T], error) {
 	return GtForward([]*Tensor[T]{a, b})
 }
 
 // MustGt compares two tensors, panicking on error.
-func (a *Tensor[T]) MustGt(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustGt(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Gt(b)
 	if err != nil {
 		panic(err)
@@ -521,12 +549,12 @@ func (a *Tensor[T]) MustGt(b *Tensor[T]) *Tensor[uint8] {
 
 // Ge compares two tensors element-wise: result = (a >= b)
 // Returns a uint8 tensor with 1 where a >= b and 0 otherwise.
-func (a *Tensor[T]) Ge(b *Tensor[T]) (*Tensor[uint8], error) {
+func (a *Tensor[T]) Ge(b *Tensor[T]) (*Tensor[T], error) {
 	return GeForward([]*Tensor[T]{a, b})
 }
 
 // MustGe compares two tensors, panicking on error.
-func (a *Tensor[T]) MustGe(b *Tensor[T]) *Tensor[uint8] {
+func (a *Tensor[T]) MustGe(b *Tensor[T]) *Tensor[T] {
 	result, err := a.Ge(b)
 	if err != nil {
 		panic(err)
@@ -632,28 +660,50 @@ func (t *Tensor[T]) MustUpsampleNearest2d(params *spark.UpsampleParams) *Tensor[
 	return result
 }
 
-// Softmax performs softmax activation along the last dimension.
-func (t *Tensor[T]) Softmax() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SoftmaxForward[T], SoftmaxBackward[T])
+// Copy creates a copy of the tensor.
+func (t *Tensor[T]) Copy() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, CopyForward[T](), CopyBackward[T]())
 }
 
-// MustSoftmax performs softmax activation, panicking on error.
-func (t *Tensor[T]) MustSoftmax() *Tensor[T] {
-	result, err := t.Softmax()
+// MustCopy creates a copy of the tensor, panicking on error.
+func (t *Tensor[T]) MustCopy() *Tensor[T] {
+	result, err := t.Copy()
 	if err != nil {
 		panic(err)
 	}
 	return result
 }
 
-// Relu performs element-wise ReLU activation: relu(x) = max(0, x).
-func (t *Tensor[T]) Relu() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, ReluForward[T], ReluBackward[T])
+// Clone creates a clone of the tensor.
+func (t *Tensor[T]) Clone() (*Tensor[T], error) {
+	return &Tensor[T]{
+		id:      NewId(),
+		storage: t.storage,
+		layout:  t.layout.Clone(),
+		op:      nil,
+		isVar:   false,
+		dtype:   t.dtype,
+		device:  t.device,
+	}, nil
 }
 
-// MustRelu performs ReLU activation, panicking on error.
-func (t *Tensor[T]) MustRelu() *Tensor[T] {
-	result, err := t.Relu()
+// MustClone creates a clone of the tensor, panicking on error.
+func (t *Tensor[T]) MustClone() *Tensor[T] {
+	result, err := t.Clone()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Softmax performs softmax activation along the last dimension.
+func (t *Tensor[T]) Softmax() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SoftmaxForward[T](), SoftmaxBackward[T]())
+}
+
+// MustSoftmax performs softmax activation, panicking on error.
+func (t *Tensor[T]) MustSoftmax() *Tensor[T] {
+	result, err := t.Softmax()
 	if err != nil {
 		panic(err)
 	}
@@ -682,7 +732,7 @@ func (t *Tensor[T]) MustWhereCond(trueVal, falseVal *Tensor[T]) *Tensor[T] {
 
 // Neg computes the negation of each element: neg(x) = -x
 func (t *Tensor[T]) Neg() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, NegForward[T], NegBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, NegForward[T](), NegBackward[T]())
 }
 
 // MustNeg computes the negation of each element, panicking on error.
@@ -694,9 +744,37 @@ func (t *Tensor[T]) MustNeg() *Tensor[T] {
 	return result
 }
 
+// Recip computes the reciprocal of each element: recip(x) = 1/x
+func (t *Tensor[T]) Recip() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, RecipForward[T](), RecipBackward[T]())
+}
+
+// MustRecip computes the reciprocal of each element, panicking on error.
+func (t *Tensor[T]) MustRecip() *Tensor[T] {
+	result, err := t.Recip()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Exp computes the exponential of each element: exp(x) = e^x
+func (t *Tensor[T]) Exp() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ExpForward[T](), ExpBackward[T]())
+}
+
+// MustExp computes the exponential of each element, panicking on error.
+func (t *Tensor[T]) MustExp() *Tensor[T] {
+	result, err := t.Exp()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Log computes the natural logarithm of each element: log(x) = ln(x)
 func (t *Tensor[T]) Log() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, LogForward[T], LogBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, LogForward[T](), LogBackward[T]())
 }
 
 // MustLog computes the natural logarithm of each element, panicking on error.
@@ -708,9 +786,121 @@ func (t *Tensor[T]) MustLog() *Tensor[T] {
 	return result
 }
 
+// Sin computes the sine of each element: sin(x)
+func (t *Tensor[T]) Sin() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SinForward[T](), SinBackward[T]())
+}
+
+// MustSin computes the sine of each element, panicking on error.
+func (t *Tensor[T]) MustSin() *Tensor[T] {
+	result, err := t.Sin()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Cos computes the cosine of each element: cos(x)
+func (t *Tensor[T]) Cos() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, CosForward[T](), CosBackward[T]())
+}
+
+// MustCos computes the cosine of each element, panicking on error.
+func (t *Tensor[T]) MustCos() *Tensor[T] {
+	result, err := t.Cos()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Tanh computes the hyperbolic tangent of each element: tanh(x)
+func (t *Tensor[T]) Tanh() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, TanhForward[T](), TanhBackward[T]())
+}
+
+// MustTanh computes the hyperbolic tangent of each element, panicking on error.
+func (t *Tensor[T]) MustTanh() *Tensor[T] {
+	result, err := t.Tanh()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Erf computes the error function of each element: erf(x)
+func (t *Tensor[T]) Erf() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ErfForward[T](), ErfBackward[T]())
+}
+
+// MustErf computes the error function of each element, panicking on error.
+func (t *Tensor[T]) MustErf() *Tensor[T] {
+	result, err := t.Erf()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Ceil computes the ceiling of each element: ceil(x)
+func (t *Tensor[T]) Ceil() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, CeilForward[T](), CeilBackward[T]())
+}
+
+// MustCeil computes the ceiling of each element, panicking on error.
+func (t *Tensor[T]) MustCeil() *Tensor[T] {
+	result, err := t.Ceil()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Floor computes the floor of each element: floor(x)
+func (t *Tensor[T]) Floor() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FloorForward[T](), FloorBackward[T]())
+}
+
+// MustFloor computes the floor of each element, panicking on error.
+func (t *Tensor[T]) MustFloor() *Tensor[T] {
+	result, err := t.Floor()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Round computes the round of each element: round(x)
+func (t *Tensor[T]) Round() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, RoundForward[T](), RoundBackward[T]())
+}
+
+// MustRound computes the round of each element, panicking on error.
+func (t *Tensor[T]) MustRound() *Tensor[T] {
+	result, err := t.Round()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Normcdf computes the normal CDF of each element: Φ(x)
+func (t *Tensor[T]) Normcdf() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, NormcdfForward[T](), NormcdfBackward[T]())
+}
+
+// MustNormcdf computes the normal CDF of each element, panicking on error.
+func (t *Tensor[T]) MustNormcdf() *Tensor[T] {
+	result, err := t.Normcdf()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Abs computes the absolute value of each element: abs(x) = |x|
 func (t *Tensor[T]) Abs() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, AbsForward[T], AbsBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, AbsForward[T](), AbsBackward[T]())
 }
 
 // MustAbs computes the absolute value of each element, panicking on error.
@@ -724,7 +914,7 @@ func (t *Tensor[T]) MustAbs() *Tensor[T] {
 
 // Sqr computes the square of each element: sqr(x) = x²
 func (t *Tensor[T]) Sqr() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SqrForward[T], SqrBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, SqrForward[T](), SqrBackward[T]())
 }
 
 // MustSqr computes the square of each element, panicking on error.
@@ -738,7 +928,7 @@ func (t *Tensor[T]) MustSqr() *Tensor[T] {
 
 // Sqrt computes the square root of each element.
 func (t *Tensor[T]) Sqrt() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SqrtForward[T], SqrtBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, SqrtForward[T](), SqrtBackward[T]())
 }
 
 // MustSqrt computes the square root of each element, panicking on error.
@@ -750,9 +940,93 @@ func (t *Tensor[T]) MustSqrt() *Tensor[T] {
 	return t
 }
 
+// Gelu computes the GELU activation of each element: gelu(x) ≈ 0.5 * x * (1 + tanh(√(2/π) * (x + 0.044715 * x³)))
+func (t *Tensor[T]) Gelu() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, GeluForward[T](), GeluBackward[T]())
+}
+
+// MustGelu computes the GELU activation of each element, panicking on error.
+func (t *Tensor[T]) MustGelu() *Tensor[T] {
+	result, err := t.Gelu()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// GeluErf computes the ERF-based GELU activation of each element: gelu_erf(x) = 0.5 * x * (1 + erf(x/√2))
+func (t *Tensor[T]) GeluErf() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, GeluErfForward[T](), GeluErfBackward[T]())
+}
+
+// MustGeluErf computes the ERF-based GELU activation of each element, panicking on error.
+func (t *Tensor[T]) MustGeluErf() *Tensor[T] {
+	result, err := t.GeluErf()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Relu performs element-wise ReLU activation: relu(x) = max(0, x).
+func (t *Tensor[T]) Relu() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReluForward[T](), ReluBackward[T]())
+}
+
+// MustRelu performs ReLU activation, panicking on error.
+func (t *Tensor[T]) MustRelu() *Tensor[T] {
+	result, err := t.Relu()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Elu computes the ELU activation of each element: elu(x) = x if x >= 0, alpha * (exp(x) - 1) if x < 0
+func (t *Tensor[T]) Elu(alpha float64) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, EluForward[T](alpha), EluBackward[T](alpha))
+}
+
+// MustElu computes the ELU activation of each element, panicking on error.
+func (t *Tensor[T]) MustElu(alpha float64) *Tensor[T] {
+	result, err := t.Elu(alpha)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Silu computes the SiLU (Swish) activation of each element: silu(x) = x * sigmoid(x)
+func (t *Tensor[T]) Silu() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SiluForward[T](), SiluBackward[T]())
+}
+
+// MustSilu computes the SiLU activation of each element, panicking on error.
+func (t *Tensor[T]) MustSilu() *Tensor[T] {
+	result, err := t.Silu()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Powf computes the power of each element: powf(x) = x^param
+func (t *Tensor[T]) Powf(param float64) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, PowfForward[T](param), PowfBackward[T](param))
+}
+
+// MustPowf computes the power of each element, panicking on error.
+func (t *Tensor[T]) MustPowf(param float64) *Tensor[T] {
+	result, err := t.Powf(param)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // Sigmoid computes the sigmoid activation: sigmoid(x) = 1/(1+e^(-x))
 func (t *Tensor[T]) Sigmoid() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SigmoidForward[T], SigmoidBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, SigmoidForward[T](), SigmoidBackward[T]())
 }
 
 // MustSigmoid computes the sigmoid activation, panicking on error.
@@ -766,7 +1040,7 @@ func (t *Tensor[T]) MustSigmoid() *Tensor[T] {
 
 // Sign computes the sign of each element: sign(x) = {1 if x>0, 0 if x=0, -1 if x<0}
 func (t *Tensor[T]) Sign() (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SignForward[T], SignBackward[T])
+	return ApplyOp([]*Tensor[T]{t}, SignForward[T](), SignBackward[T]())
 }
 
 // MustSign computes the sign of each element, panicking on error.
@@ -778,17 +1052,31 @@ func (t *Tensor[T]) MustSign() *Tensor[T] {
 	return result
 }
 
-// Sum computes the sum along the specified dimensions.
+// SumDim computes the sum along the specified dimensions.
 // The dimensions to sum over are specified in dims.
 // If keepdim is true, the summed dimensions are retained with size 1.
 // If keepdim is false, the summed dimensions are removed.
-func (t *Tensor[T]) Sum(dims []int, keepdim bool) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SumForward[T](dims, keepdim), SumBackward[T](dims, keepdim))
+func (t *Tensor[T]) SumDim(dims []int, keepdim bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, SumDimForward[T](dims, keepdim), SumDimBackward[T](dims, keepdim))
+}
+
+// MustSumDim computes the sum along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustSumDim(dims []int, keepdim bool) *Tensor[T] {
+	t, err := t.SumDim(dims, keepdim)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// Sum computes the sum along the specified dimensions, removing the dimensions with size 1.
+func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
+	return t.SumDim(dims, false)
 }
 
 // MustSum computes the sum along the specified dimensions, panicking on error.
-func (t *Tensor[T]) MustSum(dims []int, keepdim bool) *Tensor[T] {
-	t, err := t.Sum(dims, keepdim)
+func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
+	t, err := t.Sum(dims)
 	if err != nil {
 		panic(err)
 	}
@@ -797,7 +1085,7 @@ func (t *Tensor[T]) MustSum(dims []int, keepdim bool) *Tensor[T] {
 
 // SumKeepDim computes the sum along the specified dimensions, keeping the dimensions with size 1.
 func (t *Tensor[T]) SumKeepDim(dims []int) (*Tensor[T], error) {
-	return t.Sum(dims, true)
+	return t.SumDim(dims, true)
 }
 
 // MustSumKeepDim computes the sum along the specified dimensions, panicking on error.
@@ -815,7 +1103,7 @@ func (t *Tensor[T]) SumAll() (*Tensor[T], error) {
 	for i := range dims {
 		dims[i] = i
 	}
-	return t.Sum(dims, false)
+	return t.SumDim(dims, false)
 }
 
 // MustSumAll computes the sum of all elements in the tensor, panicking on error.
@@ -836,7 +1124,7 @@ func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
 	}
 
 	// Divide by element count
-	elemCount := T(t.Shape().ElemCount())
+	elemCount := float64(t.Shape().ElemCount())
 	divisor := Full[T](elemCount, sum.Shape(), sum.Device())
 
 	mean, err := sum.Div(divisor)
@@ -858,7 +1146,7 @@ func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 
 // BroadcastAdd performs broadcasted addition: result = broadcast(a) + broadcast(b).
 func (a *Tensor[T]) BroadcastAdd(b *Tensor[T]) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T], BroadcastAddBackward[T])
+	return ApplyOp([]*Tensor[T]{a, b}, BroadcastAddForward[T](), BroadcastAddBackward[T]())
 }
 
 // MustBroadcastAdd performs broadcasted addition, panicking on error.

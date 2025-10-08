@@ -162,16 +162,16 @@ func (c *CpuDevice[T]) Zeros(shape *spark.Shape, dtype spark.DType) (spark.Backe
 
 // Ones creates a storage filled with ones.
 func (c *CpuDevice[T]) Ones(shape *spark.Shape, dtype spark.DType) (spark.BackendStorage[T], error) {
-	return c.Full(shape, dtype, T(1))
+	return c.Full(shape, dtype, 1.0)
 }
 
 // Full creates a storage filled with a specific value.
-func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value T) (spark.BackendStorage[T], error) {
+func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value float64) (spark.BackendStorage[T], error) {
 	storage := New(make([]T, shape.ElemCount()))
 	data := storage.data
 
 	for i := range data {
-		data[i] = value
+		data[i] = any(value).(T)
 	}
 
 	return storage, nil
