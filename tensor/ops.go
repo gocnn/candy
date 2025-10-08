@@ -1977,14 +1977,14 @@ func FastMaxBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
-// SoftmaxForward returns a ForwardFunc for softmax along the last dimension.
-func SoftmaxForward[T spark.D]() ForwardFunc[T] {
+// FastSoftmaxForward returns a ForwardFunc for softmax along the last dimension.
+func FastSoftmaxForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		data, err := x.storage.Softmax(x.layout)
+		data, err := x.storage.FastSoftmax(x.layout)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute softmax: %w", err)
 		}
@@ -1992,14 +1992,14 @@ func SoftmaxForward[T spark.D]() ForwardFunc[T] {
 	}
 }
 
-// SoftmaxBackward returns a BackwardFunc for softmax gradients.
-func SoftmaxBackward[T spark.D]() BackwardFunc[T] {
+// FastSoftmaxBackward returns a BackwardFunc for softmax gradients.
+func FastSoftmaxBackward[T spark.D]() BackwardFunc[T] {
 	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		s, err := x.Softmax()
+		s, err := x.FastSoftmax()
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute softmax: %w", err)
 		}

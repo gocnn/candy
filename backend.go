@@ -104,14 +104,14 @@ type BackendStorage[T D] interface {
 	// Sum performs summation along specified dimensions.
 	Sum(layout *Layout, sumDims []int) (BackendStorage[T], error)
 
-	// Softmax performs softmax along the last dimension.
-	Softmax(layout *Layout) (BackendStorage[T], error)
+	// FastFastSoftmax performs softmax along the last dimension.
+	FastSoftmax(layout *Layout) (BackendStorage[T], error)
 
-	// RmsNorm performs RMS normalization along the last dimension.
-	RmsNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, eps T) (BackendStorage[T], error)
+	// FastRmsNorm performs RMS normalization along the last dimension.
+	FastRmsNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, eps T) (BackendStorage[T], error)
 
-	// LayerNorm performs Layer normalization along the last dimension.
-	LayerNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, beta BackendStorage[T], betaLayout *Layout, eps T) (BackendStorage[T], error)
+	// FastLayerNorm performs Layer normalization along the last dimension.
+	FastLayerNorm(layout *Layout, alpha BackendStorage[T], alphaLayout *Layout, beta BackendStorage[T], betaLayout *Layout, eps T) (BackendStorage[T], error)
 
 	// RopeI performs rotary position embedding (rope_i variant).
 	RopeI(layout *Layout, cos BackendStorage[T], cosLayout *Layout, sin BackendStorage[T], sinLayout *Layout) (BackendStorage[T], error)
