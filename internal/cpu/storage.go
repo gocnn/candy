@@ -1683,7 +1683,7 @@ func (s *CpuStorage[T]) Softmax(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // RmsNorm performs RMS normalization along the last dimension
-func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, eps T, alpha []T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1691,6 +1691,24 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, eps T, alpha []T) (spark.B
 	numel := layout.ElemCount()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	alphaC, ok := alpha.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("alpha must be CPU storage")
+	}
+
+	if !alphaLayout.IsContiguous() {
+		return nil, errors.New("alpha must be contiguous")
+	}
+
+	dims := layout.Dims()
+	if len(dims) == 0 {
+		return nil, errors.New("cannot normalize scalar tensor")
+	}
+	lastDim := dims[len(dims)-1]
+	if len(alphaC.data) != lastDim {
+		return nil, fmt.Errorf("alpha size %d must match last dimension %d", len(alphaC.data), lastDim)
 	}
 
 	result := New(make([]T, numel))
@@ -1700,7 +1718,7 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, eps T, alpha []T) (spark.B
 		layout.Dims(),
 		layout.Stride(),
 		eps,
-		alpha,
+		alphaC.data,
 		s.data,
 		result.data,
 	)
@@ -1709,7 +1727,7 @@ func (s *CpuStorage[T]) RmsNorm(layout *spark.Layout, eps T, alpha []T) (spark.B
 }
 
 // LayerNorm performs Layer normalization along the last dimension
-func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, eps T, alpha, beta []T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, beta spark.BackendStorage[T], betaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1717,6 +1735,35 @@ func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, eps T, alpha, beta []T) 
 	numel := layout.ElemCount()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	alphaC, ok := alpha.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("alpha must be CPU storage")
+	}
+
+	betaC, ok := beta.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("beta must be CPU storage")
+	}
+
+	if !alphaLayout.IsContiguous() {
+		return nil, errors.New("alpha must be contiguous")
+	}
+	if !betaLayout.IsContiguous() {
+		return nil, errors.New("beta must be contiguous")
+	}
+
+	dims := layout.Dims()
+	if len(dims) == 0 {
+		return nil, errors.New("cannot normalize scalar tensor")
+	}
+	lastDim := dims[len(dims)-1]
+	if len(alphaC.data) != lastDim {
+		return nil, fmt.Errorf("alpha size %d must match last dimension %d", len(alphaC.data), lastDim)
+	}
+	if len(betaC.data) != lastDim {
+		return nil, fmt.Errorf("beta size %d must match last dimension %d", len(betaC.data), lastDim)
 	}
 
 	result := New(make([]T, numel))
@@ -1726,8 +1773,8 @@ func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, eps T, alpha, beta []T) 
 		layout.Dims(),
 		layout.Stride(),
 		eps,
-		alpha,
-		beta,
+		alphaC.data,
+		betaC.data,
 		s.data,
 		result.data,
 	)
@@ -1736,12 +1783,25 @@ func (s *CpuStorage[T]) LayerNorm(layout *spark.Layout, eps T, alpha, beta []T) 
 }
 
 // RopeI performs rotary position embedding (rope_i variant)
-func (s *CpuStorage[T]) RopeI(layout *spark.Layout, bh, td, strideB int, cos, sin []T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) RopeI(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
+	if cosLayout == nil {
+		return nil, errors.New("cos layout cannot be nil")
+	}
+	if sinLayout == nil {
+		return nil, errors.New("sin layout cannot be nil")
+	}
 	if len(s.data) == 0 {
 		return nil, errors.New("source storage is empty")
+	}
+
+	if !cosLayout.IsContiguous() {
+		return nil, errors.New("input cos must be contiguous")
+	}
+	if !sinLayout.IsContiguous() {
+		return nil, errors.New("input sin must be contiguous")
 	}
 
 	numel := layout.ElemCount()
@@ -1749,36 +1809,109 @@ func (s *CpuStorage[T]) RopeI(layout *spark.Layout, bh, td, strideB int, cos, si
 		return nil, errors.New("layout element count does not match storage size")
 	}
 
+	cosC, ok := cos.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("cos must be CPU storage")
+	}
+	sinC, ok := sin.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("sin must be CPU storage")
+	}
+
+	if layout.Rank() != 4 {
+		return nil, errors.New("input must be 4D for RoPE")
+	}
+
+	b, h, t, d, err := layout.Dims4()
+	if err != nil {
+		return nil, err
+	}
+
+	expectedSize := b * t * d / 2
+	if cosLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	}
+	if sinLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	}
+
+	bh := b * h
+	td := t * d
+	strideB := td
+
 	result := New(make([]T, numel))
 	kernels.RopeIStrided(
-		layout.Rank(),
-		layout.Dims(),
-		layout.Stride(),
-		bh,
-		td,
-		strideB,
-		s.data,
-		cos,
-		sin,
-		result.data,
+		layout.Rank(),   // rank
+		layout.Dims(),   // dims
+		layout.Stride(), // strides
+		bh,              // bh
+		td,              // td
+		strideB,         // strideB
+		s.data,          // src
+		cosC.data,       // cos
+		sinC.data,       // sin
+		result.data,     // dst
 	)
 
 	return result, nil
 }
 
 // Rope performs rotary position embedding (rope variant)
-func (s *CpuStorage[T]) Rope(layout *spark.Layout, bh, td, d, strideB int, cos, sin []T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Rope(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
+	if cosLayout == nil {
+		return nil, errors.New("cos layout cannot be nil")
+	}
+	if sinLayout == nil {
+		return nil, errors.New("sin layout cannot be nil")
+	}
 	if len(s.data) == 0 {
 		return nil, errors.New("source storage is empty")
+	}
+
+	if !cosLayout.IsContiguous() {
+		return nil, errors.New("input cos must be contiguous")
+	}
+	if !sinLayout.IsContiguous() {
+		return nil, errors.New("input sin must be contiguous")
 	}
 
 	numel := layout.ElemCount()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
+
+	cosC, ok := cos.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("cos must be CPU storage")
+	}
+	sinC, ok := sin.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("sin must be CPU storage")
+	}
+
+	if layout.Rank() != 4 {
+		return nil, errors.New("input must be 4D for RoPE")
+	}
+
+	b, h, t, d, err := layout.Dims4()
+	if err != nil {
+		return nil, err
+	}
+
+	expectedSize := b * t * d / 2
+	if cosLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	}
+	if sinLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	}
+
+	bh := b * h
+	td := t * d
+	strideB := td
 
 	result := New(make([]T, numel))
 	kernels.RopeStrided(
@@ -1790,8 +1923,8 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, bh, td, d, strideB int, cos, 
 		d,
 		strideB,
 		s.data,
-		cos,
-		sin,
+		cosC.data,
+		sinC.data,
 		result.data,
 	)
 
@@ -1799,18 +1932,59 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, bh, td, d, strideB int, cos, 
 }
 
 // RopeThd performs rotary position embedding (rope_thd variant)
-func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, b, t, h, d, strideB int, cos, sin []T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
+	if cosLayout == nil {
+		return nil, errors.New("cos layout cannot be nil")
+	}
+	if sinLayout == nil {
+		return nil, errors.New("sin layout cannot be nil")
+	}
 	if len(s.data) == 0 {
 		return nil, errors.New("source storage is empty")
+	}
+
+	if !cosLayout.IsContiguous() {
+		return nil, errors.New("input cos must be contiguous")
+	}
+	if !sinLayout.IsContiguous() {
+		return nil, errors.New("input sin must be contiguous")
 	}
 
 	numel := layout.ElemCount()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
+
+	cosC, ok := cos.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("cos must be CPU storage")
+	}
+	sinC, ok := sin.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("sin must be CPU storage")
+	}
+
+	if layout.Rank() != 4 {
+		return nil, errors.New("input must be 4D for RoPE")
+	}
+
+	b, t, h, d, err := layout.Dims4()
+	if err != nil {
+		return nil, err
+	}
+
+	expectedSize := b * t * h * d / 2
+	if cosLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	}
+	if sinLayout.ElemCount() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	}
+
+	strideB := t * h * d
 
 	result := New(make([]T, numel))
 	kernels.RopeThdStrided(
@@ -1823,8 +1997,8 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, b, t, h, d, strideB int, c
 		d,
 		strideB,
 		s.data,
-		cos,
-		sin,
+		cosC.data,
+		sinC.data,
 		result.data,
 	)
 

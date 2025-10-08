@@ -1029,30 +1029,53 @@ func (t *Tensor[T]) MustSumAll() *Tensor[T] {
 
 // MeanAll computes the mean of all elements in the tensor.
 func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
-	// Sum all elements
 	sum, err := t.SumAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to sum all elements: %w", err)
 	}
-
-	// Divide by element count
 	elemCount := float64(t.Shape().ElemCount())
 	divisor, err := Full[T](elemCount, sum.Shape(), sum.Device())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create divisor: %w", err)
 	}
-
 	mean, err := sum.Div(divisor)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
-
 	return mean, nil
 }
 
 // MustMeanAll computes the mean of all elements in the tensor, panicking on error.
 func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 	result, err := t.MeanAll()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FastMin computes the minimum over the last dimension.
+func (t *Tensor[T]) FastMin() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FastMinForward[T](), FastMinBackward[T]())
+}
+
+// MustFastMin computes the minimum over the last dimension, panicking on error.
+func (t *Tensor[T]) MustFastMin() *Tensor[T] {
+	result, err := t.FastMin()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// FastMax computes the maximum over the last dimension.
+func (t *Tensor[T]) FastMax() (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, FastMaxForward[T](), FastMaxBackward[T]())
+}
+
+// MustFastMax computes the maximum over the last dimension, panicking on error.
+func (t *Tensor[T]) MustFastMax() *Tensor[T] {
+	result, err := t.FastMax()
 	if err != nil {
 		panic(err)
 	}
