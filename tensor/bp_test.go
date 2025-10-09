@@ -1,1 +1,1 @@
-package tensor
+package tensor_test

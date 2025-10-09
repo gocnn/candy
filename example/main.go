@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gocnn/spark"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	fmt.Println(spark.Logo)
 }
