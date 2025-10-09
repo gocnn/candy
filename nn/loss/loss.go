@@ -7,46 +7,46 @@ import (
 	"github.com/gocnn/spark/tensor"
 )
 
-// NLL computes the negative log likelihood loss for log probabilities.
-func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	xs, ys := x.Shape(), y.Shape()
-	if ys.Rank() != 1 {
-		return nil, fmt.Errorf("target must be 1D, got %dD", ys.Rank())
-	}
-	n := ys.Dim(0)
-	if xs.Rank() != 2 || xs.Dim(0) != n {
-		return nil, fmt.Errorf("input must be 2D with batch size %d, got shape %v", n, xs)
-	}
-	yt, err := y.Unsqueeze(1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unsqueeze target: %w", err)
-	}
-	g, err := x.Gather(yt, 1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to gather: %w", err)
-	}
-	s, err := g.SumAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to sum: %w", err)
-	}
-	m, err := s.Affine(-1.0/float64(n), 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to scale: %w", err)
-	}
-	return m, nil
-}
+// // NLL computes the negative log likelihood loss for log probabilities.
+// func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+// 	xs, ys := x.Shape(), y.Shape()
+// 	if ys.Rank() != 1 {
+// 		return nil, fmt.Errorf("target must be 1D, got %dD", ys.Rank())
+// 	}
+// 	n := ys.Dim(0)
+// 	if xs.Rank() != 2 || xs.Dim(0) != n {
+// 		return nil, fmt.Errorf("input must be 2D with batch size %d, got shape %v", n, xs)
+// 	}
+// 	yt, err := y.Unsqueeze(1)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to unsqueeze target: %w", err)
+// 	}
+// 	g, err := x.Gather(yt, 1)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to gather: %w", err)
+// 	}
+// 	s, err := g.SumAll()
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to sum: %w", err)
+// 	}
+// 	m, err := s.Affine(-1.0/float64(n), 0)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to scale: %w", err)
+// 	}
+// 	return m, nil
+// }
 
-// CrossEntropy computes the cross-entropy loss for logits.
-func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	if x.Rank() != 2 {
-		return nil, fmt.Errorf("input must be 2D, got %dD", x.Rank())
-	}
-	z, err := x.LogSoftmax(1)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
-	}
-	return NLL(z, y)
-}
+// // CrossEntropy computes the cross-entropy loss for logits.
+// func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+// 	if x.Rank() != 2 {
+// 		return nil, fmt.Errorf("input must be 2D, got %dD", x.Rank())
+// 	}
+// 	z, err := x.LogSoftmax(1)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
+// 	}
+// 	return NLL(z, y)
+// }
 
 // MSE computes the mean squared error loss between input and target.
 func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
@@ -66,9 +66,9 @@ func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 }
 
 // BCE computes the binary cross-entropy loss for logits.
+// Stable formula: BCE = 1/N * Σ [max(x,0) - x*y + log(1 + exp(-|x|))]
 func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	// Stable formula: BCE = 1/N * Σ [max(x,0) - x*y + log(1 + exp(-|x|))]
-	zero, err := tensor.Full[T](0.0, x.Shape(), x.Device())
+	zero, err := tensor.Zeros[T](x.Shape(), x.Device())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zero tensor: %w", err)
 	}
@@ -96,11 +96,7 @@ func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute exp(-|x|): %w", err)
 	}
-	one, err := tensor.Full[T](1.0, e.Shape(), e.Device())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create one tensor: %w", err)
-	}
-	t, err := one.Add(e) // 1 + exp(-|x|)
+	t, err := e.AddScalar(1.0) // 1 + exp(-|x|)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute 1 + exp(-|x|): %w", err)
 	}
@@ -165,19 +161,11 @@ func SmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tens
 	if err != nil {
 		return nil, fmt.Errorf("failed to square: %w", err)
 	}
-	b, err = tensor.Full[T](0.5/beta, s.Shape(), s.Device())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create scale: %w", err)
-	}
-	q, err := s.Mul(b)
+	q, err := s.MulScalar(0.5 / beta)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute quadratic part: %w", err)
 	}
-	b, err = tensor.Full[T](-0.5*beta, a.Shape(), a.Device())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create offset: %w", err)
-	}
-	l, err := a.Add(b)
+	l, err := a.AddScalar(-0.5 * beta)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute linear part: %w", err)
 	}

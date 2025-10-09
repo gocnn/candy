@@ -9,22 +9,23 @@ import (
 )
 
 var _ Optimizer[float32] = (*SGD[float32])(nil)
+var _ Optimizer[float64] = (*SGD[float64])(nil)
 
-// SGD implements Stochastic Gradient Descent optimizer.
+// SGD implements the Stochastic Gradient Descent optimizer.
 type SGD[T spark.D] struct {
-	vars []*tensor.Tensor[T]
-	lr   float64
+	vs []*tensor.Tensor[T] // Variables to optimize
+	lr float64             // Learning rate
 }
 
 // NewSGD creates a new SGD optimizer with the given variables and learning rate.
 func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) *SGD[T] {
-	filtered := make([]*tensor.Tensor[T], 0, len(vars))
+	vs := make([]*tensor.Tensor[T], 0, len(vars))
 	for _, v := range vars {
 		if v.IsVar() {
-			filtered = append(filtered, v)
+			vs = append(vs, v)
 		}
 	}
-	return &SGD[T]{vars: filtered, lr: lr}
+	return &SGD[T]{vs: vs, lr: lr}
 }
 
 // LearningRate returns the current learning rate.
@@ -42,47 +43,40 @@ func (s *SGD[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
 		return errors.New("not a variable")
 	}
-	s.vars = append(s.vars, v)
+	s.vs = append(s.vs, v)
 	return nil
 }
 
 // Vars returns all variables being optimized.
 func (s *SGD[T]) Vars() []*tensor.Tensor[T] {
-	return s.vars
+	return s.vs
 }
 
 // Optimize performs backward propagation and an SGD step.
 func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
-	store := tensor.NewGradStore[T]()
-	if err := tensor.Backward(loss, store); err != nil {
-		return fmt.Errorf("backward propagation: %w", err)
+	gs := tensor.NewGradStore[T]()
+	if err := tensor.Backward(loss, gs); err != nil {
+		return fmt.Errorf("failed to backward: %w", err)
 	}
-	return s.Step(store)
+	return s.Step(gs)
 }
 
 // Step performs an SGD optimization step.
-func (s *SGD[T]) Step(grads *tensor.GradStore[T]) error {
-	for _, v := range s.vars {
-		grad := grads.Get(v)
-		if grad == nil {
+func (s *SGD[T]) Step(gs *tensor.GradStore[T]) error {
+	for _, v := range s.vs {
+		g := gs.Get(v)
+		if g == nil {
 			continue
 		}
-
-		lrTensor, err := tensor.Full[T](s.lr, spark.NewShape(), v.Device())
+		u, err := g.MulScalar(s.lr)
 		if err != nil {
-			return fmt.Errorf("create learning rate tensor: %w", err)
+			return fmt.Errorf("failed to scale gradient: %w", err)
 		}
-		scaled, err := grad.Mul(lrTensor)
+		vn, err := v.Sub(u)
 		if err != nil {
-			return fmt.Errorf("scale gradient: %w", err)
+			return fmt.Errorf("failed to update variable: %w", err)
 		}
-
-		updated, err := v.Sub(scaled)
-		if err != nil {
-			return fmt.Errorf("update variable: %w", err)
-		}
-
-		v.SetStorage(updated.Storage())
+		v.SetStorage(vn.Storage())
 	}
 	return nil
 }
