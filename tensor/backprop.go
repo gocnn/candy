@@ -8,16 +8,16 @@ import (
 
 // GradStore maps tensor IDs to their gradient tensors for backpropagation.
 type GradStore[T spark.D] struct {
-	m map[TensorId]*Tensor[T]
+	m map[TensorID]*Tensor[T]
 }
 
 // NewGradStore returns a new gradient store.
 func NewGradStore[T spark.D]() *GradStore[T] {
-	return &GradStore[T]{m: make(map[TensorId]*Tensor[T])}
+	return &GradStore[T]{m: make(map[TensorID]*Tensor[T])}
 }
 
 // GetByID returns the gradient tensor for the given ID, or nil if not found.
-func (s *GradStore[T]) GetByID(id TensorId) *Tensor[T] {
+func (s *GradStore[T]) GetByID(id TensorID) *Tensor[T] {
 	return s.m[id]
 }
 
@@ -40,7 +40,7 @@ func (s *GradStore[T]) GetOrCreate(t *Tensor[T]) (*Tensor[T], error) {
 }
 
 // SetByID sets the gradient tensor for the given ID, returning the previous gradient and whether it existed.
-func (s *GradStore[T]) SetByID(id TensorId, grad *Tensor[T]) (*Tensor[T], bool) {
+func (s *GradStore[T]) SetByID(id TensorID, grad *Tensor[T]) (*Tensor[T], bool) {
 	prev, ok := s.m[id]
 	s.m[id] = grad
 	return prev, ok
@@ -52,7 +52,7 @@ func (s *GradStore[T]) Set(t *Tensor[T], grad *Tensor[T]) (*Tensor[T], bool) {
 }
 
 // DeleteByID deletes the gradient tensor for the given ID, returning it and whether it existed.
-func (s *GradStore[T]) DeleteByID(id TensorId) (*Tensor[T], bool) {
+func (s *GradStore[T]) DeleteByID(id TensorID) (*Tensor[T], bool) {
 	grad, ok := s.m[id]
 	if ok {
 		delete(s.m, id)
@@ -66,8 +66,8 @@ func (s *GradStore[T]) Delete(t *Tensor[T]) (*Tensor[T], bool) {
 }
 
 // IDs returns all stored gradient tensor IDs.
-func (s *GradStore[T]) IDs() []TensorId {
-	ids := make([]TensorId, 0, len(s.m))
+func (s *GradStore[T]) IDs() []TensorID {
+	ids := make([]TensorID, 0, len(s.m))
 	for id := range s.m {
 		ids = append(ids, id)
 	}
@@ -76,7 +76,7 @@ func (s *GradStore[T]) IDs() []TensorId {
 
 // Clear removes all gradient tensors from the store.
 func (s *GradStore[T]) Clear() {
-	s.m = make(map[TensorId]*Tensor[T])
+	s.m = make(map[TensorID]*Tensor[T])
 }
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.
@@ -93,10 +93,10 @@ func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
 		store.Set(root, one)
 	}
 
-	vars := make(map[TensorId]*Tensor[T])
-	outputs := make(map[TensorId][]*Tensor[T])
+	vars := make(map[TensorID]*Tensor[T])
+	outputs := make(map[TensorID][]*Tensor[T])
 	queue := []*Tensor[T]{root}
-	visited := make(map[TensorId]bool)
+	visited := make(map[TensorID]bool)
 
 	for len(queue) > 0 {
 		t := queue[0]
@@ -121,7 +121,7 @@ func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
 		}
 	}
 
-	pending := make(map[TensorId]int, len(vars))
+	pending := make(map[TensorID]int, len(vars))
 	for id := range vars {
 		pending[id] = len(outputs[id])
 	}
