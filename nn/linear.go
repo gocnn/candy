@@ -2,181 +2,122 @@ package nn
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/gocnn/spark"
 	"github.com/gocnn/spark/tensor"
 )
 
-// Linear represents a linear transformation layer: y = xW^T + b
+// Linear represents a linear transformation layer: y = xW^T + b.
 type Linear[T spark.D] struct {
-	weight *tensor.Tensor[T]
-	bias   *tensor.Tensor[T] // can be nil for no bias
+	w *tensor.Tensor[T] // Weight tensor
+	b *tensor.Tensor[T] // Bias tensor (optional)
 }
 
-// NewLinear creates a new linear layer with given weight and optional bias
-func NewLinear[T spark.D](weight *tensor.Tensor[T], bias *tensor.Tensor[T]) *Linear[T] {
-	return &Linear[T]{
-		weight: weight,
-		bias:   bias,
-	}
+// NewLinear creates a new linear layer with given weight and optional bias.
+func NewLinear[T spark.D](w, b *tensor.Tensor[T]) *Linear[T] {
+	return &Linear[T]{w: w, b: b}
 }
 
-// NewLinearLayer creates a linear layer with random initialization
+// NewLinearLayer creates a linear layer with PyTorch-style Kaiming Uniform initialization.
 func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device) *Linear[T] {
-	bound := 1.0 / float64(inDim)
-	weight, err := tensor.RandN[T](0.0, bound, spark.NewShape(outDim, inDim), device)
+	// bound = sqrt(6 / fan_in) for Kaiming Uniform
+	bound := math.Sqrt(0.1 / float64(inDim))
+	w, err := tensor.Rand[T](-bound, bound, spark.NewShape(outDim, inDim), device)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create weight: %w", err))
 	}
-
-	var biasT *tensor.Tensor[T]
+	w.SetIsVar(true)
+	var b *tensor.Tensor[T]
 	if bias {
-		var err error
-		biasT, err = tensor.Rand[T](-bound, bound, spark.NewShape(outDim), device)
+		// bound = 1 / sqrt(fan_in)
+		bBound := 1.0 / math.Sqrt(float64(inDim))
+		b, err = tensor.Rand[T](-bBound, bBound, spark.NewShape(outDim), device)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("failed to create bias: %w", err))
 		}
+		b.SetIsVar(true)
 	}
-
-	return NewLinear(weight, biasT)
+	return NewLinear(w, b)
 }
 
-// NewLinearNoBias creates a linear layer without bias
+// NewLinearNoBias creates a linear layer without bias.
 func NewLinearNoBias[T spark.D](inDim, outDim int, device spark.Device) *Linear[T] {
 	return NewLinearLayer[T](inDim, outDim, false, device)
 }
 
-// Weight returns the weight tensor
+// Weight returns the weight tensor.
 func (l *Linear[T]) Weight() *tensor.Tensor[T] {
-	return l.weight
+	return l.w
 }
 
-// Bias returns the bias tensor (can be nil)
+// Bias returns the bias tensor (may be nil).
 func (l *Linear[T]) Bias() *tensor.Tensor[T] {
-	return l.bias
+	return l.b
 }
 
-// Forward applies the linear transformation: y = xW^T + b
+// Forward applies the linear transformation: y = xW^T + b.
 func (l *Linear[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-	// Handle different input dimensions for efficiency
-	dims := x.Shape().Dims()
+	dims := x.Dims()
+	rank := len(dims)
+	if rank < 2 {
+		return nil, fmt.Errorf("input rank must be >= 2, got %d", rank)
+	}
 
-	var result *tensor.Tensor[T]
-	var err error
+	wt, err := l.w.Transpose(-1, -2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to transpose weight: %w", err)
+	}
 
-	switch len(dims) {
-	case 4: // [b1, b2, m, k]
-		b1, b2, m, k := dims[0], dims[1], dims[2], dims[3]
-		if x.Layout().IsContiguous() {
-			// Efficient path: reshape and use standard matmul
-			w, err := l.weight.Transpose(-1, -2) // transpose weight
-			if err != nil {
-				return nil, err
-			}
-
-			reshaped, err := x.Reshape(b1*b2*m, k)
-			if err != nil {
-				return nil, err
-			}
-
-			matmulResult, err := reshaped.MatMul(w)
-			if err != nil {
-				return nil, err
-			}
-
-			outFeatures := l.weight.Shape().Dim(0)
-			result, err = matmulResult.Reshape(b1, b2, m, outFeatures)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// Non-contiguous path: use broadcasted matmul
-			w, err := l.weight.BroadcastLeft(b1, b2)
-			if err != nil {
-				return nil, err
-			}
-
-			w, err = w.Transpose(-1, -2)
-			if err != nil {
-				return nil, err
-			}
-
-			result, err = x.MatMul(w)
-			if err != nil {
-				return nil, err
-			}
+	var r *tensor.Tensor[T]
+	switch {
+	case x.Layout().IsContiguous():
+		// Reshape input for efficient matmul
+		bs := dims[:rank-1]
+		k := dims[rank-1]
+		n := int64(1)
+		for _, d := range bs {
+			n *= int64(d)
 		}
-
-	case 3: // [bsize, m, k]
-		bsize, m, k := dims[0], dims[1], dims[2]
-		if x.Layout().IsContiguous() {
-			// Efficient path
-			w, err := l.weight.Transpose(-1, -2)
-			if err != nil {
-				return nil, err
-			}
-
-			reshaped, err := x.Reshape(bsize*m, k)
-			if err != nil {
-				return nil, err
-			}
-
-			matmulResult, err := reshaped.MatMul(w)
-			if err != nil {
-				return nil, err
-			}
-
-			outFeatures := l.weight.Shape().Dim(0)
-			result, err = matmulResult.Reshape(bsize, m, outFeatures)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// Non-contiguous path
-			w, err := l.weight.BroadcastLeft(bsize)
-			if err != nil {
-				return nil, err
-			}
-
-			w, err = w.Transpose(-1, -2)
-			if err != nil {
-				return nil, err
-			}
-
-			result, err = x.MatMul(w)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-	default: // 2D or other cases: standard matmul
-		w, err := l.weight.Transpose(-1, -2)
+		xr, err := x.Reshape(int(n), k)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to reshape input: %w", err)
 		}
-
-		result, err = x.MatMul(w)
+		r, err = xr.MatMul(wt)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to matmul: %w", err)
+		}
+		s := append(bs, l.w.Dim(0))
+		r, err = r.Reshape(s...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reshape output: %w", err)
+		}
+	default:
+		// Broadcast weight for non-contiguous input
+		wb, err := wt.BroadcastLeft(dims[:rank-1]...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast weight: %w", err)
+		}
+		r, err = x.MatMul(wb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to matmul: %w", err)
 		}
 	}
 
-	// Add bias if present
-	if l.bias != nil {
-		result, err = result.BroadcastAdd(l.bias)
+	if l.b != nil {
+		r, err = r.BroadcastAdd(l.b)
 		if err != nil {
 			return nil, fmt.Errorf("failed to add bias: %w", err)
 		}
 	}
-
-	return result, nil
+	return r, nil
 }
 
-// MustForward applies the linear transformation, panicking on error
+// MustForward applies the linear transformation, panicking on error.
 func (l *Linear[T]) MustForward(x *tensor.Tensor[T]) *tensor.Tensor[T] {
-	result, err := l.Forward(x)
+	r, err := l.Forward(x)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed forward: %w", err))
 	}
-	return result
+	return r
 }

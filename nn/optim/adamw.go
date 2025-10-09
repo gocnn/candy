@@ -128,6 +128,20 @@ func (a *AdamW[T]) Optimize(loss *tensor.Tensor[T]) error {
 	return a.Step(gs)
 }
 
+// MustOptimize performs backward propagation and an AdamW step, panics on error.
+func (a *AdamW[T]) MustOptimize(loss *tensor.Tensor[T]) {
+	if err := a.Optimize(loss); err != nil {
+		panic(err)
+	}
+}
+
+// MustStep performs an AdamW optimization step, panics on error.
+func (a *AdamW[T]) MustStep(gs *tensor.GradStore[T]) {
+	if err := a.Step(gs); err != nil {
+		panic(err)
+	}
+}
+
 // Step performs an AdamW optimization step.
 func (a *AdamW[T]) Step(gs *tensor.GradStore[T]) error {
 	a.step++

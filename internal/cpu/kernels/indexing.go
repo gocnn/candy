@@ -649,6 +649,59 @@ func IndexSelectStridedU8I64(numel, ndims int, dims, strides []int, ids []uint8,
 	}
 }
 
+// GatherF32F32 performs gather along a specified dimension for float32 indices and float32 data
+func GatherF32F32(numel int, ids []float32, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	maxU := float32(math.MaxFloat32)
+	var zero float32
+	for i := range numel {
+
+		rightI := i % rightSize
+		temp := i / rightSize
+		idsI := temp % idsDimSize
+		leftI := temp / idsDimSize
+
+		if leftI >= leftSize || idsI >= idsDimSize || rightI >= rightSize {
+			out[i] = zero
+			continue
+		}
+
+		idsIdx := leftI*idsDimSize*rightSize + idsI*rightSize + rightI
+		idx := ids[idsIdx]
+
+		if idx == maxU {
+			out[i] = zero
+			continue
+		}
+
+		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
+
+		if srcI >= len(inp) {
+			out[i] = zero
+			continue
+		}
+		out[i] = inp[srcI]
+	}
+}
+
+// GatherF64F64 performs gather along a specified dimension for float64 indices and float64 data
+func GatherF64F64(numel int, ids []float64, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	maxU := float64(math.MaxFloat64)
+	var zero float64
+	for i := range numel {
+
+		post := i % rightSize
+		pre := i / (rightSize * idsDimSize)
+
+		idx := ids[(i/rightSize)%idsDimSize]
+		if idx == maxU {
+			out[i] = zero
+			continue
+		}
+		srcI := (pre*srcDimSize+int(idx))*rightSize + post
+		out[i] = inp[srcI]
+	}
+}
+
 // GatherI64F32 performs gather along a specified dimension for int64 indices and float32 data
 func GatherI64F32(numel int, ids []int64, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
 	maxU := int64(math.MaxInt64)
@@ -1489,6 +1542,46 @@ func IndexAddStridedU8I64(leftSize, ndims int, dims, strides []int, idsDimSize i
 	panic("strided not supported for IndexAdd")
 }
 
+// ScatterF32F32 performs scatter along a specified dimension for int64 indices and float32 data
+func ScatterF32F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []float32, inp, out []float32) {
+
+	maxU := float32(math.MaxFloat32)
+	numel := leftSize * rightSize
+	for i := range numel {
+		pre := i / rightSize
+		post := i % rightSize
+		for j := range srcDimSize {
+			srcI := (pre*srcDimSize+j)*rightSize + post
+			idx := ids[srcI]
+			if idx == maxU {
+				continue
+			}
+			dstI := (pre*dstDimSize+int(idx))*rightSize + post
+			out[dstI] = inp[srcI]
+		}
+	}
+}
+
+// ScatterF64F64 performs scatter along a specified dimension for int64 indices and float64 data
+func ScatterF64F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []float64, inp, out []float64) {
+
+	maxU := float64(math.MaxFloat64)
+	numel := leftSize * rightSize
+	for i := range numel {
+		pre := i / rightSize
+		post := i % rightSize
+		for j := range srcDimSize {
+			srcI := (pre*srcDimSize+j)*rightSize + post
+			idx := ids[srcI]
+			if idx == maxU {
+				continue
+			}
+			dstI := (pre*dstDimSize+int(idx))*rightSize + post
+			out[dstI] = inp[srcI]
+		}
+	}
+}
+
 // ScatterI64F32 performs scatter along a specified dimension for int64 indices and float32 data
 func ScatterI64F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float32) {
 
@@ -1912,6 +2005,52 @@ func ScatterStridedU8I64(leftSize, ndims int, dims, strides []int, srcDimSize, d
 		return
 	}
 	panic("strided not supported for Scatter")
+}
+
+// ScatterAddF32F32 performs scatteradd along a specified dimension for int64 indices and float32 data
+func ScatterAddF32F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []float32, inp, out []float32) {
+
+	maxU := float32(math.MaxFloat32)
+	numel := leftSize * rightSize
+	for i := range numel {
+		pre := i / rightSize
+		post := i % rightSize
+		for j := range srcDimSize {
+			srcI := (pre*srcDimSize+j)*rightSize + post
+			if srcI >= len(ids) {
+				continue
+			}
+			idx := ids[srcI]
+			if idx == maxU {
+				continue
+			}
+			dstI := (pre*dstDimSize+int(idx))*rightSize + post
+			if srcI >= len(inp) || dstI >= len(out) {
+				continue
+			}
+			out[dstI] += inp[srcI]
+		}
+	}
+}
+
+// ScatterAddF64F64 performs scatteradd along a specified dimension for int64 indices and float64 data
+func ScatterAddF64F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []float64, inp, out []float64) {
+
+	maxU := float64(math.MaxFloat64)
+	numel := leftSize * rightSize
+	for i := range numel {
+		pre := i / rightSize
+		post := i % rightSize
+		for j := range srcDimSize {
+			srcI := (pre*srcDimSize+j)*rightSize + post
+			idx := ids[srcI]
+			if idx == maxU {
+				continue
+			}
+			dstI := (pre*dstDimSize+int(idx))*rightSize + post
+			out[dstI] += inp[srcI]
+		}
+	}
 }
 
 // ScatterAddI64F32 performs scatteradd along a specified dimension for int64 indices and float32 data

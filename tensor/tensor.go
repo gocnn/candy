@@ -1032,12 +1032,40 @@ func (t *Tensor[T]) MustUpsampleNearest2d(h, w int) *Tensor[T] {
 
 // Gather gathers along dimension.
 func (t *Tensor[T]) Gather(idx *Tensor[T], dim int) (*Tensor[T], error) {
-	return nil, nil // Placeholder
+	return ApplyOp([]*Tensor[T]{t, idx}, GatherForward[T](dim), GatherBackward[T](dim))
 }
 
 // MustGather gathers along dimension, panics on error.
 func (t *Tensor[T]) MustGather(idx *Tensor[T], dim int) *Tensor[T] {
 	res, err := t.Gather(idx, dim)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// Scatter scatters src values along dimension using indices.
+func (t *Tensor[T]) Scatter(idx *Tensor[T], src *Tensor[T], dim int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, idx, src}, ScatterForward[T](dim), ScatterBackward[T](dim))
+}
+
+// MustScatter scatters along dimension, panics on error.
+func (t *Tensor[T]) MustScatter(idx *Tensor[T], src *Tensor[T], dim int) *Tensor[T] {
+	res, err := t.Scatter(idx, src, dim)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// ScatterAdd performs scatter-add operation: adds src values to dst at indices along dimension.
+func (t *Tensor[T]) ScatterAdd(idx *Tensor[T], src *Tensor[T], dim int) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t, idx, src}, ScatterAddForward[T](dim), ScatterAddBackward[T](dim))
+}
+
+// MustScatterAdd performs scatter-add operation, panics on error.
+func (t *Tensor[T]) MustScatterAdd(idx *Tensor[T], src *Tensor[T], dim int) *Tensor[T] {
+	res, err := t.ScatterAdd(idx, src, dim)
 	if err != nil {
 		panic(err)
 	}
@@ -1817,7 +1845,10 @@ func (t *Tensor[T]) SqueezeDims(dims []int) (*Tensor[T], error) {
 
 // Reshape reshapes preserving elements.
 func (t *Tensor[T]) Reshape(d ...int) (*Tensor[T], error) {
-	s := spark.NewShapeFrom(d)
+	s, err := t.Shape().Reshape(d...)
+	if err != nil {
+		return nil, fmt.Errorf("reshape failed: %w", err)
+	}
 	return ApplyOp([]*Tensor[T]{t}, ReshapeForward[T](s), ReshapeBackward[T](t.Shape()))
 }
 
@@ -1919,4 +1950,13 @@ func (t *Tensor[T]) Backward() (*GradStore[T], error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// MustBackward computes gradients, panics on error.
+func (t *Tensor[T]) MustBackward() *GradStore[T] {
+	s, err := t.Backward()
+	if err != nil {
+		panic(err)
+	}
+	return s
 }

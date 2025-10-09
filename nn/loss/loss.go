@@ -36,6 +36,15 @@ func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	return m, nil
 }
 
+// MustNLL computes the negative log likelihood loss for log probabilities.
+func MustNLL[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+	ls, err := NLL(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return ls
+}
+
 // CrossEntropy computes the cross-entropy loss for logits.
 func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	if x.Rank() != 2 {
@@ -46,6 +55,15 @@ func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) 
 		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
 	}
 	return NLL(z, y)
+}
+
+// MustCrossEntropy computes the cross-entropy loss for logits.
+func MustCrossEntropy[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+	ls, err := CrossEntropy(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return ls
 }
 
 // MSE computes the mean squared error loss between input and target.
@@ -63,6 +81,15 @@ func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
 	return mean, nil
+}
+
+// MustMSE computes the mean squared error loss between input and target.
+func MustMSE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+	ls, err := MSE(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return ls
 }
 
 // BCE computes the binary cross-entropy loss for logits.
@@ -119,6 +146,15 @@ func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	return mn, nil
 }
 
+// MustBCE computes the binary cross-entropy loss for logits.
+func MustBCE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+	ls, err := BCE(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return ls
+}
+
 // L1Loss computes the L1 (mean absolute error) loss between input and target.
 func L1Loss[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	diff, err := x.Sub(y)
@@ -134,6 +170,15 @@ func L1Loss[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
 	return mean, nil
+}
+
+// MustL1Loss computes the L1 (mean absolute error) loss between input and target.
+func MustL1Loss[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+	ls, err := L1Loss(x, y)
+	if err != nil {
+		panic(err)
+	}
+	return ls
 }
 
 // SmoothL1Loss computes the Smooth L1 (Huber) loss between input and target.
@@ -178,4 +223,13 @@ func SmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tens
 		return nil, fmt.Errorf("failed to compute mean: %w", err)
 	}
 	return m, nil
+}
+
+// MustSmoothL1Loss computes the Smooth L1 (Huber) loss between input and target.
+func MustSmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) *tensor.Tensor[T] {
+	ls, err := SmoothL1Loss(x, y, beta)
+	if err != nil {
+		panic(err)
+	}
+	return ls
 }

@@ -38,62 +38,67 @@ func New(cfg Config) *Client {
 // Ensure checks or downloads configured files.
 func (c *Client) Ensure() error {
 	for _, f := range c.cfg.Files {
-		path := filepath.Join(c.cfg.Dir, f.Name)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if !c.cfg.Download {
-				if f.Needed {
-					return fmt.Errorf("missing required file %s", f.Name)
-				}
-				continue
+		p := filepath.Join(c.cfg.Dir, f.Name)
+		_, err := os.Stat(p)
+		if err == nil {
+			continue
+		}
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to check %s: %w", f.Name, err)
+		}
+		if !c.cfg.Download {
+			if f.Needed {
+				return fmt.Errorf("missing required file %s", f.Name)
 			}
-			if err := c.Download(f, path); err != nil {
-				return fmt.Errorf("download %s: %w", f.Name, err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("check %s: %w", f.Name, err)
+			continue
+		}
+		if err := c.download(f, p); err != nil {
+			return fmt.Errorf("failed to download %s: %w", f.Name, err)
 		}
 	}
 	return nil
 }
 
-// Download fetches and saves a file.
-func (c *Client) Download(f File, path string) error {
+// download fetches and saves a file.
+func (c *Client) download(f File, p string) error {
 	resp, err := http.Get(f.URL)
 	if err != nil {
-		return fmt.Errorf("fetch %s: %w", f.URL, err)
+		return fmt.Errorf("failed to fetch %s: %w", f.URL, err)
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad response: %s", resp.Status)
 	}
-
-	body := io.Reader(resp.Body)
+	var r io.Reader
+	var rc io.Closer
 	if c.cfg.Progress && resp.ContentLength > 0 {
-		body = NewProgressReader(resp.Body, resp.ContentLength, f.Name)
+		pr := NewProgressReader(resp.Body, resp.ContentLength, f.Name)
+		r, rc = pr, pr
+	} else {
+		r, rc = resp.Body, resp.Body
 	}
-
 	if c.cfg.Gzip && filepath.Ext(f.URL) == ".gz" {
-		gr, err := gzip.NewReader(body)
+		gr, err := gzip.NewReader(r)
 		if err != nil {
-			return fmt.Errorf("decompress: %w", err)
+			rc.Close()
+			return fmt.Errorf("failed to decompress: %w", err)
 		}
 		defer gr.Close()
-		body = gr
+		r = gr
 	}
-
 	if err := os.MkdirAll(c.cfg.Dir, 0755); err != nil {
-		return fmt.Errorf("create dir %s: %w", c.cfg.Dir, err)
+		rc.Close()
+		return fmt.Errorf("failed to create dir %s: %w", c.cfg.Dir, err)
 	}
-
-	file, err := os.Create(path)
+	w, err := os.Create(p)
 	if err != nil {
-		return fmt.Errorf("create %s: %w", path, err)
+		rc.Close()
+		return fmt.Errorf("failed to create %s: %w", p, err)
 	}
-	defer file.Close()
-
-	if _, err := io.Copy(file, body); err != nil {
-		return fmt.Errorf("write %s: %w", path, err)
+	defer w.Close()
+	if _, err := io.Copy(w, r); err != nil {
+		rc.Close()
+		return fmt.Errorf("failed to write %s: %w", p, err)
 	}
-	return nil
+	return rc.Close()
 }
