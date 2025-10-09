@@ -1827,11 +1827,11 @@ func (s *CpuStorage[T]) FastArgmax(layout *spark.Layout) (spark.BackendStorage[u
 	return result, nil
 }
 
-func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sum(layout *spark.Layout, dims []int) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	if len(sumDims) == 0 {
+	if len(dims) == 0 {
 		return nil, errors.New("sumDims cannot be empty")
 	}
 
@@ -1842,7 +1842,7 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendS
 
 	outputDims := make([]int, len(layout.Dims()))
 	copy(outputDims, layout.Dims())
-	for _, dim := range sumDims {
+	for _, dim := range dims {
 		if dim < 0 || dim >= len(outputDims) {
 			return nil, errors.New("invalid sum dimension")
 		}
@@ -1860,7 +1860,179 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendS
 		layout.Rank(),
 		layout.Dims(),
 		layout.Stride(),
-		sumDims,
+		dims,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Min computes the minimum over the specified dimension
+func (s *CpuStorage[T]) Min(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]T, outputSize))
+	kernels.MinStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Max computes the maximum over the specified dimension
+func (s *CpuStorage[T]) Max(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]T, outputSize))
+	kernels.MaxStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Argmin computes the index of minimum over the specified dimension
+func (s *CpuStorage[T]) Argmin(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]uint32, outputSize))
+	kernels.ArgminStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Argmax computes the index of maximum over the specified dimension
+func (s *CpuStorage[T]) Argmax(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]uint32, outputSize))
+	kernels.ArgmaxStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
 		s.data,
 		result.data,
 	)

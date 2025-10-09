@@ -1774,8 +1774,8 @@ func UpsampleNearest2dBackward[T spark.D](h, w int) BackwardFunc[T] {
 	}
 }
 
-// SumDimForward returns a ForwardFunc for summing along specified dimensions.
-func SumDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
+// ReduceSumForward returns a ForwardFunc for summing along specified dimensions.
+func ReduceSumForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1803,8 +1803,8 @@ func SumDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 	}
 }
 
-// SumDimBackward returns a BackwardFunc for sum gradients.
-func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
+// ReduceSumBackward returns a BackwardFunc for sum gradients.
+func ReduceSumBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1834,8 +1834,8 @@ func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 	}
 }
 
-// MeanDimForward returns a ForwardFunc for computing the mean along specified dimensions.
-func MeanDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
+// ReduceMeanForward returns a ForwardFunc for computing the mean along specified dimensions.
+func ReduceMeanForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1849,7 +1849,7 @@ func MeanDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 		for _, i := range d {
 			n *= x.Dims()[i]
 		}
-		s, err := x.SumDim(d, keepdim)
+		s, err := x.ReduceSum(d, keepdim)
 		if err != nil {
 			return nil, fmt.Errorf("failed to sum: %w", err)
 		}
@@ -1861,8 +1861,8 @@ func MeanDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
 	}
 }
 
-// MeanDimBackward returns a BackwardFunc for mean gradients along specified dimensions.
-func MeanDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
+// ReduceMeanBackward returns a BackwardFunc for mean gradients along specified dimensions.
+func ReduceMeanBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
 		if len(inputs) != 1 {
 			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
@@ -1894,6 +1894,154 @@ func MeanDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 		dx, err := m.BroadcastAs(x.Shape())
 		if err != nil {
 			return nil, fmt.Errorf("failed to broadcast: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
+// ReduceMinForward returns a ForwardFunc for computing the minimum along a specified dimension.
+func ReduceMinForward[T spark.D](dim int, keepdim bool) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		d, err := spark.ResolveAxis(dim, x.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dim: %w", err)
+		}
+		data, err := x.storage.Min(x.layout, d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute min: %w", err)
+		}
+		s := make([]int, len(x.Dims()))
+		copy(s, x.Dims())
+		s[d] = 1
+		r := NewFrom(data, spark.Contiguous(spark.NewShapeFrom(s)), x.dtype, x.device)
+		if keepdim {
+			return r, nil
+		}
+		return r.SqueezeDims([]int{d})
+	}
+}
+
+// ReduceMinBackward returns a BackwardFunc for minimum gradients along a specified dimension.
+func ReduceMinBackward[T spark.D](dim int, keepdim bool) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0].Detach()
+		d, err := spark.ResolveAxis(dim, x.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dim: %w", err)
+		}
+		m, err := x.Min(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute min: %w", err)
+		}
+		mb := m
+		if !keepdim {
+			mb, err = m.Unsqueeze(d)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unsqueeze: %w", err)
+			}
+		}
+		n, err := x.Eq(mb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute mask: %w", err)
+		}
+		r := g
+		if !keepdim {
+			s := make([]int, len(x.Dims()))
+			copy(s, x.Dims())
+			s[d] = 1
+			r, err = g.Reshape(s...)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reshape: %w", err)
+			}
+		}
+		gb, err := r.BroadcastAs(x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
+		}
+		dx, err := gb.Mul(n)
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply mask: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
+// ReduceMaxForward returns a ForwardFunc for computing the maximum along a specified dimension.
+func ReduceMaxForward[T spark.D](dim int, keepdim bool) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		d, err := spark.ResolveAxis(dim, x.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dim: %w", err)
+		}
+		data, err := x.storage.Max(x.layout, d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute max: %w", err)
+		}
+		s := make([]int, len(x.Dims()))
+		copy(s, x.Dims())
+		s[d] = 1
+		r := NewFrom(data, spark.Contiguous(spark.NewShapeFrom(s)), x.dtype, x.device)
+		if keepdim {
+			return r, nil
+		}
+		return r.SqueezeDims([]int{d})
+	}
+}
+
+// ReduceMaxBackward returns a BackwardFunc for maximum gradients along a specified dimension.
+func ReduceMaxBackward[T spark.D](dim int, keepdim bool) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0].Detach()
+		d, err := spark.ResolveAxis(dim, x.Rank())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dim: %w", err)
+		}
+		m, err := x.Max(d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute max: %w", err)
+		}
+		mb := m
+		if !keepdim {
+			mb, err = m.Unsqueeze(d)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unsqueeze: %w", err)
+			}
+		}
+		n, err := x.Eq(mb)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute mask: %w", err)
+		}
+		r := g
+		if !keepdim {
+			s := make([]int, len(x.Dims()))
+			copy(s, x.Dims())
+			s[d] = 1
+			r, err = g.Reshape(s...)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reshape: %w", err)
+			}
+		}
+		gb, err := r.BroadcastAs(x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
+		}
+		dx, err := gb.Mul(n)
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply mask: %w", err)
 		}
 		return []*Tensor[T]{dx}, nil
 	}

@@ -7,46 +7,46 @@ import (
 	"github.com/gocnn/spark/tensor"
 )
 
-// // NLL computes the negative log likelihood loss for log probabilities.
-// func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-// 	xs, ys := x.Shape(), y.Shape()
-// 	if ys.Rank() != 1 {
-// 		return nil, fmt.Errorf("target must be 1D, got %dD", ys.Rank())
-// 	}
-// 	n := ys.Dim(0)
-// 	if xs.Rank() != 2 || xs.Dim(0) != n {
-// 		return nil, fmt.Errorf("input must be 2D with batch size %d, got shape %v", n, xs)
-// 	}
-// 	yt, err := y.Unsqueeze(1)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to unsqueeze target: %w", err)
-// 	}
-// 	g, err := x.Gather(yt, 1)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to gather: %w", err)
-// 	}
-// 	s, err := g.SumAll()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to sum: %w", err)
-// 	}
-// 	m, err := s.Affine(-1.0/float64(n), 0)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to scale: %w", err)
-// 	}
-// 	return m, nil
-// }
+// NLL computes the negative log likelihood loss for log probabilities.
+func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	xs, ys := x.Shape(), y.Shape()
+	if ys.Rank() != 1 {
+		return nil, fmt.Errorf("target must be 1D, got %dD", ys.Rank())
+	}
+	n := ys.Dim(0)
+	if xs.Rank() != 2 || xs.Dim(0) != n {
+		return nil, fmt.Errorf("input must be 2D with batch size %d, got shape %v", n, xs)
+	}
+	yt, err := y.Unsqueeze(1)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unsqueeze target: %w", err)
+	}
+	g, err := x.Gather(yt, 1)
+	if err != nil {
+		return nil, fmt.Errorf("failed to gather: %w", err)
+	}
+	s, err := g.SumAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum: %w", err)
+	}
+	m, err := s.Affine(-1.0/float64(n), 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scale: %w", err)
+	}
+	return m, nil
+}
 
-// // CrossEntropy computes the cross-entropy loss for logits.
-// func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
-// 	if x.Rank() != 2 {
-// 		return nil, fmt.Errorf("input must be 2D, got %dD", x.Rank())
-// 	}
-// 	z, err := x.LogSoftmax(1)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
-// 	}
-// 	return NLL(z, y)
-// }
+// CrossEntropy computes the cross-entropy loss for logits.
+func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+	if x.Rank() != 2 {
+		return nil, fmt.Errorf("input must be 2D, got %dD", x.Rank())
+	}
+	z, err := x.LogSoftmax(1)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute log_softmax: %w", err)
+	}
+	return NLL(z, y)
+}
 
 // MSE computes the mean squared error loss between input and target.
 func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {

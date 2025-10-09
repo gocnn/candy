@@ -120,7 +120,19 @@ type BackendStorage[T D] interface {
 	FastArgmax(layout *Layout) (BackendStorage[uint32], error)
 
 	// Sum performs summation along specified dimensions.
-	Sum(layout *Layout, sumDims []int) (BackendStorage[T], error)
+	Sum(layout *Layout, dims []int) (BackendStorage[T], error)
+
+	// Min computes the minimum over the specified dimension.
+	Min(layout *Layout, dim int) (BackendStorage[T], error)
+
+	// Max computes the maximum over the specified dimension.
+	Max(layout *Layout, dim int) (BackendStorage[T], error)
+
+	// Argmin computes the index of minimum over the specified dimension.
+	Argmin(layout *Layout, dim int) (BackendStorage[uint32], error)
+
+	// Argmax computes the index of maximum over the specified dimension.
+	Argmax(layout *Layout, dim int) (BackendStorage[uint32], error)
 
 	// FastFastSoftmax performs softmax along the last dimension.
 	FastSoftmax(layout *Layout) (BackendStorage[T], error)
