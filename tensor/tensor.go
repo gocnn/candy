@@ -1861,49 +1861,9 @@ func (t *Tensor[T]) MustReshape(d ...int) *Tensor[T] {
 	return res
 }
 
-// FlattenAll flattens to 1D.
-func (t *Tensor[T]) FlattenAll() (*Tensor[T], error) {
-	return t.Reshape(t.ElemCount())
-}
-
-// MustFlattenAll flattens to 1D, panics on error.
-func (t *Tensor[T]) MustFlattenAll() *Tensor[T] {
-	res, err := t.FlattenAll()
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
 // Flatten flattens from start to end dim.
 func (t *Tensor[T]) Flatten(start, end int) (*Tensor[T], error) {
-	s := t.Shape()
-	r := s.Rank()
-	rs, err := spark.ResolveAxis(start, r)
-	if err != nil {
-		return nil, fmt.Errorf("flatten start: %w", err)
-	}
-	re, err := spark.ResolveAxis(end, r)
-	if err != nil {
-		return nil, fmt.Errorf("flatten end: %w", err)
-	}
-	if rs > re {
-		return nil, fmt.Errorf("start %d > end %d", start, end)
-	}
-	if rs == re {
-		return NewFrom(t.storage, t.layout.Clone(), t.dtype, t.device), nil
-	}
-	d := s.Dims()
-	nd := append([]int(nil), d[:rs]...)
-	fs := 1
-	for i := rs; i <= re; i++ {
-		fs *= d[i]
-	}
-	nd = append(nd, fs)
-	if re+1 < len(d) {
-		nd = append(nd, d[re+1:]...)
-	}
-	return t.Reshape(nd...)
+	return ApplyOp([]*Tensor[T]{t}, FlattenForward[T](start, end), FlattenBackward[T](t.Shape()))
 }
 
 // MustFlatten flattens range, panics on error.
@@ -1915,28 +1875,14 @@ func (t *Tensor[T]) MustFlatten(start, end int) *Tensor[T] {
 	return res
 }
 
-// FlattenFrom flattens from start to end.
-func (t *Tensor[T]) FlattenFrom(start int) (*Tensor[T], error) {
-	return t.Flatten(start, t.Rank()-1)
+// FlattenAll flattens to 1D.
+func (t *Tensor[T]) FlattenAll() (*Tensor[T], error) {
+	return t.Reshape(t.ElemCount())
 }
 
-// MustFlattenFrom flattens from start, panics on error.
-func (t *Tensor[T]) MustFlattenFrom(start int) *Tensor[T] {
-	res, err := t.FlattenFrom(start)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
-// FlattenTo flattens to end from 0.
-func (t *Tensor[T]) FlattenTo(end int) (*Tensor[T], error) {
-	return t.Flatten(0, end)
-}
-
-// MustFlattenTo flattens to end, panics on error.
-func (t *Tensor[T]) MustFlattenTo(end int) *Tensor[T] {
-	res, err := t.FlattenTo(end)
+// MustFlattenAll flattens to 1D, panics on error.
+func (t *Tensor[T]) MustFlattenAll() *Tensor[T] {
+	res, err := t.FlattenAll()
 	if err != nil {
 		panic(err)
 	}
