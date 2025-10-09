@@ -1847,6 +1847,79 @@ func SumDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
 	}
 }
 
+// MeanDimForward returns a ForwardFunc for computing the mean along specified dimensions.
+func MeanDimForward[T spark.D](dims []int, keepdim bool) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0]
+		d, err := spark.ResolveAxes(dims, x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dims: %w", err)
+		}
+		n := 1
+		for _, i := range d {
+			n *= x.Dims()[i]
+		}
+		s, err := x.SumDim(d, keepdim)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sum: %w", err)
+		}
+		r, err := Full[T](float64(n), s.Shape(), s.Device())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create divisor: %w", err)
+		}
+		m, err := s.Div(r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to divide: %w", err)
+		}
+		return m, nil
+	}
+}
+
+// MeanDimBackward returns a BackwardFunc for mean gradients along specified dimensions.
+func MeanDimBackward[T spark.D](dims []int, keepdim bool) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("expected 1 input, got %d", len(inputs))
+		}
+		x := inputs[0].Detach()
+		d, err := spark.ResolveAxes(dims, x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve dims: %w", err)
+		}
+		n := 1
+		for _, i := range d {
+			n *= x.Dims()[i]
+		}
+		r, err := Full[T](1.0/float64(n), g.Shape(), g.Device())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create grad: %w", err)
+		}
+		m, err := g.Mul(r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scale: %w", err)
+		}
+		if !keepdim {
+			s := make([]int, len(x.Dims()))
+			copy(s, x.Dims())
+			for _, i := range d {
+				s[i] = 1
+			}
+			m, err = m.Reshape(s...)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reshape: %w", err)
+			}
+		}
+		dx, err := m.BroadcastAs(x.Shape())
+		if err != nil {
+			return nil, fmt.Errorf("failed to broadcast: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
 // FastMinForward returns a ForwardFunc for minimum over the last dimension.
 func FastMinForward[T spark.D]() ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {

@@ -965,12 +965,12 @@ func (t *Tensor[T]) MustUpsampleNearest2d(targetH, targetW int) *Tensor[T] {
 }
 
 // Gather performs gather along the specified dimension.
-func (t *Tensor[T]) Gather(indexes *Tensor[T], dim int) (*Tensor[T], error) {
+func (t *Tensor[T]) Gather(indexes *Tensor[uint32], dim int) (*Tensor[T], error) {
 	return nil, nil
 }
 
 // MustGather performs gather along the specified dimension, panicking on error.
-func (t *Tensor[T]) MustGather(indexes *Tensor[T], dim int) *Tensor[T] {
+func (t *Tensor[T]) MustGather(indexes *Tensor[uint32], dim int) *Tensor[T] {
 	result, err := t.Gather(indexes, dim)
 	if err != nil {
 		panic(err)
@@ -1041,22 +1041,55 @@ func (t *Tensor[T]) MustSumAll() *Tensor[T] {
 	return t
 }
 
+// MeanDim computes the mean along the specified dimensions.
+func (t *Tensor[T]) MeanDim(dims []int, keepdim bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, MeanDimForward[T](dims, keepdim), MeanDimBackward[T](dims, keepdim))
+}
+
+// MustMeanDim computes the mean along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMeanDim(dims []int, keepdim bool) *Tensor[T] {
+	result, err := t.MeanDim(dims, keepdim)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Mean computes the mean along the specified dimensions, removing the dimensions.
+func (t *Tensor[T]) Mean(dims []int) (*Tensor[T], error) {
+	return t.MeanDim(dims, false)
+}
+
+// MustMean computes the mean along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMean(dims []int) *Tensor[T] {
+	result, err := t.Mean(dims)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// MeanKeepDim computes the mean along the specified dimensions, keeping dimensions with size 1.
+func (t *Tensor[T]) MeanKeepDim(dims []int) (*Tensor[T], error) {
+	return t.MeanDim(dims, true)
+}
+
+// MustMeanKeepDim computes the mean along the specified dimensions, panicking on error.
+func (t *Tensor[T]) MustMeanKeepDim(dims []int) *Tensor[T] {
+	result, err := t.MeanKeepDim(dims)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 // MeanAll computes the mean of all elements in the tensor.
 func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
-	sum, err := t.SumAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to sum all elements: %w", err)
+	dims := make([]int, t.Rank())
+	for i := range dims {
+		dims[i] = i
 	}
-	elemCount := float64(t.Shape().ElemCount())
-	divisor, err := Full[T](elemCount, sum.Shape(), sum.Device())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create divisor: %w", err)
-	}
-	mean, err := sum.Div(divisor)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compute mean: %w", err)
-	}
-	return mean, nil
+	return t.MeanDim(dims, false)
 }
 
 // MustMeanAll computes the mean of all elements in the tensor, panicking on error.

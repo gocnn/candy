@@ -25,8 +25,8 @@ func IndexSelectI64F32(numel int, ids []int64, inp, out []float32, leftSize, src
 }
 
 // IndexSelectStridedI64F32 performs indexselect along a specified dimension for int64 indices and float32 data with strided memory
-func IndexSelectStridedI64F32(numel, numDims int, dims, strides []int, ids []int64, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedI64F32(numel, ndims int, dims, strides []int, ids []int64, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectI64F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -42,7 +42,7 @@ func IndexSelectStridedI64F32(numel, numDims int, dims, strides []int, ids []int
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -68,8 +68,8 @@ func IndexSelectI64F64(numel int, ids []int64, inp, out []float64, leftSize, src
 }
 
 // IndexSelectStridedI64F64 performs indexselect along a specified dimension for int64 indices and float64 data with strided memory
-func IndexSelectStridedI64F64(numel, numDims int, dims, strides []int, ids []int64, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedI64F64(numel, ndims int, dims, strides []int, ids []int64, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectI64F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -85,7 +85,7 @@ func IndexSelectStridedI64F64(numel, numDims int, dims, strides []int, ids []int
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -111,8 +111,8 @@ func IndexSelectI64U8(numel int, ids []int64, inp, out []uint8, leftSize, srcDim
 }
 
 // IndexSelectStridedI64U8 performs indexselect along a specified dimension for int64 indices and uint8 data with strided memory
-func IndexSelectStridedI64U8(numel, numDims int, dims, strides []int, ids []int64, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedI64U8(numel, ndims int, dims, strides []int, ids []int64, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectI64U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -128,7 +128,7 @@ func IndexSelectStridedI64U8(numel, numDims int, dims, strides []int, ids []int6
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -154,8 +154,8 @@ func IndexSelectI64U32(numel int, ids []int64, inp, out []uint32, leftSize, srcD
 }
 
 // IndexSelectStridedI64U32 performs indexselect along a specified dimension for int64 indices and uint32 data with strided memory
-func IndexSelectStridedI64U32(numel, numDims int, dims, strides []int, ids []int64, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedI64U32(numel, ndims int, dims, strides []int, ids []int64, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectI64U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -171,7 +171,7 @@ func IndexSelectStridedI64U32(numel, numDims int, dims, strides []int, ids []int
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -197,8 +197,8 @@ func IndexSelectI64I64(numel int, ids []int64, inp, out []int64, leftSize, srcDi
 }
 
 // IndexSelectStridedI64I64 performs indexselect along a specified dimension for int64 indices and int64 data with strided memory
-func IndexSelectStridedI64I64(numel, numDims int, dims, strides []int, ids []int64, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedI64I64(numel, ndims int, dims, strides []int, ids []int64, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectI64I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -214,7 +214,7 @@ func IndexSelectStridedI64I64(numel, numDims int, dims, strides []int, ids []int
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -240,8 +240,8 @@ func IndexSelectU32F32(numel int, ids []uint32, inp, out []float32, leftSize, sr
 }
 
 // IndexSelectStridedU32F32 performs indexselect along a specified dimension for uint32 indices and float32 data with strided memory
-func IndexSelectStridedU32F32(numel, numDims int, dims, strides []int, ids []uint32, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU32F32(numel, ndims int, dims, strides []int, ids []uint32, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU32F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -257,7 +257,7 @@ func IndexSelectStridedU32F32(numel, numDims int, dims, strides []int, ids []uin
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -283,8 +283,8 @@ func IndexSelectU32F64(numel int, ids []uint32, inp, out []float64, leftSize, sr
 }
 
 // IndexSelectStridedU32F64 performs indexselect along a specified dimension for uint32 indices and float64 data with strided memory
-func IndexSelectStridedU32F64(numel, numDims int, dims, strides []int, ids []uint32, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU32F64(numel, ndims int, dims, strides []int, ids []uint32, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU32F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -300,7 +300,7 @@ func IndexSelectStridedU32F64(numel, numDims int, dims, strides []int, ids []uin
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -326,8 +326,8 @@ func IndexSelectU32U8(numel int, ids []uint32, inp, out []uint8, leftSize, srcDi
 }
 
 // IndexSelectStridedU32U8 performs indexselect along a specified dimension for uint32 indices and uint8 data with strided memory
-func IndexSelectStridedU32U8(numel, numDims int, dims, strides []int, ids []uint32, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU32U8(numel, ndims int, dims, strides []int, ids []uint32, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU32U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -343,7 +343,7 @@ func IndexSelectStridedU32U8(numel, numDims int, dims, strides []int, ids []uint
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -369,8 +369,8 @@ func IndexSelectU32U32(numel int, ids []uint32, inp, out []uint32, leftSize, src
 }
 
 // IndexSelectStridedU32U32 performs indexselect along a specified dimension for uint32 indices and uint32 data with strided memory
-func IndexSelectStridedU32U32(numel, numDims int, dims, strides []int, ids []uint32, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU32U32(numel, ndims int, dims, strides []int, ids []uint32, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU32U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -386,7 +386,7 @@ func IndexSelectStridedU32U32(numel, numDims int, dims, strides []int, ids []uin
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -412,8 +412,8 @@ func IndexSelectU32I64(numel int, ids []uint32, inp, out []int64, leftSize, srcD
 }
 
 // IndexSelectStridedU32I64 performs indexselect along a specified dimension for uint32 indices and int64 data with strided memory
-func IndexSelectStridedU32I64(numel, numDims int, dims, strides []int, ids []uint32, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU32I64(numel, ndims int, dims, strides []int, ids []uint32, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU32I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -429,7 +429,7 @@ func IndexSelectStridedU32I64(numel, numDims int, dims, strides []int, ids []uin
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -455,8 +455,8 @@ func IndexSelectU8F32(numel int, ids []uint8, inp, out []float32, leftSize, srcD
 }
 
 // IndexSelectStridedU8F32 performs indexselect along a specified dimension for uint8 indices and float32 data with strided memory
-func IndexSelectStridedU8F32(numel, numDims int, dims, strides []int, ids []uint8, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU8F32(numel, ndims int, dims, strides []int, ids []uint8, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU8F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -472,7 +472,7 @@ func IndexSelectStridedU8F32(numel, numDims int, dims, strides []int, ids []uint
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -498,8 +498,8 @@ func IndexSelectU8F64(numel int, ids []uint8, inp, out []float64, leftSize, srcD
 }
 
 // IndexSelectStridedU8F64 performs indexselect along a specified dimension for uint8 indices and float64 data with strided memory
-func IndexSelectStridedU8F64(numel, numDims int, dims, strides []int, ids []uint8, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU8F64(numel, ndims int, dims, strides []int, ids []uint8, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU8F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -515,7 +515,7 @@ func IndexSelectStridedU8F64(numel, numDims int, dims, strides []int, ids []uint
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -541,8 +541,8 @@ func IndexSelectU8U8(numel int, ids []uint8, inp, out []uint8, leftSize, srcDimS
 }
 
 // IndexSelectStridedU8U8 performs indexselect along a specified dimension for uint8 indices and uint8 data with strided memory
-func IndexSelectStridedU8U8(numel, numDims int, dims, strides []int, ids []uint8, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU8U8(numel, ndims int, dims, strides []int, ids []uint8, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU8U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -558,7 +558,7 @@ func IndexSelectStridedU8U8(numel, numDims int, dims, strides []int, ids []uint8
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -584,8 +584,8 @@ func IndexSelectU8U32(numel int, ids []uint8, inp, out []uint32, leftSize, srcDi
 }
 
 // IndexSelectStridedU8U32 performs indexselect along a specified dimension for uint8 indices and uint32 data with strided memory
-func IndexSelectStridedU8U32(numel, numDims int, dims, strides []int, ids []uint8, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU8U32(numel, ndims int, dims, strides []int, ids []uint8, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU8U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -601,7 +601,7 @@ func IndexSelectStridedU8U32(numel, numDims int, dims, strides []int, ids []uint
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -627,8 +627,8 @@ func IndexSelectU8I64(numel int, ids []uint8, inp, out []int64, leftSize, srcDim
 }
 
 // IndexSelectStridedU8I64 performs indexselect along a specified dimension for uint8 indices and int64 data with strided memory
-func IndexSelectStridedU8I64(numel, numDims int, dims, strides []int, ids []uint8, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexSelectStridedU8I64(numel, ndims int, dims, strides []int, ids []uint8, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexSelectU8I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -644,7 +644,7 @@ func IndexSelectStridedU8I64(numel, numDims int, dims, strides []int, ids []uint
 			continue
 		}
 		srcI := leftI*srcDimSize*rightSize + int(idx)*rightSize + rightI
-		stridedI := GetStridedIndex(srcI, numDims, dims, strides)
+		stridedI := GetStridedIndex(srcI, ndims, dims, strides)
 		out[dstI] = inp[stridedI]
 	}
 }
@@ -669,8 +669,8 @@ func GatherI64F32(numel int, ids []int64, inp, out []float32, leftSize, srcDimSi
 }
 
 // GatherStridedI64F32 performs gather along a specified dimension for int64 indices and float32 data with strided memory
-func GatherStridedI64F32(numel, numDims int, dims, strides []int, ids []int64, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedI64F32(numel, ndims int, dims, strides []int, ids []int64, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherI64F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -697,8 +697,8 @@ func GatherI64F64(numel int, ids []int64, inp, out []float64, leftSize, srcDimSi
 }
 
 // GatherStridedI64F64 performs gather along a specified dimension for int64 indices and float64 data with strided memory
-func GatherStridedI64F64(numel, numDims int, dims, strides []int, ids []int64, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedI64F64(numel, ndims int, dims, strides []int, ids []int64, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherI64F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -725,8 +725,8 @@ func GatherI64U8(numel int, ids []int64, inp, out []uint8, leftSize, srcDimSize,
 }
 
 // GatherStridedI64U8 performs gather along a specified dimension for int64 indices and uint8 data with strided memory
-func GatherStridedI64U8(numel, numDims int, dims, strides []int, ids []int64, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedI64U8(numel, ndims int, dims, strides []int, ids []int64, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherI64U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -753,8 +753,8 @@ func GatherI64U32(numel int, ids []int64, inp, out []uint32, leftSize, srcDimSiz
 }
 
 // GatherStridedI64U32 performs gather along a specified dimension for int64 indices and uint32 data with strided memory
-func GatherStridedI64U32(numel, numDims int, dims, strides []int, ids []int64, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedI64U32(numel, ndims int, dims, strides []int, ids []int64, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherI64U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -781,8 +781,8 @@ func GatherI64I64(numel int, ids []int64, inp, out []int64, leftSize, srcDimSize
 }
 
 // GatherStridedI64I64 performs gather along a specified dimension for int64 indices and int64 data with strided memory
-func GatherStridedI64I64(numel, numDims int, dims, strides []int, ids []int64, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedI64I64(numel, ndims int, dims, strides []int, ids []int64, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherI64I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -809,8 +809,8 @@ func GatherU32F32(numel int, ids []uint32, inp, out []float32, leftSize, srcDimS
 }
 
 // GatherStridedU32F32 performs gather along a specified dimension for uint32 indices and float32 data with strided memory
-func GatherStridedU32F32(numel, numDims int, dims, strides []int, ids []uint32, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU32F32(numel, ndims int, dims, strides []int, ids []uint32, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU32F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -837,8 +837,8 @@ func GatherU32F64(numel int, ids []uint32, inp, out []float64, leftSize, srcDimS
 }
 
 // GatherStridedU32F64 performs gather along a specified dimension for uint32 indices and float64 data with strided memory
-func GatherStridedU32F64(numel, numDims int, dims, strides []int, ids []uint32, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU32F64(numel, ndims int, dims, strides []int, ids []uint32, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU32F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -865,8 +865,8 @@ func GatherU32U8(numel int, ids []uint32, inp, out []uint8, leftSize, srcDimSize
 }
 
 // GatherStridedU32U8 performs gather along a specified dimension for uint32 indices and uint8 data with strided memory
-func GatherStridedU32U8(numel, numDims int, dims, strides []int, ids []uint32, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU32U8(numel, ndims int, dims, strides []int, ids []uint32, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU32U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -893,8 +893,8 @@ func GatherU32U32(numel int, ids []uint32, inp, out []uint32, leftSize, srcDimSi
 }
 
 // GatherStridedU32U32 performs gather along a specified dimension for uint32 indices and uint32 data with strided memory
-func GatherStridedU32U32(numel, numDims int, dims, strides []int, ids []uint32, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU32U32(numel, ndims int, dims, strides []int, ids []uint32, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU32U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -921,8 +921,8 @@ func GatherU32I64(numel int, ids []uint32, inp, out []int64, leftSize, srcDimSiz
 }
 
 // GatherStridedU32I64 performs gather along a specified dimension for uint32 indices and int64 data with strided memory
-func GatherStridedU32I64(numel, numDims int, dims, strides []int, ids []uint32, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU32I64(numel, ndims int, dims, strides []int, ids []uint32, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU32I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -949,8 +949,8 @@ func GatherU8F32(numel int, ids []uint8, inp, out []float32, leftSize, srcDimSiz
 }
 
 // GatherStridedU8F32 performs gather along a specified dimension for uint8 indices and float32 data with strided memory
-func GatherStridedU8F32(numel, numDims int, dims, strides []int, ids []uint8, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU8F32(numel, ndims int, dims, strides []int, ids []uint8, inp, out []float32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU8F32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -977,8 +977,8 @@ func GatherU8F64(numel int, ids []uint8, inp, out []float64, leftSize, srcDimSiz
 }
 
 // GatherStridedU8F64 performs gather along a specified dimension for uint8 indices and float64 data with strided memory
-func GatherStridedU8F64(numel, numDims int, dims, strides []int, ids []uint8, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU8F64(numel, ndims int, dims, strides []int, ids []uint8, inp, out []float64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU8F64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -1005,8 +1005,8 @@ func GatherU8U8(numel int, ids []uint8, inp, out []uint8, leftSize, srcDimSize, 
 }
 
 // GatherStridedU8U8 performs gather along a specified dimension for uint8 indices and uint8 data with strided memory
-func GatherStridedU8U8(numel, numDims int, dims, strides []int, ids []uint8, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU8U8(numel, ndims int, dims, strides []int, ids []uint8, inp, out []uint8, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU8U8(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -1033,8 +1033,8 @@ func GatherU8U32(numel int, ids []uint8, inp, out []uint32, leftSize, srcDimSize
 }
 
 // GatherStridedU8U32 performs gather along a specified dimension for uint8 indices and uint32 data with strided memory
-func GatherStridedU8U32(numel, numDims int, dims, strides []int, ids []uint8, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU8U32(numel, ndims int, dims, strides []int, ids []uint8, inp, out []uint32, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU8U32(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -1061,8 +1061,8 @@ func GatherU8I64(numel int, ids []uint8, inp, out []int64, leftSize, srcDimSize,
 }
 
 // GatherStridedU8I64 performs gather along a specified dimension for uint8 indices and int64 data with strided memory
-func GatherStridedU8I64(numel, numDims int, dims, strides []int, ids []uint8, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
-	if IsContiguous(numDims, dims, strides) {
+func GatherStridedU8I64(numel, ndims int, dims, strides []int, ids []uint8, inp, out []int64, leftSize, srcDimSize, idsDimSize, rightSize int) {
+	if IsContiguous(ndims, dims, strides) {
 		GatherU8I64(numel, ids, inp, out, leftSize, srcDimSize, idsDimSize, rightSize)
 		return
 	}
@@ -1089,8 +1089,8 @@ func IndexAddI64F32(leftSize int, idsDimSize int, inp, out []float32, dstDimSize
 }
 
 // IndexAddStridedI64F32 performs indexadd along a specified dimension for int64 indices and float32 data with strided memory
-func IndexAddStridedI64F32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedI64F32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddI64F32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1117,8 +1117,8 @@ func IndexAddI64F64(leftSize int, idsDimSize int, inp, out []float64, dstDimSize
 }
 
 // IndexAddStridedI64F64 performs indexadd along a specified dimension for int64 indices and float64 data with strided memory
-func IndexAddStridedI64F64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedI64F64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddI64F64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1145,8 +1145,8 @@ func IndexAddI64U8(leftSize int, idsDimSize int, inp, out []uint8, dstDimSize in
 }
 
 // IndexAddStridedI64U8 performs indexadd along a specified dimension for int64 indices and uint8 data with strided memory
-func IndexAddStridedI64U8(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedI64U8(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddI64U8(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1173,8 +1173,8 @@ func IndexAddI64U32(leftSize int, idsDimSize int, inp, out []uint32, dstDimSize 
 }
 
 // IndexAddStridedI64U32 performs indexadd along a specified dimension for int64 indices and uint32 data with strided memory
-func IndexAddStridedI64U32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedI64U32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddI64U32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1201,8 +1201,8 @@ func IndexAddI64I64(leftSize int, idsDimSize int, inp, out []int64, dstDimSize i
 }
 
 // IndexAddStridedI64I64 performs indexadd along a specified dimension for int64 indices and int64 data with strided memory
-func IndexAddStridedI64I64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedI64I64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddI64I64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1229,8 +1229,8 @@ func IndexAddU32F32(leftSize int, idsDimSize int, inp, out []float32, dstDimSize
 }
 
 // IndexAddStridedU32F32 performs indexadd along a specified dimension for uint32 indices and float32 data with strided memory
-func IndexAddStridedU32F32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU32F32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU32F32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1257,8 +1257,8 @@ func IndexAddU32F64(leftSize int, idsDimSize int, inp, out []float64, dstDimSize
 }
 
 // IndexAddStridedU32F64 performs indexadd along a specified dimension for uint32 indices and float64 data with strided memory
-func IndexAddStridedU32F64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU32F64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU32F64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1285,8 +1285,8 @@ func IndexAddU32U8(leftSize int, idsDimSize int, inp, out []uint8, dstDimSize in
 }
 
 // IndexAddStridedU32U8 performs indexadd along a specified dimension for uint32 indices and uint8 data with strided memory
-func IndexAddStridedU32U8(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU32U8(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU32U8(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1313,8 +1313,8 @@ func IndexAddU32U32(leftSize int, idsDimSize int, inp, out []uint32, dstDimSize 
 }
 
 // IndexAddStridedU32U32 performs indexadd along a specified dimension for uint32 indices and uint32 data with strided memory
-func IndexAddStridedU32U32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU32U32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU32U32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1341,8 +1341,8 @@ func IndexAddU32I64(leftSize int, idsDimSize int, inp, out []int64, dstDimSize i
 }
 
 // IndexAddStridedU32I64 performs indexadd along a specified dimension for uint32 indices and int64 data with strided memory
-func IndexAddStridedU32I64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU32I64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU32I64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1369,8 +1369,8 @@ func IndexAddU8F32(leftSize int, idsDimSize int, inp, out []float32, dstDimSize 
 }
 
 // IndexAddStridedU8F32 performs indexadd along a specified dimension for uint8 indices and float32 data with strided memory
-func IndexAddStridedU8F32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU8F32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float32, dstDimSize int, rightSize int, ids []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU8F32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1397,8 +1397,8 @@ func IndexAddU8F64(leftSize int, idsDimSize int, inp, out []float64, dstDimSize 
 }
 
 // IndexAddStridedU8F64 performs indexadd along a specified dimension for uint8 indices and float64 data with strided memory
-func IndexAddStridedU8F64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU8F64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []float64, dstDimSize int, rightSize int, ids []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU8F64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1425,8 +1425,8 @@ func IndexAddU8U8(leftSize int, idsDimSize int, inp, out []uint8, dstDimSize int
 }
 
 // IndexAddStridedU8U8 performs indexadd along a specified dimension for uint8 indices and uint8 data with strided memory
-func IndexAddStridedU8U8(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU8U8(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint8, dstDimSize int, rightSize int, ids []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU8U8(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1453,8 +1453,8 @@ func IndexAddU8U32(leftSize int, idsDimSize int, inp, out []uint32, dstDimSize i
 }
 
 // IndexAddStridedU8U32 performs indexadd along a specified dimension for uint8 indices and uint32 data with strided memory
-func IndexAddStridedU8U32(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU8U32(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []uint32, dstDimSize int, rightSize int, ids []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU8U32(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1481,8 +1481,8 @@ func IndexAddU8I64(leftSize int, idsDimSize int, inp, out []int64, dstDimSize in
 }
 
 // IndexAddStridedU8I64 performs indexadd along a specified dimension for uint8 indices and int64 data with strided memory
-func IndexAddStridedU8I64(leftSize, numDims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func IndexAddStridedU8I64(leftSize, ndims int, dims, strides []int, idsDimSize int, inp, out []int64, dstDimSize int, rightSize int, ids []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		IndexAddU8I64(leftSize, idsDimSize, inp, out, dstDimSize, rightSize, ids)
 		return
 	}
@@ -1510,8 +1510,8 @@ func ScatterI64F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64,
 }
 
 // ScatterStridedI64F32 performs scatter along a specified dimension for int64 indices and float32 data with strided memory
-func ScatterStridedI64F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedI64F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterI64F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1539,8 +1539,8 @@ func ScatterI64F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64,
 }
 
 // ScatterStridedI64F64 performs scatter along a specified dimension for int64 indices and float64 data with strided memory
-func ScatterStridedI64F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedI64F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterI64F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1568,8 +1568,8 @@ func ScatterI64U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64, 
 }
 
 // ScatterStridedI64U8 performs scatter along a specified dimension for int64 indices and uint8 data with strided memory
-func ScatterStridedI64U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedI64U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterI64U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1597,8 +1597,8 @@ func ScatterI64U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64,
 }
 
 // ScatterStridedI64U32 performs scatter along a specified dimension for int64 indices and uint32 data with strided memory
-func ScatterStridedI64U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedI64U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterI64U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1626,8 +1626,8 @@ func ScatterI64I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int64,
 }
 
 // ScatterStridedI64I64 performs scatter along a specified dimension for int64 indices and int64 data with strided memory
-func ScatterStridedI64I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedI64I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterI64I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1654,8 +1654,8 @@ func ScatterU32F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint32
 }
 
 // ScatterStridedU32F32 performs scatter along a specified dimension for uint32 indices and float32 data with strided memory
-func ScatterStridedU32F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU32F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU32F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1682,8 +1682,8 @@ func ScatterU32F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint32
 }
 
 // ScatterStridedU32F64 performs scatter along a specified dimension for uint32 indices and float64 data with strided memory
-func ScatterStridedU32F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU32F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU32F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1710,8 +1710,8 @@ func ScatterU32U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint32,
 }
 
 // ScatterStridedU32U8 performs scatter along a specified dimension for uint32 indices and uint8 data with strided memory
-func ScatterStridedU32U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU32U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU32U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1738,8 +1738,8 @@ func ScatterU32U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint32
 }
 
 // ScatterStridedU32U32 performs scatter along a specified dimension for uint32 indices and uint32 data with strided memory
-func ScatterStridedU32U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU32U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU32U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1766,8 +1766,8 @@ func ScatterU32I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint32
 }
 
 // ScatterStridedU32I64 performs scatter along a specified dimension for uint32 indices and int64 data with strided memory
-func ScatterStridedU32I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU32I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU32I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1794,8 +1794,8 @@ func ScatterU8F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8, 
 }
 
 // ScatterStridedU8F32 performs scatter along a specified dimension for uint8 indices and float32 data with strided memory
-func ScatterStridedU8F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU8F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU8F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1822,8 +1822,8 @@ func ScatterU8F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8, 
 }
 
 // ScatterStridedU8F64 performs scatter along a specified dimension for uint8 indices and float64 data with strided memory
-func ScatterStridedU8F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU8F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU8F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1850,8 +1850,8 @@ func ScatterU8U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8, i
 }
 
 // ScatterStridedU8U8 performs scatter along a specified dimension for uint8 indices and uint8 data with strided memory
-func ScatterStridedU8U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU8U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU8U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1878,8 +1878,8 @@ func ScatterU8U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8, 
 }
 
 // ScatterStridedU8U32 performs scatter along a specified dimension for uint8 indices and uint32 data with strided memory
-func ScatterStridedU8U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU8U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU8U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1906,8 +1906,8 @@ func ScatterU8I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8, 
 }
 
 // ScatterStridedU8I64 performs scatter along a specified dimension for uint8 indices and int64 data with strided memory
-func ScatterStridedU8I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterStridedU8I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterU8I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1935,8 +1935,8 @@ func ScatterAddI64F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int
 }
 
 // ScatterAddStridedI64F32 performs scatteradd along a specified dimension for int64 indices and float32 data with strided memory
-func ScatterAddStridedI64F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedI64F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddI64F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1964,8 +1964,8 @@ func ScatterAddI64F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int
 }
 
 // ScatterAddStridedI64F64 performs scatteradd along a specified dimension for int64 indices and float64 data with strided memory
-func ScatterAddStridedI64F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedI64F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddI64F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -1993,8 +1993,8 @@ func ScatterAddI64U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int6
 }
 
 // ScatterAddStridedI64U8 performs scatteradd along a specified dimension for int64 indices and uint8 data with strided memory
-func ScatterAddStridedI64U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedI64U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddI64U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2022,8 +2022,8 @@ func ScatterAddI64U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int
 }
 
 // ScatterAddStridedI64U32 performs scatteradd along a specified dimension for int64 indices and uint32 data with strided memory
-func ScatterAddStridedI64U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedI64U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddI64U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2051,8 +2051,8 @@ func ScatterAddI64I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []int
 }
 
 // ScatterAddStridedI64I64 performs scatteradd along a specified dimension for int64 indices and int64 data with strided memory
-func ScatterAddStridedI64I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedI64I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []int64, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddI64I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2079,8 +2079,8 @@ func ScatterAddU32F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uin
 }
 
 // ScatterAddStridedU32F32 performs scatteradd along a specified dimension for uint32 indices and float32 data with strided memory
-func ScatterAddStridedU32F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU32F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU32F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2107,8 +2107,8 @@ func ScatterAddU32F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uin
 }
 
 // ScatterAddStridedU32F64 performs scatteradd along a specified dimension for uint32 indices and float64 data with strided memory
-func ScatterAddStridedU32F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU32F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU32F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2135,8 +2135,8 @@ func ScatterAddU32U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint
 }
 
 // ScatterAddStridedU32U8 performs scatteradd along a specified dimension for uint32 indices and uint8 data with strided memory
-func ScatterAddStridedU32U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU32U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU32U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2163,8 +2163,8 @@ func ScatterAddU32U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uin
 }
 
 // ScatterAddStridedU32U32 performs scatteradd along a specified dimension for uint32 indices and uint32 data with strided memory
-func ScatterAddStridedU32U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU32U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU32U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2191,8 +2191,8 @@ func ScatterAddU32I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uin
 }
 
 // ScatterAddStridedU32I64 performs scatteradd along a specified dimension for uint32 indices and int64 data with strided memory
-func ScatterAddStridedU32I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU32I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint32, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU32I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2219,8 +2219,8 @@ func ScatterAddU8F32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint
 }
 
 // ScatterAddStridedU8F32 performs scatteradd along a specified dimension for uint8 indices and float32 data with strided memory
-func ScatterAddStridedU8F32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU8F32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU8F32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2247,8 +2247,8 @@ func ScatterAddU8F64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint
 }
 
 // ScatterAddStridedU8F64 performs scatteradd along a specified dimension for uint8 indices and float64 data with strided memory
-func ScatterAddStridedU8F64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU8F64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []float64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU8F64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2275,8 +2275,8 @@ func ScatterAddU8U8(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint8
 }
 
 // ScatterAddStridedU8U8 performs scatteradd along a specified dimension for uint8 indices and uint8 data with strided memory
-func ScatterAddStridedU8U8(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint8) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU8U8(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint8) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU8U8(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2303,8 +2303,8 @@ func ScatterAddU8U32(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint
 }
 
 // ScatterAddStridedU8U32 performs scatteradd along a specified dimension for uint8 indices and uint32 data with strided memory
-func ScatterAddStridedU8U32(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint32) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU8U32(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []uint32) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU8U32(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}
@@ -2331,8 +2331,8 @@ func ScatterAddU8I64(leftSize, srcDimSize, dstDimSize, rightSize int, ids []uint
 }
 
 // ScatterAddStridedU8I64 performs scatteradd along a specified dimension for uint8 indices and int64 data with strided memory
-func ScatterAddStridedU8I64(leftSize, numDims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []int64) {
-	if IsContiguous(numDims, dims, strides) {
+func ScatterAddStridedU8I64(leftSize, ndims int, dims, strides []int, srcDimSize, dstDimSize, rightSize int, ids []uint8, inp, out []int64) {
+	if IsContiguous(ndims, dims, strides) {
 		ScatterAddU8I64(leftSize, srcDimSize, dstDimSize, rightSize, ids, inp, out)
 		return
 	}

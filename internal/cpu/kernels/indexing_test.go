@@ -77,7 +77,7 @@ func TestIndexSelectI64F32(t *testing.T) {
 func TestIndexSelectStridedI64F32(t *testing.T) {
 	tests := []struct {
 		name                                        string
-		numel, numDims                              int
+		numel, ndims                                int
 		dims, strides                               []int
 		ids                                         []int64
 		inp, want                                   []float32
@@ -86,7 +86,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		{
 			name:       "Basic select",
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			strides:    []int{1},
 			ids:        []int64{1, 3, 0},
@@ -100,7 +100,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		{
 			name:       "With max value",
 			numel:      3,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{5},
 			strides:    []int{1},
 			ids:        []int64{1, 9223372036854775807, 0},
@@ -114,7 +114,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		{
 			name:       "Multi dim",
 			numel:      12,
-			numDims:    3,
+			ndims:      3,
 			dims:       []int{2, 4, 2},
 			strides:    []int{8, 2, 1},
 			ids:        []int64{0, 2, 1},
@@ -128,7 +128,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		{
 			name:       "Non contiguous",
 			numel:      2,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{3},
 			strides:    []int{2},
 			ids:        []int64{0, 2},
@@ -142,7 +142,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 		{
 			name:       "Empty",
 			numel:      0,
-			numDims:    1,
+			ndims:      1,
 			dims:       []int{0},
 			strides:    []int{1},
 			ids:        []int64{},
@@ -158,7 +158,7 @@ func TestIndexSelectStridedI64F32(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := make([]float32, tt.numel)
-			kernels.IndexSelectStridedI64F32(tt.numel, tt.numDims, tt.dims, tt.strides, tt.ids, tt.inp, out, tt.leftSize, tt.srcDimSize, tt.idsDimSize, tt.rightSize)
+			kernels.IndexSelectStridedI64F32(tt.numel, tt.ndims, tt.dims, tt.strides, tt.ids, tt.inp, out, tt.leftSize, tt.srcDimSize, tt.idsDimSize, tt.rightSize)
 			if !slices.EqualFunc(out, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
 				t.Errorf("got %v, want %v", out, tt.want)
 			}
