@@ -485,6 +485,216 @@ func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	return result, nil
 }
 
+// EqU8 performs element-wise equality comparison of two tensors.
+func (s *CpuStorage[T]) EqU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.EqStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// NeU8 performs element-wise not-equal comparison of two tensors.
+func (s *CpuStorage[T]) NeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.NeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// LtU8 performs element-wise less-than comparison of two tensors.
+func (s *CpuStorage[T]) LtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.LtStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// LeU8 performs element-wise less-than-or-equal comparison of two tensors.
+func (s *CpuStorage[T]) LeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.LeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// GtU8 performs element-wise greater-than comparison of two tensors.
+func (s *CpuStorage[T]) GtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.GtStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
+// GeU8 performs element-wise greater-than-or-equal comparison of two tensors.
+func (s *CpuStorage[T]) GeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+	rhsC, ok := rhs.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("rhs storage must be CpuStorage")
+	}
+	if lhsLayout == nil {
+		return nil, errors.New("lhsLayout cannot be nil")
+	}
+	if rhsLayout == nil {
+		return nil, errors.New("rhsLayout cannot be nil")
+	}
+	if resLayout == nil {
+		return nil, errors.New("resLayout cannot be nil")
+	}
+	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
+	}
+
+	result := New(make([]uint8, resLayout.ElemCount()))
+	kernels.GeStridedU8(
+		lhsLayout.ElemCount(), // numel
+		lhsLayout.Rank(),      // ndims
+		lhsLayout.Dims(),      // dims
+		lhsLayout.Stride(),    // stridesX1
+		rhsLayout.Stride(),    // stridesX2
+		resLayout.Stride(),    // stridesY
+		s.data,                // x1
+		rhsC.data,             // x2
+		result.data,           // y
+	)
+
+	return result, nil
+}
+
 // ToDtype performs type conversion to the specified target type.
 func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, error) {
 	if layout == nil {
@@ -1617,11 +1827,11 @@ func (s *CpuStorage[T]) FastArgmax(layout *spark.Layout) (spark.BackendStorage[u
 	return result, nil
 }
 
-func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sum(layout *spark.Layout, dims []int) (spark.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	if len(sumDims) == 0 {
+	if len(dims) == 0 {
 		return nil, errors.New("sumDims cannot be empty")
 	}
 
@@ -1632,7 +1842,7 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendS
 
 	outputDims := make([]int, len(layout.Dims()))
 	copy(outputDims, layout.Dims())
-	for _, dim := range sumDims {
+	for _, dim := range dims {
 		if dim < 0 || dim >= len(outputDims) {
 			return nil, errors.New("invalid sum dimension")
 		}
@@ -1650,7 +1860,179 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, sumDims []int) (spark.BackendS
 		layout.Rank(),
 		layout.Dims(),
 		layout.Stride(),
-		sumDims,
+		dims,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Min computes the minimum over the specified dimension
+func (s *CpuStorage[T]) Min(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]T, outputSize))
+	kernels.MinStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Max computes the maximum over the specified dimension
+func (s *CpuStorage[T]) Max(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]T, outputSize))
+	kernels.MaxStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Argmin computes the index of minimum over the specified dimension
+func (s *CpuStorage[T]) Argmin(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]uint32, outputSize))
+	kernels.ArgminStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
+		s.data,
+		result.data,
+	)
+
+	return result, nil
+}
+
+// Argmax computes the index of maximum over the specified dimension
+func (s *CpuStorage[T]) Argmax(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+	if layout == nil {
+		return nil, errors.New("layout cannot be nil")
+	}
+
+	numel := layout.ElemCount()
+	if numel != len(s.data) {
+		return nil, errors.New("layout element count does not match storage size")
+	}
+
+	dims := layout.Dims()
+	if dim < 0 || dim >= len(dims) {
+		return nil, errors.New("invalid dimension")
+	}
+
+	// Calculate output dimensions (remove the reduced dimension)
+	outputDims := make([]int, 0, len(dims)-1)
+	for i, d := range dims {
+		if i != dim {
+			outputDims = append(outputDims, d)
+		}
+	}
+
+	outputSize := 1
+	for _, d := range outputDims {
+		outputSize *= d
+	}
+
+	result := New(make([]uint32, outputSize))
+	kernels.ArgmaxStrided(
+		numel,
+		layout.Rank(),
+		layout.Dims(),
+		layout.Stride(),
+		dim,
 		s.data,
 		result.data,
 	)

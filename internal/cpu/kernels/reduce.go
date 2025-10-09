@@ -1328,6 +1328,1496 @@ func SumStridedI64(numel, ndims int, dims, strides, sumDims []int, inp, out []in
 	}
 }
 
+// Min computes the minimum over the specified dimension for type T
+func Min[T D](numel, ndims int, dims []int, dim int, src, dst []T) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := src[baseIdx] // init to first element
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinF32 computes the minimum over the specified dimension for float32
+func MinF32(numel, ndims int, dims []int, dim int, src, dst []float32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := float32(math.MaxFloat32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinF64 computes the minimum over the specified dimension for float64
+func MinF64(numel, ndims int, dims []int, dim int, src, dst []float64) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := math.MaxFloat64
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinU8 computes the minimum over the specified dimension for uint8
+func MinU8(numel, ndims int, dims []int, dim int, src, dst []uint8) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint8(math.MaxUint8)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinU32 computes the minimum over the specified dimension for uint32
+func MinU32(numel, ndims int, dims []int, dim int, src, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint32(math.MaxUint32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinI64 computes the minimum over the specified dimension for int64
+func MinI64(numel, ndims int, dims []int, dim int, src, dst []int64) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := int64(math.MaxInt64)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStrided computes the minimum over the specified dimension for type T with strided memory
+func MinStrided[T D](numel, ndims int, dims, strides []int, dim int, src, dst []T) {
+	if IsContiguous(ndims, dims, strides) {
+		Min(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		stridedFirst := GetStridedIndex(baseIdx, ndims, dims, strides)
+		minVal := src[stridedFirst] // init to first element
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			if src[stridedI] < minVal {
+				minVal = src[stridedI]
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStridedF32 computes the minimum over the specified dimension for float32 with strided memory
+func MinStridedF32(numel, ndims int, dims, strides []int, dim int, src, dst []float32) {
+	if IsContiguous(ndims, dims, strides) {
+		MinF32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := float32(math.MaxFloat32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStridedF64 computes the minimum over the specified dimension for float64 with strided memory
+func MinStridedF64(numel, ndims int, dims, strides []int, dim int, src, dst []float64) {
+	if IsContiguous(ndims, dims, strides) {
+		MinF64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := math.MaxFloat64
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStridedU8 computes the minimum over the specified dimension for uint8 with strided memory
+func MinStridedU8(numel, ndims int, dims, strides []int, dim int, src, dst []uint8) {
+	if IsContiguous(ndims, dims, strides) {
+		MinU8(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint8(math.MaxUint8)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStridedU32 computes the minimum over the specified dimension for uint32 with strided memory
+func MinStridedU32(numel, ndims int, dims, strides []int, dim int, src, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		MinU32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint32(math.MaxUint32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// MinStridedI64 computes the minimum over the specified dimension for int64 with strided memory
+func MinStridedI64(numel, ndims int, dims, strides []int, dim int, src, dst []int64) {
+	if IsContiguous(ndims, dims, strides) {
+		MinI64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := int64(math.MaxInt64)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+			}
+		}
+		dst[i] = minVal
+	}
+}
+
+// Max computes the maximum over the specified dimension for type T
+func Max[T D](numel, ndims int, dims []int, dim int, src, dst []T) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := src[baseIdx] // init to first element
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxF32 computes the maximum over the specified dimension for float32
+func MaxF32(numel, ndims int, dims []int, dim int, src, dst []float32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := float32(-math.MaxFloat32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxF64 computes the maximum over the specified dimension for float64
+func MaxF64(numel, ndims int, dims []int, dim int, src, dst []float64) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := -math.MaxFloat64
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxU8 computes the maximum over the specified dimension for uint8
+func MaxU8(numel, ndims int, dims []int, dim int, src, dst []uint8) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint8(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxU32 computes the maximum over the specified dimension for uint32
+func MaxU32(numel, ndims int, dims []int, dim int, src, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxI64 computes the maximum over the specified dimension for int64
+func MaxI64(numel, ndims int, dims []int, dim int, src, dst []int64) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := int64(math.MinInt64)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStrided computes the maximum over the specified dimension for type T with strided memory
+func MaxStrided[T D](numel, ndims int, dims, strides []int, dim int, src, dst []T) {
+	if IsContiguous(ndims, dims, strides) {
+		Max(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		stridedFirst := GetStridedIndex(baseIdx, ndims, dims, strides)
+		maxVal := src[stridedFirst] // init to first element
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			if src[stridedI] > maxVal {
+				maxVal = src[stridedI]
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStridedF32 computes the maximum over the specified dimension for float32 with strided memory
+func MaxStridedF32(numel, ndims int, dims, strides []int, dim int, src, dst []float32) {
+	if IsContiguous(ndims, dims, strides) {
+		MaxF32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := float32(-math.MaxFloat32)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStridedF64 computes the maximum over the specified dimension for float64 with strided memory
+func MaxStridedF64(numel, ndims int, dims, strides []int, dim int, src, dst []float64) {
+	if IsContiguous(ndims, dims, strides) {
+		MaxF64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := -math.MaxFloat64
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStridedU8 computes the maximum over the specified dimension for uint8 with strided memory
+func MaxStridedU8(numel, ndims int, dims, strides []int, dim int, src, dst []uint8) {
+	if IsContiguous(ndims, dims, strides) {
+		MaxU8(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint8(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStridedU32 computes the maximum over the specified dimension for uint32 with strided memory
+func MaxStridedU32(numel, ndims int, dims, strides []int, dim int, src, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		MaxU32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// MaxStridedI64 computes the maximum over the specified dimension for int64 with strided memory
+func MaxStridedI64(numel, ndims int, dims, strides []int, dim int, src, dst []int64) {
+	if IsContiguous(ndims, dims, strides) {
+		MaxI64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := int64(math.MinInt64)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+			}
+		}
+		dst[i] = maxVal
+	}
+}
+
+// Argmin computes the index of the minimum over the specified dimension for type T
+func Argmin[T D](numel, ndims int, dims []int, dim int, src []T, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minIdx := uint32(0)
+		minVal := src[baseIdx]
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminF32 computes the index of the minimum over the specified dimension for float32
+func ArgminF32(numel, ndims int, dims []int, dim int, src []float32, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := float32(math.MaxFloat32)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminF64 computes the index of the minimum over the specified dimension for float64
+func ArgminF64(numel, ndims int, dims []int, dim int, src []float64, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := math.MaxFloat64
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminU8 computes the index of the minimum over the specified dimension for uint8
+func ArgminU8(numel, ndims int, dims []int, dim int, src []uint8, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint8(math.MaxUint8)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminU32 computes the index of the minimum over the specified dimension for uint32
+func ArgminU32(numel, ndims int, dims []int, dim int, src []uint32, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint32(math.MaxUint32)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminI64 computes the index of the minimum over the specified dimension for int64
+func ArgminI64(numel, ndims int, dims []int, dim int, src []int64, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := int64(math.MaxInt64)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] < minVal {
+				minVal = src[idx]
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStrided computes the index of the minimum over the specified dimension for type T with strided memory
+func ArgminStrided[T D](numel, ndims int, dims, strides []int, dim int, src []T, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		Argmin(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		stridedFirst := GetStridedIndex(baseIdx, ndims, dims, strides)
+		minVal := src[stridedFirst]
+		minIdx := uint32(0)
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStridedF32 computes the index of the minimum over the specified dimension for float32 with strided memory
+func ArgminStridedF32(numel, ndims int, dims, strides []int, dim int, src []float32, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgminF32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := float32(math.MaxFloat32)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStridedF64 computes the index of the minimum over the specified dimension for float64 with strided memory
+func ArgminStridedF64(numel, ndims int, dims, strides []int, dim int, src []float64, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgminF64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := math.MaxFloat64
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStridedU8 computes the index of the minimum over the specified dimension for uint8 with strided memory
+func ArgminStridedU8(numel, ndims int, dims, strides []int, dim int, src []uint8, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgminU8(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint8(math.MaxUint8)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStridedU32 computes the index of the minimum over the specified dimension for uint32 with strided memory
+func ArgminStridedU32(numel, ndims int, dims, strides []int, dim int, src []uint32, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgminU32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := uint32(math.MaxUint32)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// ArgminStridedI64 computes the index of the minimum over the specified dimension for int64 with strided memory
+func ArgminStridedI64(numel, ndims int, dims, strides []int, dim int, src []int64, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgminI64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		minVal := int64(math.MaxInt64)
+		minIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val < minVal {
+				minVal = val
+				minIdx = uint32(j)
+			}
+		}
+		dst[i] = minIdx
+	}
+}
+
+// Argmax computes the index of the maximum over the specified dimension for type T
+func Argmax[T D](numel, ndims int, dims []int, dim int, src []T, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxIdx := uint32(0)
+		maxVal := src[baseIdx]
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxF32 computes the index of the maximum over the specified dimension for float32
+func ArgmaxF32(numel, ndims int, dims []int, dim int, src []float32, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := float32(-math.MaxFloat32)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxF64 computes the index of the maximum over the specified dimension for float64
+func ArgmaxF64(numel, ndims int, dims []int, dim int, src []float64, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := -math.MaxFloat64
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxU8 computes the index of the maximum over the specified dimension for uint8
+func ArgmaxU8(numel, ndims int, dims []int, dim int, src []uint8, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint8(0)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxU32 computes the index of the maximum over the specified dimension for uint32
+func ArgmaxU32(numel, ndims int, dims []int, dim int, src []uint32, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint32(0)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxI64 computes the index of the maximum over the specified dimension for int64
+func ArgmaxI64(numel, ndims int, dims []int, dim int, src []int64, dst []uint32) {
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := int64(math.MinInt64)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			if src[idx] > maxVal {
+				maxVal = src[idx]
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStrided computes the index of the maximum over the specified dimension for type T with strided memory
+func ArgmaxStrided[T D](numel, ndims int, dims, strides []int, dim int, src []T, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		Argmax(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		stridedFirst := GetStridedIndex(baseIdx, ndims, dims, strides)
+		maxVal := src[stridedFirst]
+		maxIdx := uint32(0)
+		for j := 1; j < reduceSize; j++ {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStridedF32 computes the index of the maximum over the specified dimension for float32 with strided memory
+func ArgmaxStridedF32(numel, ndims int, dims, strides []int, dim int, src []float32, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgmaxF32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := float32(-math.MaxFloat32)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStridedF64 computes the index of the maximum over the specified dimension for float64 with strided memory
+func ArgmaxStridedF64(numel, ndims int, dims, strides []int, dim int, src []float64, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgmaxF64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := -math.MaxFloat64
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStridedU8 computes the index of the maximum over the specified dimension for uint8 with strided memory
+func ArgmaxStridedU8(numel, ndims int, dims, strides []int, dim int, src []uint8, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgmaxU8(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint8(0)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStridedU32 computes the index of the maximum over the last dimension for uint32 with strided memory
+func ArgmaxStridedU32(numel, ndims int, dims, strides []int, dim int, src []uint32, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgmaxU32(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := uint32(0)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
+// ArgmaxStridedI64 computes the index of the maximum over the specified dimension for int64 with strided memory
+func ArgmaxStridedI64(numel, ndims int, dims, strides []int, dim int, src []int64, dst []uint32) {
+	if IsContiguous(ndims, dims, strides) {
+		ArgmaxI64(numel, ndims, dims, dim, src, dst)
+		return
+	}
+	prefix := 1
+	for i := range dim {
+		prefix *= dims[i]
+	}
+	reduceSize := dims[dim]
+	suffix := 1
+	for i := dim + 1; i < ndims; i++ {
+		suffix *= dims[i]
+	}
+	dstSize := numel / reduceSize
+	for i := range dstSize {
+		outer := i / suffix
+		inner := i % suffix
+		baseIdx := outer*(reduceSize*suffix) + inner
+		maxVal := int64(math.MinInt64)
+		maxIdx := uint32(0)
+		for j := range reduceSize {
+			idx := baseIdx + j*suffix
+			stridedI := GetStridedIndex(idx, ndims, dims, strides)
+			val := src[stridedI]
+			if val > maxVal {
+				maxVal = val
+				maxIdx = uint32(j)
+			}
+		}
+		dst[i] = maxIdx
+	}
+}
+
 // FastSoftmax performs softmax along the last dimension for type T (contiguous memory)
 func FastSoftmax[T D](numel, ndims int, dims []int, src, dst []T) {
 	var zero T

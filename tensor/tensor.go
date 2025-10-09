@@ -666,7 +666,7 @@ func (t *Tensor[T]) MustMinimum(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Eq compares equality element-wise (uint8 result).
+// Eq compares equality element-wise.
 func (t *Tensor[T]) Eq(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, EqForward[T](), EqBackward[T]())
 }
@@ -680,7 +680,7 @@ func (t *Tensor[T]) MustEq(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Ne compares inequality element-wise (uint8 result).
+// Ne compares inequality element-wise.
 func (t *Tensor[T]) Ne(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, NeForward[T](), NeBackward[T]())
 }
@@ -694,7 +694,7 @@ func (t *Tensor[T]) MustNe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Lt compares less-than element-wise (uint8 result).
+// Lt compares less-than element-wise.
 func (t *Tensor[T]) Lt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, LtForward[T](), LtBackward[T]())
 }
@@ -708,7 +708,7 @@ func (t *Tensor[T]) MustLt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Le compares less-equal element-wise (uint8 result).
+// Le compares less-equal element-wise.
 func (t *Tensor[T]) Le(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, LeForward[T](), LeBackward[T]())
 }
@@ -722,7 +722,7 @@ func (t *Tensor[T]) MustLe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Gt compares greater-than element-wise (uint8 result).
+// Gt compares greater-than element-wise.
 func (t *Tensor[T]) Gt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, GtForward[T](), GtBackward[T]())
 }
@@ -736,7 +736,7 @@ func (t *Tensor[T]) MustGt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// Ge compares greater-equal element-wise (uint8 result).
+// Ge compares greater-equal element-wise.
 func (t *Tensor[T]) Ge(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, GeForward[T](), GeBackward[T]())
 }
@@ -834,7 +834,7 @@ func (t *Tensor[T]) MustBroadcastMinimum(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastEq equals with broadcast (uint8 result).
+// BroadcastEq equals with broadcast.
 func (t *Tensor[T]) BroadcastEq(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastEqForward[T](), BroadcastEqBackward[T]())
 }
@@ -848,7 +848,7 @@ func (t *Tensor[T]) MustBroadcastEq(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastNe not equals with broadcast (uint8 result).
+// BroadcastNe not equals with broadcast.
 func (t *Tensor[T]) BroadcastNe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastNeForward[T](), BroadcastNeBackward[T]())
 }
@@ -862,7 +862,7 @@ func (t *Tensor[T]) MustBroadcastNe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastLt less-than with broadcast (uint8 result).
+// BroadcastLt less-than with broadcast.
 func (t *Tensor[T]) BroadcastLt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastLtForward[T](), BroadcastLtBackward[T]())
 }
@@ -876,7 +876,7 @@ func (t *Tensor[T]) MustBroadcastLt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastLe less-equal with broadcast (uint8 result).
+// BroadcastLe less-equal with broadcast.
 func (t *Tensor[T]) BroadcastLe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastLeForward[T](), BroadcastLeBackward[T]())
 }
@@ -890,7 +890,7 @@ func (t *Tensor[T]) MustBroadcastLe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastGt greater-than with broadcast (uint8 result).
+// BroadcastGt greater-than with broadcast.
 func (t *Tensor[T]) BroadcastGt(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastGtForward[T](), BroadcastGtBackward[T]())
 }
@@ -904,7 +904,7 @@ func (t *Tensor[T]) MustBroadcastGt(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
-// BroadcastGe greater-equal with broadcast (uint8 result).
+// BroadcastGe greater-equal with broadcast.
 func (t *Tensor[T]) BroadcastGe(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastGeForward[T](), BroadcastGeBackward[T]())
 }
@@ -1031,12 +1031,12 @@ func (t *Tensor[T]) MustUpsampleNearest2d(h, w int) *Tensor[T] {
 }
 
 // Gather gathers along dimension.
-func (t *Tensor[T]) Gather(idx *Tensor[uint32], dim int) (*Tensor[T], error) {
+func (t *Tensor[T]) Gather(idx *Tensor[T], dim int) (*Tensor[T], error) {
 	return nil, nil // Placeholder
 }
 
 // MustGather gathers along dimension, panics on error.
-func (t *Tensor[T]) MustGather(idx *Tensor[uint32], dim int) *Tensor[T] {
+func (t *Tensor[T]) MustGather(idx *Tensor[T], dim int) *Tensor[T] {
 	res, err := t.Gather(idx, dim)
 	if err != nil {
 		panic(err)
@@ -1044,26 +1044,26 @@ func (t *Tensor[T]) MustGather(idx *Tensor[uint32], dim int) *Tensor[T] {
 	return res
 }
 
-// SumDim sums along dims, keepdim retains size 1.
-func (t *Tensor[T]) SumDim(dims []int, keep bool) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, SumDimForward[T](dims, keep), SumDimBackward[T](dims, keep))
+// ReduceSum computes sum along dims, keepdim retains size 1.
+func (t *Tensor[T]) ReduceSum(dims []int, keep bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReduceSumForward[T](dims, keep), ReduceSumBackward[T](dims, keep))
 }
 
-// MustSumDim sums along dims, panics on error.
-func (t *Tensor[T]) MustSumDim(dims []int, keep bool) *Tensor[T] {
-	res, err := t.SumDim(dims, keep)
+// MustReduceSum computes sum along dims, panics on error.
+func (t *Tensor[T]) MustReduceSum(dims []int, keep bool) *Tensor[T] {
+	res, err := t.ReduceSum(dims, keep)
 	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-// Sum sums along dims, removes dims.
+// Sum computes sum along dims, removes dims.
 func (t *Tensor[T]) Sum(dims []int) (*Tensor[T], error) {
-	return t.SumDim(dims, false)
+	return t.ReduceSum(dims, false)
 }
 
-// MustSum sums along dims, panics on error.
+// MustSum computes sum along dims, panics on error.
 func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
 	res, err := t.Sum(dims)
 	if err != nil {
@@ -1072,12 +1072,12 @@ func (t *Tensor[T]) MustSum(dims []int) *Tensor[T] {
 	return res
 }
 
-// SumKeep sums along dims, keeps size 1.
+// SumKeep computes sum along dims, keeps size 1.
 func (t *Tensor[T]) SumKeep(dims []int) (*Tensor[T], error) {
-	return t.SumDim(dims, true)
+	return t.ReduceSum(dims, true)
 }
 
-// MustSumKeep sums along dims, panics on error.
+// MustSumKeep computes sum along dims, panics on error.
 func (t *Tensor[T]) MustSumKeep(dims []int) *Tensor[T] {
 	res, err := t.SumKeep(dims)
 	if err != nil {
@@ -1086,16 +1086,16 @@ func (t *Tensor[T]) MustSumKeep(dims []int) *Tensor[T] {
 	return res
 }
 
-// SumAll sums all elements.
+// SumAll computes sum of all elements.
 func (t *Tensor[T]) SumAll() (*Tensor[T], error) {
 	dims := make([]int, t.Rank())
 	for i := range dims {
 		dims[i] = i
 	}
-	return t.SumDim(dims, false)
+	return t.ReduceSum(dims, false)
 }
 
-// MustSumAll sums all elements, panics on error.
+// MustSumAll computes sum of all elements, panics on error.
 func (t *Tensor[T]) MustSumAll() *Tensor[T] {
 	res, err := t.SumAll()
 	if err != nil {
@@ -1104,26 +1104,26 @@ func (t *Tensor[T]) MustSumAll() *Tensor[T] {
 	return res
 }
 
-// MeanDim means along dims, keepdim retains size 1.
-func (t *Tensor[T]) MeanDim(dims []int, keep bool) (*Tensor[T], error) {
-	return ApplyOp([]*Tensor[T]{t}, MeanDimForward[T](dims, keep), MeanDimBackward[T](dims, keep))
+// ReduceMean computes mean along dims, keepdim retains size 1.
+func (t *Tensor[T]) ReduceMean(dims []int, keep bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReduceMeanForward[T](dims, keep), ReduceMeanBackward[T](dims, keep))
 }
 
-// MustMeanDim means along dims, panics on error.
-func (t *Tensor[T]) MustMeanDim(dims []int, keep bool) *Tensor[T] {
-	res, err := t.MeanDim(dims, keep)
+// MustReduceMean computes mean along dims, panics on error.
+func (t *Tensor[T]) MustReduceMean(dims []int, keep bool) *Tensor[T] {
+	res, err := t.ReduceMean(dims, keep)
 	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-// Mean means along dims, removes dims.
+// Mean computes mean along dims, removes dims.
 func (t *Tensor[T]) Mean(dims []int) (*Tensor[T], error) {
-	return t.MeanDim(dims, false)
+	return t.ReduceMean(dims, false)
 }
 
-// MustMean means along dims, panics on error.
+// MustMean computes mean along dims, panics on error.
 func (t *Tensor[T]) MustMean(dims []int) *Tensor[T] {
 	res, err := t.Mean(dims)
 	if err != nil {
@@ -1132,12 +1132,12 @@ func (t *Tensor[T]) MustMean(dims []int) *Tensor[T] {
 	return res
 }
 
-// MeanKeep means along dims, keeps size 1.
+// MeanKeep computes mean along dims, keeps size 1.
 func (t *Tensor[T]) MeanKeep(dims []int) (*Tensor[T], error) {
-	return t.MeanDim(dims, true)
+	return t.ReduceMean(dims, true)
 }
 
-// MustMeanKeep means along dims, panics on error.
+// MustMeanKeep computes mean along dims, panics on error.
 func (t *Tensor[T]) MustMeanKeep(dims []int) *Tensor[T] {
 	res, err := t.MeanKeep(dims)
 	if err != nil {
@@ -1146,16 +1146,16 @@ func (t *Tensor[T]) MustMeanKeep(dims []int) *Tensor[T] {
 	return res
 }
 
-// MeanAll means all elements.
+// MeanAll computes mean of all elements.
 func (t *Tensor[T]) MeanAll() (*Tensor[T], error) {
 	dims := make([]int, t.Rank())
 	for i := range dims {
 		dims[i] = i
 	}
-	return t.MeanDim(dims, false)
+	return t.ReduceMean(dims, false)
 }
 
-// MustMeanAll means all elements, panics on error.
+// MustMeanAll computes mean of all elements, panics on error.
 func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 	res, err := t.MeanAll()
 	if err != nil {
@@ -1164,60 +1164,84 @@ func (t *Tensor[T]) MustMeanAll() *Tensor[T] {
 	return res
 }
 
-// MaxDim maxes along dims, keepdim retains size 1.
-func (t *Tensor[T]) MaxDim(dims []int, keep bool) (*Tensor[T], error) {
-	return nil, nil // Placeholder
+// ReduceMin computes minimum along dims, keepdim retains size 1.
+func (t *Tensor[T]) ReduceMin(dim int, keep bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReduceMinForward[T](dim, keep), ReduceMinBackward[T](dim, keep))
 }
 
-// MustMaxDim maxes along dims, panics on error.
-func (t *Tensor[T]) MustMaxDim(dims []int, keep bool) *Tensor[T] {
-	res, err := t.MaxDim(dims, keep)
+// MustReduceMin computes minimum along dims, panics on error.
+func (t *Tensor[T]) MustReduceMin(dim int, keep bool) *Tensor[T] {
+	res, err := t.ReduceMin(dim, keep)
 	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-// Max maxes along dims, removes dims.
-func (t *Tensor[T]) Max(dims []int) (*Tensor[T], error) {
-	return t.MaxDim(dims, false)
+// Min computes minimum along dims, removes dims.
+func (t *Tensor[T]) Min(dim int) (*Tensor[T], error) {
+	return t.ReduceMin(dim, false)
 }
 
-// MustMax maxes along dims, panics on error.
-func (t *Tensor[T]) MustMax(dims []int) *Tensor[T] {
-	res, err := t.Max(dims)
+// MustMin computes minimum along dims, panics on error.
+func (t *Tensor[T]) MustMin(dim int) *Tensor[T] {
+	res, err := t.Min(dim)
 	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-// MaxKeep maxes along dims, keeps size 1.
-func (t *Tensor[T]) MaxKeep(dims []int) (*Tensor[T], error) {
-	return t.MaxDim(dims, true)
+// MinKeep computes minimum along dims, keeps size 1.
+func (t *Tensor[T]) MinKeep(dim int) (*Tensor[T], error) {
+	return t.ReduceMin(dim, true)
 }
 
-// MustMaxKeep maxes along dims, panics on error.
-func (t *Tensor[T]) MustMaxKeep(dims []int) *Tensor[T] {
-	res, err := t.MaxKeep(dims)
+// MustMinKeep computes minimum along dims, panics on error.
+func (t *Tensor[T]) MustMinKeep(dim int) *Tensor[T] {
+	res, err := t.MinKeep(dim)
 	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-// MaxAll maxes all elements.
-func (t *Tensor[T]) MaxAll() (*Tensor[T], error) {
-	dims := make([]int, t.Rank())
-	for i := range dims {
-		dims[i] = i
-	}
-	return t.MaxDim(dims, false)
+// ReduceMax computes maximum along dims, keepdim retains size 1.
+func (t *Tensor[T]) ReduceMax(dim int, keep bool) (*Tensor[T], error) {
+	return ApplyOp([]*Tensor[T]{t}, ReduceMaxForward[T](dim, keep), ReduceMaxBackward[T](dim, keep))
 }
 
-// MustMaxAll maxes all elements, panics on error.
-func (t *Tensor[T]) MustMaxAll() *Tensor[T] {
-	res, err := t.MaxAll()
+// MustReduceMax computes maximum along dims, panics on error.
+func (t *Tensor[T]) MustReduceMax(dim int, keep bool) *Tensor[T] {
+	res, err := t.ReduceMax(dim, keep)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// Max computes maximum along dims, removes dims.
+func (t *Tensor[T]) Max(dim int) (*Tensor[T], error) {
+	return t.ReduceMax(dim, false)
+}
+
+// MustMax computes maximum along dims, panics on error.
+func (t *Tensor[T]) MustMax(dim int) *Tensor[T] {
+	res, err := t.Max(dim)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// MaxKeep computes maximum along dims, keeps size 1.
+func (t *Tensor[T]) MaxKeep(dim int) (*Tensor[T], error) {
+	return t.ReduceMax(dim, true)
+}
+
+// MustMaxKeep computes maximum along dims, panics on error.
+func (t *Tensor[T]) MustMaxKeep(dim int) *Tensor[T] {
+	res, err := t.MaxKeep(dim)
 	if err != nil {
 		panic(err)
 	}
@@ -1266,9 +1290,37 @@ func (t *Tensor[T]) MustFastSoftmax() *Tensor[T] {
 	return res
 }
 
-// LogSoftmax log soft maxes along dim.
-func (t *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
-	return nil, nil // Placeholder
+// LogSoftmax computes the log-softmax along the specified dimension.
+func (x *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
+	d, err := spark.ResolveAxis(dim, x.Rank())
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve dim: %w", err)
+	}
+	m, err := x.MaxKeep(d)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute max: %w", err)
+	}
+	s, err := x.BroadcastSub(m)
+	if err != nil {
+		return nil, fmt.Errorf("failed to subtract max: %w", err)
+	}
+	e, err := s.Exp()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute exp: %w", err)
+	}
+	se, err := e.SumKeep([]int{d})
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum exp: %w", err)
+	}
+	l, err := se.Log()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute log: %w", err)
+	}
+	r, err := s.BroadcastSub(l)
+	if err != nil {
+		return nil, fmt.Errorf("failed to subtract log-sum-exp: %w", err)
+	}
+	return r, nil
 }
 
 // MustLogSoftmax log soft maxes, panics on error.
