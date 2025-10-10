@@ -15,7 +15,7 @@ import (
 const (
 	batch  = 64
 	epochs = 5
-	lr     = 0.01
+	lr     = 1
 )
 
 func main() {
@@ -32,11 +32,7 @@ func main() {
 	}
 
 	m := NewLeNet[float32](d)
-	// o, err := optim.NewAdamWWithLR(m.Parameters(), lr)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	o, err := optim.NewSGD(m.Parameters(), lr)
+	o, err := optim.NewAdamWWithLR(m.Parameters(), lr)
 	if err != nil {
 		log.Fatal(err)
 	}
