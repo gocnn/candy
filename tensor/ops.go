@@ -3638,3 +3638,55 @@ func BroadcastAsBackward[T spark.D](s *spark.Shape) BackwardFunc[T] {
 		return []*Tensor[T]{dx}, nil
 	}
 }
+
+// FlattenForward returns a ForwardFunc for flattening from start to end dimension.
+func FlattenForward[T spark.D](s, e int) ForwardFunc[T] {
+	return func(ins []*Tensor[T]) (*Tensor[T], error) {
+		if len(ins) != 1 {
+			return nil, fmt.Errorf("flatten forward: expected 1 input, got %d", len(ins))
+		}
+		x := ins[0]
+		sh := x.Shape()
+		r := sh.Rank()
+		rs, err := spark.ResolveAxis(s, r)
+		if err != nil {
+			return nil, fmt.Errorf("flatten forward start: %w", err)
+		}
+		re, err := spark.ResolveAxis(e, r)
+		if err != nil {
+			return nil, fmt.Errorf("flatten forward end: %w", err)
+		}
+		if rs > re {
+			return nil, fmt.Errorf("flatten forward: start %d > end %d", s, e)
+		}
+		if rs == re {
+			return NewFrom(x.storage, x.layout.Clone(), x.dtype, x.device), nil
+		}
+		d := sh.Dims()
+		nd := append([]int{}, d[:rs]...)
+		fs := 1
+		for i := rs; i <= re; i++ {
+			fs *= d[i]
+		}
+		nd = append(nd, fs)
+		nd = append(nd, d[re+1:]...)
+		if !x.layout.IsContiguous() {
+			return nil, fmt.Errorf("flatten forward: non-contiguous tensor")
+		}
+		return NewFrom(x.storage, spark.ContiguousWithOffset(spark.NewShapeFrom(nd), x.layout.StartOffset()), x.dtype, x.device), nil
+	}
+}
+
+// FlattenBackward returns a BackwardFunc for flatten gradients.
+func FlattenBackward[T spark.D](s *spark.Shape) BackwardFunc[T] {
+	return func(g *Tensor[T], ins []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(ins) != 1 {
+			return nil, fmt.Errorf("flatten backward: expected 1 input, got %d", len(ins))
+		}
+		dx, err := g.Reshape(s.Dims()...)
+		if err != nil {
+			return nil, fmt.Errorf("flatten backward: reshape failed: %w", err)
+		}
+		return []*Tensor[T]{dx}, nil
+	}
+}
