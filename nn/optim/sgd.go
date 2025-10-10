@@ -18,14 +18,14 @@ type SGD[T spark.D] struct {
 }
 
 // NewSGD creates a new SGD optimizer with the given variables and learning rate.
-func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) *SGD[T] {
+func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) (*SGD[T], error) {
 	vs := make([]*tensor.Tensor[T], 0, len(vars))
 	for _, v := range vars {
 		if v.IsVar() {
 			vs = append(vs, v)
 		}
 	}
-	return &SGD[T]{vs: vs, lr: lr}
+	return &SGD[T]{vs: vs, lr: lr}, nil
 }
 
 // LearningRate returns the current learning rate.
@@ -61,6 +61,13 @@ func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
 	return s.Step(gs)
 }
 
+// MustOptimize performs backward propagation and an SGD step, panics on error.
+func (s *SGD[T]) MustOptimize(loss *tensor.Tensor[T]) {
+	if err := s.Optimize(loss); err != nil {
+		panic(err)
+	}
+}
+
 // Step performs an SGD optimization step.
 func (s *SGD[T]) Step(gs *tensor.GradStore[T]) error {
 	for _, v := range s.vs {
@@ -79,4 +86,11 @@ func (s *SGD[T]) Step(gs *tensor.GradStore[T]) error {
 		v.SetStorage(vn.Storage())
 	}
 	return nil
+}
+
+// MustStep performs an SGD optimization step, panics on error.
+func (s *SGD[T]) MustStep(gs *tensor.GradStore[T]) {
+	if err := s.Step(gs); err != nil {
+		panic(err)
+	}
 }

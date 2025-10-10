@@ -1638,6 +1638,208 @@ func (s *CpuStorage[T]) ConstSet(layout *spark.Layout, val T) error {
 	return nil
 }
 
+// Gather performs gather operation along a specified dimension with same-type indices
+func (s *CpuStorage[T]) Gather(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil || idsLayout == nil {
+		return nil, errors.New("layout and idsLayout cannot be nil")
+	}
+	if ids == nil {
+		return nil, errors.New("ids cannot be nil")
+	}
+
+	idsC, ok := ids.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("ids storage must be CpuStorage")
+	}
+
+	// Calculate dimensions
+	srcDims := layout.Dims()
+	idsDims := idsLayout.Dims()
+
+	if dim < 0 || dim >= len(srcDims) {
+		return nil, fmt.Errorf("dimension %d out of range", dim)
+	}
+
+	// Calculate result shape
+	resultDims := make([]int, 0, len(srcDims)-1+len(idsDims))
+	resultDims = append(resultDims, srcDims[:dim]...)
+	resultDims = append(resultDims, idsDims...)
+	resultDims = append(resultDims, srcDims[dim+1:]...)
+
+	numel := 1
+	for _, d := range resultDims {
+		numel *= d
+	}
+	result := New(make([]T, numel))
+
+	// Calculate parameters
+	leftSize := 1
+	for i := range dim {
+		leftSize *= srcDims[i]
+	}
+
+	srcDimSize := srcDims[dim]
+
+	rightSize := 1
+	for i := dim + 1; i < len(srcDims); i++ {
+		rightSize *= srcDims[i]
+	}
+
+	idsDimSize := idsLayout.ElemCount() / leftSize / rightSize
+
+	// Call kernel based on type
+	switch any(s.data).(type) {
+	case []float32:
+		kernels.GatherF32F32(numel, any(idsC.data).([]float32), any(s.data).([]float32), any(result.data).([]float32), leftSize, srcDimSize, idsDimSize, rightSize)
+	case []float64:
+		kernels.GatherF64F64(numel, any(idsC.data).([]float64), any(s.data).([]float64), any(result.data).([]float64), leftSize, srcDimSize, idsDimSize, rightSize)
+	case []uint8:
+		kernels.GatherU8U8(numel, any(idsC.data).([]uint8), any(s.data).([]uint8), any(result.data).([]uint8), leftSize, srcDimSize, idsDimSize, rightSize)
+	case []uint32:
+		kernels.GatherU32U32(numel, any(idsC.data).([]uint32), any(s.data).([]uint32), any(result.data).([]uint32), leftSize, srcDimSize, idsDimSize, rightSize)
+	case []int64:
+		kernels.GatherI64I64(numel, any(idsC.data).([]int64), any(s.data).([]int64), any(result.data).([]int64), leftSize, srcDimSize, idsDimSize, rightSize)
+	default:
+		return nil, errors.New("unsupported data type for Gather")
+	}
+
+	return result, nil
+}
+
+// Scatter performs scatter operation along a specified dimension with same-type indices
+func (s *CpuStorage[T]) Scatter(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, src spark.BackendStorage[T], srcLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil || idsLayout == nil || srcLayout == nil {
+		return nil, errors.New("layouts cannot be nil")
+	}
+	if ids == nil || src == nil {
+		return nil, errors.New("ids and src cannot be nil")
+	}
+
+	idsC, ok := ids.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("ids storage must be CpuStorage")
+	}
+
+	srcC, ok := src.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("src storage must be CpuStorage")
+	}
+
+	// Calculate dimensions
+	dstDims := layout.Dims()
+	srcDims := srcLayout.Dims()
+
+	if dim < 0 || dim >= len(dstDims) {
+		return nil, fmt.Errorf("dimension %d out of range", dim)
+	}
+
+	// Create result storage with same shape as destination
+	numel := layout.ElemCount()
+	result := New(make([]T, numel))
+
+	// Copy destination data to result first
+	copy(result.data, s.data)
+
+	// Calculate parameters
+	leftSize := 1
+	for i := 0; i < dim; i++ {
+		leftSize *= dstDims[i]
+	}
+
+	srcDimSize := srcDims[dim]
+	dstDimSize := dstDims[dim]
+
+	rightSize := 1
+	for i := dim + 1; i < len(dstDims); i++ {
+		rightSize *= dstDims[i]
+	}
+
+	// Call kernel based on type
+	switch any(s.data).(type) {
+	case []float32:
+		kernels.ScatterF32F32(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]float32), any(srcC.data).([]float32), any(result.data).([]float32))
+	case []float64:
+		kernels.ScatterF64F64(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]float64), any(srcC.data).([]float64), any(result.data).([]float64))
+	case []uint8:
+		kernels.ScatterU8U8(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]uint8), any(srcC.data).([]uint8), any(result.data).([]uint8))
+	case []uint32:
+		kernels.ScatterU32U32(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]uint32), any(srcC.data).([]uint32), any(result.data).([]uint32))
+	case []int64:
+		kernels.ScatterI64I64(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]int64), any(srcC.data).([]int64), any(result.data).([]int64))
+	default:
+		return nil, errors.New("unsupported data type for Scatter")
+	}
+
+	return result, nil
+}
+
+// ScatterAdd performs scatter-add operation along a specified dimension with same-type indices
+func (s *CpuStorage[T]) ScatterAdd(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, src spark.BackendStorage[T], srcLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+	if layout == nil || idsLayout == nil || srcLayout == nil {
+		return nil, errors.New("layouts cannot be nil")
+	}
+	if ids == nil || src == nil {
+		return nil, errors.New("ids and src cannot be nil")
+	}
+
+	idsC, ok := ids.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("ids storage must be CpuStorage")
+	}
+
+	srcC, ok := src.(*CpuStorage[T])
+	if !ok {
+		return nil, errors.New("src storage must be CpuStorage")
+	}
+
+	// Calculate dimensions
+	dstDims := layout.Dims()
+	srcDims := srcLayout.Dims()
+
+	if dim < 0 || dim >= len(dstDims) {
+		return nil, fmt.Errorf("dimension %d out of range", dim)
+	}
+
+	// Create result storage with same shape as destination
+	numel := layout.ElemCount()
+	result := New(make([]T, numel))
+
+	// Copy destination data to result first
+	copy(result.data, s.data)
+
+	// Calculate parameters
+	leftSize := 1
+	for i := range dim {
+		leftSize *= dstDims[i]
+	}
+
+	srcDimSize := srcDims[dim]
+	dstDimSize := dstDims[dim]
+
+	rightSize := 1
+	for i := dim + 1; i < len(dstDims); i++ {
+		rightSize *= dstDims[i]
+	}
+
+	// Call kernel based on type
+	switch any(s.data).(type) {
+	case []float32:
+		kernels.ScatterAddF32F32(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]float32), any(srcC.data).([]float32), any(result.data).([]float32))
+	case []float64:
+		kernels.ScatterAddF64F64(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]float64), any(srcC.data).([]float64), any(result.data).([]float64))
+	case []uint8:
+		kernels.ScatterAddU8U8(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]uint8), any(srcC.data).([]uint8), any(result.data).([]uint8))
+	case []uint32:
+		kernels.ScatterAddU32U32(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]uint32), any(srcC.data).([]uint32), any(result.data).([]uint32))
+	case []int64:
+		kernels.ScatterAddI64I64(leftSize, srcDimSize, dstDimSize, rightSize, any(idsC.data).([]int64), any(srcC.data).([]int64), any(result.data).([]int64))
+	default:
+		return nil, errors.New("unsupported data type for ScatterAdd")
+	}
+
+	return result, nil
+}
+
 // Copy2d copies a 2D region from source to destination for supported types.
 func (s *CpuStorage[T]) Copy2d(dst spark.BackendStorage[T], d1, d2 int, srcStride1, dstStride1, srcOffset, dstOffset int) error {
 	dstC, ok := dst.(*CpuStorage[T])

@@ -171,7 +171,14 @@ func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value float64
 	data := storage.data
 
 	for i := range data {
-		data[i] = any(value).(T)
+		switch any(data[i]).(type) {
+		case float32:
+			data[i] = any(float32(value)).(T)
+		case float64:
+			data[i] = any(value).(T)
+		default:
+			data[i] = any(value).(T)
+		}
 	}
 
 	return storage, nil

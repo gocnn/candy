@@ -8,47 +8,41 @@ import (
 
 // ProgressReader wraps an io.ReadCloser to display download progress.
 type ProgressReader struct {
-	io.ReadCloser
-	total      int64
-	downloaded int64
-	file       string
-	completed  bool // Add flag to track completion
+	r          io.ReadCloser // Underlying reader
+	total      int64         // Total size
+	downloaded int64         // Bytes downloaded
+	f          string        // File name
+	done       bool          // Completion flag
 }
 
 // NewProgressReader creates a new ProgressReader.
-func NewProgressReader(reader io.ReadCloser, total int64, file string) *ProgressReader {
-	return &ProgressReader{
-		ReadCloser: reader,
-		total:      total,
-		file:       file,
-	}
+func NewProgressReader(r io.ReadCloser, total int64, f string) *ProgressReader {
+	return &ProgressReader{r: r, total: total, f: f}
 }
 
 // Read implements io.Reader, updating progress after each read.
-func (pr *ProgressReader) Read(p []byte) (int, error) {
-	n, err := pr.ReadCloser.Read(p)
-	pr.downloaded += int64(n)
-	if !pr.completed {
-		pr.printProgress()
+func (p *ProgressReader) Read(b []byte) (int, error) {
+	n, err := p.r.Read(b)
+	p.downloaded += int64(n)
+	if !p.done && p.total > 0 {
+		p.print()
 	}
 	return n, err
 }
 
-// printProgress displays the progress bar if total size is known.
-func (pr *ProgressReader) printProgress() {
-	if pr.total <= 0 {
-		return
-	}
-	pct := float64(pr.downloaded) / float64(pr.total) * 100
-	barWidth := 50
-	bar := int(pct / 100 * float64(barWidth))
-	fmt.Printf("\rDownloading %s: [%s%s] %.2f%%",
-		pr.file,
-		strings.Repeat("=", bar),
-		strings.Repeat(" ", barWidth-bar),
-		pct)
-	if pr.downloaded >= pr.total {
+// Close implements io.Closer.
+func (p *ProgressReader) Close() error {
+	return p.r.Close()
+}
+
+// print displays the progress bar.
+func (p *ProgressReader) print() {
+	const w = 50 // Bar width
+	pct := float64(p.downloaded) / float64(p.total) * 100
+	bar := int(pct * float64(w) / 100)
+	fmt.Printf("\rDownloading %s: [%s%s] %.2f%%", p.f, strings.Repeat("=", bar), strings.Repeat(" ", w-bar), pct)
+	if p.downloaded >= p.total {
 		fmt.Println()
-		pr.completed = true
+		p.done = true
 	}
 }

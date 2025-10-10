@@ -101,6 +101,15 @@ type BackendStorage[T D] interface {
 	// ConstSet sets all elements to a constant value for supported types.
 	ConstSet(layout *Layout, val T) error
 
+	// Gather performs gather operation along a specified dimension with same-type indices.
+	Gather(layout *Layout, ids BackendStorage[T], idsLayout *Layout, dim int) (BackendStorage[T], error)
+
+	// Scatter performs scatter operation along a specified dimension with same-type indices.
+	Scatter(layout *Layout, ids BackendStorage[T], idsLayout *Layout, src BackendStorage[T], srcLayout *Layout, dim int) (BackendStorage[T], error)
+
+	// ScatterAdd performs scatter-add operation along a specified dimension.
+	ScatterAdd(layout *Layout, ids BackendStorage[T], idsLayout *Layout, src BackendStorage[T], srcLayout *Layout, dim int) (BackendStorage[T], error)
+
 	// Copy2d copies a 2D region from source to destination for supported types.
 	Copy2d(dst BackendStorage[T], d1, d2, srcStride1, dstStride1, srcOffset, dstOffset int) error
 
