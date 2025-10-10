@@ -55,11 +55,11 @@ func NewAdamW[T spark.D](vars []*tensor.Tensor[T], p AdamWParams) (*AdamW[T], er
 		}
 		m, err := v.ZerosLike()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create first moment: %w", err)
+			return nil, fmt.Errorf("adamw: failed to create first moment: %w", err)
 		}
 		s, err := v.ZerosLike()
 		if err != nil {
-			return nil, fmt.Errorf("failed to create second moment: %w", err)
+			return nil, fmt.Errorf("adamw: failed to create second moment: %w", err)
 		}
 		vs = append(vs, adamVar[T]{v: v, m: m, s: s})
 	}
@@ -96,15 +96,15 @@ func (a *AdamW[T]) SetLearningRate(lr float64) {
 // Add adds a variable to be optimized.
 func (a *AdamW[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
-		return errors.New("not a variable")
+		return errors.New("adamw: not a variable")
 	}
 	m, err := v.ZerosLike()
 	if err != nil {
-		return fmt.Errorf("failed to create first moment: %w", err)
+		return fmt.Errorf("adamw: failed to create first moment: %w", err)
 	}
 	s, err := v.ZerosLike()
 	if err != nil {
-		return fmt.Errorf("failed to create second moment: %w", err)
+		return fmt.Errorf("adamw: failed to create second moment: %w", err)
 	}
 	a.vars = append(a.vars, adamVar[T]{v: v, m: m, s: s})
 	return nil
@@ -123,7 +123,7 @@ func (a *AdamW[T]) Vars() []*tensor.Tensor[T] {
 func (a *AdamW[T]) Optimize(loss *tensor.Tensor[T]) error {
 	gs := tensor.NewGradStore[T]()
 	if err := tensor.Backward(loss, gs); err != nil {
-		return fmt.Errorf("failed to backward: %w", err)
+		return fmt.Errorf("adamw: failed to backward: %w", err)
 	}
 	return a.Step(gs)
 }
@@ -152,73 +152,73 @@ func (a *AdamW[T]) Step(gs *tensor.GradStore[T]) error {
 		// First moment: m = beta1*m + (1-beta1)*g
 		m, err := av.m.MulScalar(p.Beta1)
 		if err != nil {
-			return fmt.Errorf("failed to scale first moment: %w", err)
+			return fmt.Errorf("adamw: failed to scale first moment: %w", err)
 		}
 		g1, err := g.MulScalar(1.0 - p.Beta1)
 		if err != nil {
-			return fmt.Errorf("failed to scale gradient: %w", err)
+			return fmt.Errorf("adamw: failed to scale gradient: %w", err)
 		}
 		m, err = m.Add(g1)
 		if err != nil {
-			return fmt.Errorf("failed to update first moment: %w", err)
+			return fmt.Errorf("adamw: failed to update first moment: %w", err)
 		}
 
 		// Second moment: s = beta2*s + (1-beta2)*g²
 		s, err := av.s.MulScalar(p.Beta2)
 		if err != nil {
-			return fmt.Errorf("failed to scale second moment: %w", err)
+			return fmt.Errorf("adamw: failed to scale second moment: %w", err)
 		}
 		g2, err := g.Mul(g)
 		if err != nil {
-			return fmt.Errorf("failed to square gradient: %w", err)
+			return fmt.Errorf("adamw: failed to square gradient: %w", err)
 		}
 		g2, err = g2.MulScalar(1.0 - p.Beta2)
 		if err != nil {
-			return fmt.Errorf("failed to scale squared gradient: %w", err)
+			return fmt.Errorf("adamw: failed to scale squared gradient: %w", err)
 		}
 		s, err = s.Add(g2)
 		if err != nil {
-			return fmt.Errorf("failed to update second moment: %w", err)
+			return fmt.Errorf("adamw: failed to update second moment: %w", err)
 		}
 
 		// Bias correction
 		mh, err := m.MulScalar(mScale)
 		if err != nil {
-			return fmt.Errorf("failed to correct first moment: %w", err)
+			return fmt.Errorf("adamw: failed to correct first moment: %w", err)
 		}
 		vh, err := s.MulScalar(vScale)
 		if err != nil {
-			return fmt.Errorf("failed to correct second moment: %w", err)
+			return fmt.Errorf("adamw: failed to correct second moment: %w", err)
 		}
 
 		// Weight decay: v = v * (1 - lr * wd)
 		v, err = v.MulScalar(1.0 - p.LearningRate*p.WeightDecay)
 		if err != nil {
-			return fmt.Errorf("failed to apply weight decay: %w", err)
+			return fmt.Errorf("adamw: failed to apply weight decay: %w", err)
 		}
 
 		// Adjusted gradient: mh / (√vh + eps)
 		r, err := vh.Sqrt()
 		if err != nil {
-			return fmt.Errorf("failed to sqrt second moment: %w", err)
+			return fmt.Errorf("adamw: failed to sqrt second moment: %w", err)
 		}
 		r, err = r.AddScalar(p.Epsilon)
 		if err != nil {
-			return fmt.Errorf("failed to add epsilon: %w", err)
+			return fmt.Errorf("adamw: failed to add epsilon: %w", err)
 		}
 		u, err := mh.Div(r)
 		if err != nil {
-			return fmt.Errorf("failed to compute update: %w", err)
+			return fmt.Errorf("adamw: failed to compute update: %w", err)
 		}
 
 		// Update: v = v - lr * u
 		u, err = u.MulScalar(p.LearningRate)
 		if err != nil {
-			return fmt.Errorf("failed to scale update: %w", err)
+			return fmt.Errorf("adamw: failed to scale update: %w", err)
 		}
 		v, err = v.Sub(u)
 		if err != nil {
-			return fmt.Errorf("failed to update variable: %w", err)
+			return fmt.Errorf("adamw: failed to update variable: %w", err)
 		}
 
 		// Update tensors
