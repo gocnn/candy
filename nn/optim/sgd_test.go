@@ -1,6 +1,8 @@
 package optim_test
 
 import (
+	"math"
+	"slices"
 	"testing"
 
 	"github.com/gocnn/spark"
@@ -9,177 +11,130 @@ import (
 )
 
 func TestNewSGD(t *testing.T) {
-	x := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU)
-	x.SetIsVar(true)
+	x := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU).RequiresGrad()
 	y := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU)
-
 	s, err := optim.NewSGD([]*tensor.Tensor[float32]{x, y}, 0.01)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Vars()) != 1 {
-		t.Errorf("got %d vars, want 1", len(s.Vars()))
+	if got, want := len(s.Vars()), 1; got != want {
+		t.Errorf("got %d vars, want %d", got, want)
 	}
-	if s.LearningRate() != 0.01 {
-		t.Errorf("got lr %f, want 0.01", s.LearningRate())
+	if got, want := s.LearningRate(), 0.01; got != want {
+		t.Errorf("got lr %f, want %f", got, want)
 	}
 }
 
 func TestSGDLearningRate(t *testing.T) {
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{}, 0.01)
-
-	if s.LearningRate() != 0.01 {
-		t.Errorf("got %f, want 0.01", s.LearningRate())
+	if got, want := s.LearningRate(), 0.01; got != want {
+		t.Errorf("got %f, want %f", got, want)
 	}
-
 	s.SetLearningRate(0.001)
-	if s.LearningRate() != 0.001 {
-		t.Errorf("got %f, want 0.001", s.LearningRate())
+	if got, want := s.LearningRate(), 0.001; got != want {
+		t.Errorf("got %f, want %f", got, want)
 	}
 }
 
 func TestSGDAdd(t *testing.T) {
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{}, 0.01)
-
 	x := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
-	err := s.Add(x)
-	if err == nil {
+	if err := s.Add(x); err == nil {
 		t.Error("expected error for non-var")
 	}
-
 	x.SetIsVar(true)
-	err = s.Add(x)
-	if err != nil {
+	if err := s.Add(x); err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Vars()) != 1 {
-		t.Errorf("got %d vars, want 1", len(s.Vars()))
+	if got, want := len(s.Vars()), 1; got != want {
+		t.Errorf("got %d vars, want %d", got, want)
 	}
 }
 
 func TestSGDStep(t *testing.T) {
-	x := tensor.MustFull[float32](2.0, spark.NewShape(2), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustFull[float32](2.0, spark.NewShape(2), spark.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
-
 	g := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
-
-	err := s.Step(gs)
-	if err != nil {
+	if err := s.Step(gs); err != nil {
 		t.Fatal(err)
 	}
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 1.9 {
-			t.Errorf("got %f, want 1.9", v)
-		}
+	got := x.Data()
+	want := []float32{1.9, 1.9}
+	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestSGDStepNoGrad(t *testing.T) {
-	x := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
 	gs := tensor.NewGradStore[float32]()
-
-	err := s.Step(gs)
-	if err != nil {
+	if err := s.Step(gs); err != nil {
 		t.Fatal(err)
 	}
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 1.0 {
-			t.Errorf("got %f, want 1.0", v)
-		}
+	got := x.Data()
+	want := []float32{1.0, 1.0, 1.0, 1.0, 1.0, 1.0}
+	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestSGDOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](3.0, spark.NewShape(2), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustFull[float32](3.0, spark.NewShape(2), spark.CPU).RequiresGrad()
 	y := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
-	loss := x.MustSub(y).MustSum([]int{0})
-
+	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
-
-	err := s.Optimize(loss)
-	if err != nil {
+	if err := s.Optimize(loss); err != nil {
 		t.Fatal(err)
 	}
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 2.9 {
-			t.Errorf("got %f, want 2.9", v)
-		}
+	got := x.Data()
+	want := []float32{2.6, 2.6}
+	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestSGDMustOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](5.0, spark.NewShape(2), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustFull[float32](5.0, spark.NewShape(2), spark.CPU).RequiresGrad()
 	y := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
-	loss := x.MustSub(y).MustSum([]int{0})
-
+	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.05)
-
 	s.MustOptimize(loss)
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 4.95 {
-			t.Errorf("got %f, want 4.95", v)
-		}
+	got := x.Data()
+	want := []float32{4.6, 4.6}
+	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestSGDMustStep(t *testing.T) {
-	x := tensor.MustFull[float32](4.0, spark.NewShape(3), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustFull[float32](4.0, spark.NewShape(3), spark.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.2)
-
 	g := tensor.MustOnes[float32](spark.NewShape(3), spark.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
-
 	s.MustStep(gs)
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 3.8 {
-			t.Errorf("got %f, want 3.8", v)
-		}
+	got := x.Data()
+	want := []float32{3.8, 3.8, 3.8}
+	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
 func TestSGDFloat64(t *testing.T) {
-	x := tensor.MustFull[float64](1.5, spark.NewShape(2), spark.CPU)
-	x.SetIsVar(true)
-
+	x := tensor.MustFull[float64](1.5, spark.NewShape(2), spark.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float64]{x}, 0.1)
-
 	g := tensor.MustOnes[float64](spark.NewShape(2), spark.CPU)
 	gs := tensor.NewGradStore[float64]()
 	gs.Set(x, g)
-
-	err := s.Step(gs)
-	if err != nil {
+	if err := s.Step(gs); err != nil {
 		t.Fatal(err)
 	}
-
-	d := x.Data()
-	for _, v := range d {
-		if v != 1.4 {
-			t.Errorf("got %f, want 1.4", v)
-		}
+	got := x.Data()
+	want := []float64{1.4, 1.4}
+	if !slices.EqualFunc(got, want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
