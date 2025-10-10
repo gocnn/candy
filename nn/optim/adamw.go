@@ -135,13 +135,6 @@ func (a *AdamW[T]) MustOptimize(loss *tensor.Tensor[T]) {
 	}
 }
 
-// MustStep performs an AdamW optimization step, panics on error.
-func (a *AdamW[T]) MustStep(gs *tensor.GradStore[T]) {
-	if err := a.Step(gs); err != nil {
-		panic(err)
-	}
-}
-
 // Step performs an AdamW optimization step.
 func (a *AdamW[T]) Step(gs *tensor.GradStore[T]) error {
 	a.step++
@@ -234,4 +227,11 @@ func (a *AdamW[T]) Step(gs *tensor.GradStore[T]) error {
 		av.v.SetStorage(v.Storage())
 	}
 	return nil
+}
+
+// MustStep performs an AdamW optimization step, panics on error.
+func (a *AdamW[T]) MustStep(gs *tensor.GradStore[T]) {
+	if err := a.Step(gs); err != nil {
+		panic(err)
+	}
 }

@@ -12,6 +12,7 @@ var _ Optimizer[float32] = (*SGD[float32])(nil)
 var _ Optimizer[float64] = (*SGD[float64])(nil)
 
 // SGD implements the Stochastic Gradient Descent optimizer.
+// Contrary to the PyTorch implementation of SGD, this version does not support momentum.
 type SGD[T spark.D] struct {
 	vs []*tensor.Tensor[T] // Variables to optimize
 	lr float64             // Learning rate
