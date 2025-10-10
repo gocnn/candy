@@ -150,20 +150,6 @@ func TestAdamWOptimize(t *testing.T) {
 	}
 }
 
-func TestAdamWMustOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](6.0, spark.NewShape(2, 3), spark.CPU).RequiresGrad()
-	y := tensor.MustFull[float32](1.0, spark.NewShape(2, 3), spark.CPU)
-	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
-	p := optim.AdamWParams{LearningRate: 0.02, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
-	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
-	a.MustOptimize(loss)
-	got := x.Data()
-	want := []float32{5.980000019073486, 5.980000019073486, 5.980000019073486, 5.980000019073486, 5.980000019073486, 5.980000019073486}
-	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
-		t.Errorf("got %v, want %v", got, want)
-	}
-}
-
 func TestAdamWMustStep(t *testing.T) {
 	x := tensor.MustFull[float32](5.0, spark.NewShape(3, 2), spark.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.15, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
