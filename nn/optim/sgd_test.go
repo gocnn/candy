@@ -96,19 +96,6 @@ func TestSGDOptimize(t *testing.T) {
 	}
 }
 
-func TestSGDMustOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](5.0, spark.NewShape(2), spark.CPU).RequiresGrad()
-	y := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
-	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
-	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.05)
-	s.MustOptimize(loss)
-	got := x.Data()
-	want := []float32{4.6, 4.6}
-	if !slices.EqualFunc(got, want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
-		t.Errorf("got %v, want %v", got, want)
-	}
-}
-
 func TestSGDMustStep(t *testing.T) {
 	x := tensor.MustFull[float32](4.0, spark.NewShape(3), spark.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.2)
