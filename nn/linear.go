@@ -24,7 +24,7 @@ func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device
 	bound := math.Sqrt(1.0 / float64(inDim))
 	w, err := tensor.Rand[T](-bound, bound, spark.NewShape(outDim, inDim), device)
 	if err != nil {
-		panic(fmt.Errorf("failed to create weight: %w", err))
+		panic(fmt.Errorf("linear: failed to create weight: %w", err))
 	}
 	w.SetIsVar(true)
 	var b *tensor.Tensor[T]
@@ -32,7 +32,7 @@ func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device
 		bBound := 1.0 / math.Sqrt(float64(inDim))
 		b, err = tensor.Rand[T](-bBound, bBound, spark.NewShape(outDim), device)
 		if err != nil {
-			panic(fmt.Errorf("failed to create bias: %w", err))
+			panic(fmt.Errorf("linear: failed to create bias: %w", err))
 		}
 		b.SetIsVar(true)
 	}
@@ -59,12 +59,12 @@ func (l *Linear[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	dims := x.Dims()
 	rank := len(dims)
 	if rank < 2 {
-		return nil, fmt.Errorf("input rank must be >= 2, got %d", rank)
+		return nil, fmt.Errorf("linear: input rank must be >= 2, got %d", rank)
 	}
 
 	wt, err := l.w.Transpose(-1, -2)
 	if err != nil {
-		return nil, fmt.Errorf("failed to transpose weight: %w", err)
+		return nil, fmt.Errorf("linear: failed to transpose weight: %w", err)
 	}
 
 	var r *tensor.Tensor[T]
@@ -79,33 +79,33 @@ func (l *Linear[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 		}
 		xr, err := x.Reshape(int(n), k)
 		if err != nil {
-			return nil, fmt.Errorf("failed to reshape input: %w", err)
+			return nil, fmt.Errorf("linear: failed to reshape input: %w", err)
 		}
 		r, err = xr.MatMul(wt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to matmul: %w", err)
+			return nil, fmt.Errorf("linear: failed to matmul: %w", err)
 		}
 		s := append(bs, l.w.Dim(0))
 		r, err = r.Reshape(s...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to reshape output: %w", err)
+			return nil, fmt.Errorf("linear: failed to reshape output: %w", err)
 		}
 	default:
 		// Broadcast weight for non-contiguous input
 		wb, err := wt.BroadcastLeft(dims[:rank-1]...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to broadcast weight: %w", err)
+			return nil, fmt.Errorf("linear: failed to broadcast weight: %w", err)
 		}
 		r, err = x.MatMul(wb)
 		if err != nil {
-			return nil, fmt.Errorf("failed to matmul: %w", err)
+			return nil, fmt.Errorf("linear: failed to matmul: %w", err)
 		}
 	}
 
 	if l.b != nil {
 		r, err = r.BroadcastAdd(l.b)
 		if err != nil {
-			return nil, fmt.Errorf("failed to add bias: %w", err)
+			return nil, fmt.Errorf("linear: failed to add bias: %w", err)
 		}
 	}
 	return r, nil
@@ -115,7 +115,7 @@ func (l *Linear[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 func (l *Linear[T]) MustForward(x *tensor.Tensor[T]) *tensor.Tensor[T] {
 	r, err := l.Forward(x)
 	if err != nil {
-		panic(fmt.Errorf("failed forward: %w", err))
+		panic(fmt.Errorf("linear: failed forward: %w", err))
 	}
 	return r
 }

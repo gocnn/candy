@@ -42,7 +42,7 @@ func (s *SGD[T]) SetLearningRate(lr float64) {
 // Add adds a variable to be optimized.
 func (s *SGD[T]) Add(v *tensor.Tensor[T]) error {
 	if !v.IsVar() {
-		return errors.New("not a variable")
+		return errors.New("sgd: not a variable")
 	}
 	s.vs = append(s.vs, v)
 	return nil
@@ -57,7 +57,7 @@ func (s *SGD[T]) Vars() []*tensor.Tensor[T] {
 func (s *SGD[T]) Optimize(loss *tensor.Tensor[T]) error {
 	gs := tensor.NewGradStore[T]()
 	if err := tensor.Backward(loss, gs); err != nil {
-		return fmt.Errorf("failed to backward: %w", err)
+		return fmt.Errorf("sgd: failed to backward: %w", err)
 	}
 	return s.Step(gs)
 }
@@ -78,11 +78,11 @@ func (s *SGD[T]) Step(gs *tensor.GradStore[T]) error {
 		}
 		u, err := g.MulScalar(s.lr)
 		if err != nil {
-			return fmt.Errorf("failed to scale gradient: %w", err)
+			return fmt.Errorf("sgd: failed to scale gradient: %w", err)
 		}
 		vn, err := v.Sub(u)
 		if err != nil {
-			return fmt.Errorf("failed to update variable: %w", err)
+			return fmt.Errorf("sgd: failed to update variable: %w", err)
 		}
 		v.SetStorage(vn.Storage())
 	}
