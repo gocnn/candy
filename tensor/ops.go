@@ -1597,7 +1597,7 @@ func AvgPool2dForward[T spark.D](kH, kW, sH, sW int) ForwardFunc[T] {
 		if x.Rank() != 4 {
 			return nil, fmt.Errorf("avgPool2d forward: tensor must be 4D, got %dD", x.Rank())
 		}
-		b, c, h, w, err := x.Shape().Dims4()
+		b, c, h, w, err := x.Dims4()
 		if err != nil {
 			return nil, fmt.Errorf("avgPool2d forward: expected 4D tensor for avg_pool2d, got: %w", err)
 		}
@@ -1625,7 +1625,7 @@ func AvgPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 			return nil, fmt.Errorf("avgPool2d backward: expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0].Detach()
-		_, _, h, w, err := x.Shape().Dims4()
+		_, _, h, w, err := x.Dims4()
 		if err != nil {
 			return nil, fmt.Errorf("avgPool2d backward: expected 4D tensor for avg_pool2d, got: %w", err)
 		}
@@ -1651,7 +1651,7 @@ func MaxPool2dForward[T spark.D](kH, kW, sH, sW int) ForwardFunc[T] {
 		if x.Rank() != 4 {
 			return nil, fmt.Errorf("maxPool2d forward: tensor must be 4D, got %dD", x.Rank())
 		}
-		b, c, h, w, err := x.Shape().Dims4()
+		b, c, h, w, err := x.Dims4()
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d forward: failed to get 4D shape: %w", err)
 		}
@@ -1682,7 +1682,7 @@ func MaxPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 			return nil, fmt.Errorf("maxPool2d backward: kernel must equal stride: kH=%d, sH=%d, kW=%d, sW=%d", kH, sH, kW, sW)
 		}
 		x := inputs[0].Detach()
-		_, _, h, w, err := x.Shape().Dims4()
+		_, _, h, w, err := x.Dims4()
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to get 4D shape: %w", err)
 		}

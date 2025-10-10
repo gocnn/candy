@@ -21,7 +21,7 @@ func NewLinear[T spark.D](w, b *tensor.Tensor[T]) *Linear[T] {
 
 // NewLinearLayer creates a linear layer with PyTorch-style Kaiming Uniform initialization.
 func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device) *Linear[T] {
-	bound := math.Sqrt(1.0 / float64(inDim))
+	bound := math.Sqrt(2.0 / float64(inDim))
 	w, err := tensor.Rand[T](-bound, bound, spark.NewShape(outDim, inDim), device)
 	if err != nil {
 		panic(fmt.Errorf("linear: failed to create weight: %w", err))

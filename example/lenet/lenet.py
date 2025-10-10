@@ -54,17 +54,26 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 def train(model, train_loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
-    for images, labels in train_loader:
+    correct = 0
+    total = 0
+    
+    for batch_idx, (images, labels) in enumerate(train_loader):
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs = model(images)
-        # For MSE loss, uncomment the following and comment CrossEntropyLoss:
-        # labels_one_hot = torch.zeros(labels.size(0), 10).to(device).scatter_(1, labels.view(-1, 1), 1)
         # loss = criterion(outputs, labels_one_hot)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        if (batch_idx + 1) % 10 == 0:
+            avg_loss = running_loss / (batch_idx + 1)
+            accuracy = 100 * correct / total
+            print(f"  Batch {batch_idx + 1}/{len(train_loader)} - Loss: {avg_loss:.4f}, Acc: {accuracy:.2f}%")
+            
     return running_loss / len(train_loader)
 
 # Testing function

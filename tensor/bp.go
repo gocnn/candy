@@ -74,6 +74,11 @@ func (s *GradStore[T]) IDs() []TensorID {
 	return ids
 }
 
+// Len returns the number of gradient tensors currently stored.
+func (s *GradStore[T]) Len() int {
+	return len(s.m)
+}
+
 // Clear removes all gradient tensors from the store.
 func (s *GradStore[T]) Clear() {
 	s.m = make(map[TensorID]*Tensor[T])

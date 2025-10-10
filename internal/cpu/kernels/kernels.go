@@ -12,7 +12,6 @@ type I interface {
 	~int | ~int32 | ~int64 | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
-// Helper functions (should be moved to kernels.go)
 func IsContiguous(ndims int, dims, strides []int) bool {
 	if ndims == 0 {
 		return true

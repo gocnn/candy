@@ -38,7 +38,7 @@ func (net *LeNet[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed relu1: %w", err)
 	}
-	r, err = r.AvgPool2d(2, 2, 2, 2)
+	r, err = r.MaxPool2d(2, 2, 2, 2)
 	if err != nil {
 		return nil, fmt.Errorf("failed pool1: %w", err)
 	}
@@ -50,7 +50,7 @@ func (net *LeNet[T]) Forward(x *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed relu2: %w", err)
 	}
-	r, err = r.AvgPool2d(2, 2, 2, 2)
+	r, err = r.MaxPool2d(2, 2, 2, 2)
 	if err != nil {
 		return nil, fmt.Errorf("failed pool2: %w", err)
 	}

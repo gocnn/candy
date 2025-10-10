@@ -15,7 +15,7 @@ import (
 const (
 	batch  = 64
 	epochs = 5
-	lr     = 1
+	lr     = 0.001
 )
 
 func main() {
@@ -57,7 +57,7 @@ func train(m *LeNet[float32], o optim.Optimizer[float32], t *mnist.Dataset[float
 			tl += float64(ls.Data()[0])
 			a += acc(z, y)
 			n++
-			if n%100 == 0 {
+			if n%10 == 0 {
 				fmt.Printf("  Batch %d/%d - Loss: %.4f, Acc: %.2f%%\n", n, l.Len(), tl/float64(n), 100*a/float64(n))
 			}
 		}
