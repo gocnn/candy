@@ -8,6 +8,62 @@ import (
 	"github.com/gocnn/spark/internal/cpu/kernels"
 )
 
+func TestMatMulF32(t *testing.T) {
+	tests := []struct {
+		name    string
+		m, n, k int
+		a, b    []float32
+		want    []float32
+	}{
+		{
+			name: "Basic 2x2",
+			m:    2,
+			n:    2,
+			k:    2,
+			a:    []float32{1, 2, 3, 4},
+			b:    []float32{5, 6, 7, 8},
+			want: []float32{19, 22, 43, 50},
+		},
+		{
+			name: "Dot product",
+			m:    1,
+			n:    1,
+			k:    4,
+			a:    []float32{1, 2, 3, 4},
+			b:    []float32{4, 3, 2, 1},
+			want: []float32{20},
+		},
+		{
+			name: "Zero rows",
+			m:    0,
+			n:    3,
+			k:    2,
+			a:    []float32{},
+			b:    []float32{0, 0, 0, 0, 0, 0},
+			want: []float32{},
+		},
+		{
+			name: "Random 3x4 from 3x2 * 2x4",
+			m:    3,
+			n:    4,
+			k:    2,
+			a:    []float32{0.33669036626815796, 0.12880940735340118, 0.23446236550807953, 0.23033303022384644, -1.1228563785552979, -0.18632829189300537},
+			b:    []float32{2.2082014083862305, -0.637997031211853, 0.46165722608566284, 0.2673508822917938, 0.5349046587944031, 0.809357225894928, 1.110290288925171, -1.6897989511489868},
+			want: []float32{0.8123809099197388, -0.11055462807416916, 0.29845139384269714, -0.1276475340127945, 0.6409463286399841, 0.03683541342616081, 0.3639777600765228, -0.326532781124115, -2.5791609287261963, 0.5655729174613953, -0.7252532243728638, 0.014660704880952835},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := make([]float32, tt.m*tt.n)
+			kernels.MatMulF32(tt.m, tt.n, tt.k, tt.a, tt.b, c)
+			if !slices.EqualFunc(c, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", c, tt.want)
+			}
+		})
+	}
+}
+
 func TestIm2colConv1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
