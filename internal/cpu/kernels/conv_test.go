@@ -8,6 +8,189 @@ import (
 	"github.com/gocnn/spark/internal/cpu/kernels"
 )
 
+func TestIm2colConv1dF32(t *testing.T) {
+	tests := []struct {
+		name                         string
+		bSize, cIn, lIn, cOut, kSize int
+		stride, padding, dilation    int
+		src, kernel                  []float32
+		want                         []float32
+	}{
+		{
+			name:     "Basic 1D convolution",
+			bSize:    1,
+			cIn:      1,
+			lIn:      5,
+			cOut:     1,
+			kSize:    3,
+			stride:   1,
+			padding:  0,
+			dilation: 1,
+			src:      []float32{1, 2, 3, 4, 5},
+			kernel:   []float32{1, 0, -1},
+			want:     []float32{-2, -2, -2},
+		},
+		{
+			name:     "Empty input",
+			bSize:    1,
+			cIn:      1,
+			lIn:      0,
+			cOut:     1,
+			kSize:    1,
+			stride:   1,
+			padding:  0,
+			dilation: 1,
+			src:      []float32{},
+			kernel:   []float32{0},
+			want:     []float32{},
+		},
+		{
+			name:     "With padding",
+			bSize:    2,
+			cIn:      1,
+			lIn:      3,
+			cOut:     1,
+			kSize:    2,
+			stride:   1,
+			padding:  1,
+			dilation: 1,
+			src:      []float32{1, 2, 3, 4, 5, 6},
+			kernel:   []float32{1, -1},
+			want:     []float32{-1, -1, -1, 3, -4, -1, -1, 6},
+		},
+		{
+			name:     "Multiple channels",
+			bSize:    1,
+			cIn:      2,
+			lIn:      4,
+			cOut:     1,
+			kSize:    3,
+			stride:   2,
+			padding:  0,
+			dilation: 1,
+			src:      []float32{1, 2, 3, 4, 5, 6, 7, 8},
+			kernel:   []float32{1, 0, -1, 1, 0, -1},
+			want:     []float32{-4},
+		},
+		{
+			name:     "With dilation",
+			bSize:    1,
+			cIn:      1,
+			lIn:      5,
+			cOut:     1,
+			kSize:    3,
+			stride:   1,
+			padding:  1,
+			dilation: 2,
+			src:      []float32{1, 2, 3, 4, 5},
+			kernel:   []float32{1, 0, -1},
+			want:     []float32{-4, -4, 2},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			dst := make([]float32, tt.bSize*tt.cOut*lOut)
+			kernels.Im2colConv1dF32(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
+
+func TestIm2colConv1dF64(t *testing.T) {
+	tests := []struct {
+		name                         string
+		bSize, cIn, lIn, cOut, kSize int
+		stride, padding, dilation    int
+		src, kernel                  []float64
+		want                         []float64
+	}{
+		{
+			name:     "Basic 1D convolution",
+			bSize:    1,
+			cIn:      1,
+			lIn:      5,
+			cOut:     1,
+			kSize:    3,
+			stride:   1,
+			padding:  0,
+			dilation: 1,
+			src:      []float64{1, 2, 3, 4, 5},
+			kernel:   []float64{1, 0, -1},
+			want:     []float64{-2, -2, -2},
+		},
+		{
+			name:     "Empty input",
+			bSize:    1,
+			cIn:      1,
+			lIn:      0,
+			cOut:     1,
+			kSize:    1,
+			stride:   1,
+			padding:  0,
+			dilation: 1,
+			src:      []float64{},
+			kernel:   []float64{0},
+			want:     []float64{},
+		},
+		{
+			name:     "With padding",
+			bSize:    2,
+			cIn:      1,
+			lIn:      3,
+			cOut:     1,
+			kSize:    2,
+			stride:   1,
+			padding:  1,
+			dilation: 1,
+			src:      []float64{1, 2, 3, 4, 5, 6},
+			kernel:   []float64{1, -1},
+			want:     []float64{-1, -1, -1, 3, -4, -1, -1, 6},
+		},
+		{
+			name:     "Multiple channels",
+			bSize:    1,
+			cIn:      2,
+			lIn:      4,
+			cOut:     1,
+			kSize:    3,
+			stride:   2,
+			padding:  0,
+			dilation: 1,
+			src:      []float64{1, 2, 3, 4, 5, 6, 7, 8},
+			kernel:   []float64{1, 0, -1, 1, 0, -1},
+			want:     []float64{-4},
+		},
+		{
+			name:     "With dilation",
+			bSize:    1,
+			cIn:      1,
+			lIn:      5,
+			cOut:     1,
+			kSize:    3,
+			stride:   1,
+			padding:  1,
+			dilation: 2,
+			src:      []float64{1, 2, 3, 4, 5},
+			kernel:   []float64{1, 0, -1},
+			want:     []float64{-4, -4, 2},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
+			dst := make([]float64, tt.bSize*tt.cOut*lOut)
+			kernels.Im2colConv1dF64(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst)
+			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", dst, tt.want)
+			}
+		})
+	}
+}
 func TestNaiveConv1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
@@ -436,190 +619,6 @@ func TestNaiveConv1dStridedF64(t *testing.T) {
 			dst := make([]float64, tt.bSize*tt.cOut*lOut) // Note: actual storage size based on contiguous, but function handles strides
 			kernels.NaiveConv1dStridedF64(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst, tt.srcStrides, tt.kernelStrides, tt.dstStrides)
 			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
-				t.Errorf("got %v, want %v", dst, tt.want)
-			}
-		})
-	}
-}
-
-func TestIm2colConv1dF32(t *testing.T) {
-	tests := []struct {
-		name                         string
-		bSize, cIn, lIn, cOut, kSize int
-		stride, padding, dilation    int
-		src, kernel                  []float32
-		want                         []float32
-	}{
-		{
-			name:     "Basic 1D convolution",
-			bSize:    1,
-			cIn:      1,
-			lIn:      5,
-			cOut:     1,
-			kSize:    3,
-			stride:   1,
-			padding:  0,
-			dilation: 1,
-			src:      []float32{1, 2, 3, 4, 5},
-			kernel:   []float32{1, 0, -1},
-			want:     []float32{-2, -2, -2},
-		},
-		{
-			name:     "Empty input",
-			bSize:    1,
-			cIn:      1,
-			lIn:      0,
-			cOut:     1,
-			kSize:    1,
-			stride:   1,
-			padding:  0,
-			dilation: 1,
-			src:      []float32{},
-			kernel:   []float32{0},
-			want:     []float32{},
-		},
-		{
-			name:     "With padding",
-			bSize:    2,
-			cIn:      1,
-			lIn:      3,
-			cOut:     1,
-			kSize:    2,
-			stride:   1,
-			padding:  1,
-			dilation: 1,
-			src:      []float32{1, 2, 3, 4, 5, 6},
-			kernel:   []float32{1, -1},
-			want:     []float32{-1, -1, -1, 3, -4, -1, -1, 6},
-		},
-		{
-			name:     "Multiple channels",
-			bSize:    1,
-			cIn:      2,
-			lIn:      4,
-			cOut:     1,
-			kSize:    3,
-			stride:   2,
-			padding:  0,
-			dilation: 1,
-			src:      []float32{1, 2, 3, 4, 5, 6, 7, 8},
-			kernel:   []float32{1, 0, -1, 1, 0, -1},
-			want:     []float32{-4},
-		},
-		{
-			name:     "With dilation",
-			bSize:    1,
-			cIn:      1,
-			lIn:      5,
-			cOut:     1,
-			kSize:    3,
-			stride:   1,
-			padding:  1,
-			dilation: 2,
-			src:      []float32{1, 2, 3, 4, 5},
-			kernel:   []float32{1, 0, -1},
-			want:     []float32{-4, -4, 2},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
-			dst := make([]float32, tt.bSize*tt.cOut*lOut)
-			kernels.Im2colConv1dF32(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst)
-			if !slices.EqualFunc(dst, tt.want, func(a, b float32) bool { return math.Abs(float64(a-b)) < 1e-6 }) {
-				t.Errorf("got %v, want %v", dst, tt.want)
-			}
-		})
-	}
-}
-
-func TestIm2colConv1dF64(t *testing.T) {
-	tests := []struct {
-		name                         string
-		bSize, cIn, lIn, cOut, kSize int
-		stride, padding, dilation    int
-		src, kernel                  []float64
-		want                         []float64
-	}{
-		{
-			name:     "Basic 1D convolution",
-			bSize:    1,
-			cIn:      1,
-			lIn:      5,
-			cOut:     1,
-			kSize:    3,
-			stride:   1,
-			padding:  0,
-			dilation: 1,
-			src:      []float64{1, 2, 3, 4, 5},
-			kernel:   []float64{1, 0, -1},
-			want:     []float64{-2, -2, -2},
-		},
-		{
-			name:     "Empty input",
-			bSize:    1,
-			cIn:      1,
-			lIn:      0,
-			cOut:     1,
-			kSize:    1,
-			stride:   1,
-			padding:  0,
-			dilation: 1,
-			src:      []float64{},
-			kernel:   []float64{0},
-			want:     []float64{},
-		},
-		{
-			name:     "With padding",
-			bSize:    2,
-			cIn:      1,
-			lIn:      3,
-			cOut:     1,
-			kSize:    2,
-			stride:   1,
-			padding:  1,
-			dilation: 1,
-			src:      []float64{1, 2, 3, 4, 5, 6},
-			kernel:   []float64{1, -1},
-			want:     []float64{-1, -1, -1, 3, -4, -1, -1, 6},
-		},
-		{
-			name:     "Multiple channels",
-			bSize:    1,
-			cIn:      2,
-			lIn:      4,
-			cOut:     1,
-			kSize:    3,
-			stride:   2,
-			padding:  0,
-			dilation: 1,
-			src:      []float64{1, 2, 3, 4, 5, 6, 7, 8},
-			kernel:   []float64{1, 0, -1, 1, 0, -1},
-			want:     []float64{-4},
-		},
-		{
-			name:     "With dilation",
-			bSize:    1,
-			cIn:      1,
-			lIn:      5,
-			cOut:     1,
-			kSize:    3,
-			stride:   1,
-			padding:  1,
-			dilation: 2,
-			src:      []float64{1, 2, 3, 4, 5},
-			kernel:   []float64{1, 0, -1},
-			want:     []float64{-4, -4, 2},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lOut := max(0, (tt.lIn+2*tt.padding-tt.dilation*(tt.kSize-1)-1)/tt.stride+1)
-			dst := make([]float64, tt.bSize*tt.cOut*lOut)
-			kernels.Im2colConv1dF64(tt.bSize, tt.cIn, tt.lIn, tt.cOut, tt.kSize, tt.stride, tt.padding, tt.dilation, tt.src, tt.kernel, dst)
-			if !slices.EqualFunc(dst, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
 				t.Errorf("got %v, want %v", dst, tt.want)
 			}
 		})
