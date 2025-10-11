@@ -19,24 +19,24 @@ func MatMulF64(m, n, k int, a, b, c []float64) {
 }
 
 // MatMulBatchedF32 performs batched matrix multiplication for float32: C[i] = A[i] * B[i]
-func MatMulBatchedF32(b, m, n, k int, a, bMat, c []float32) {
-	for i := range b {
+func MatMulBatchedF32(batch, m, n, k int, a, b, c []float32) {
+	for i := range batch {
 		aOffset := i * m * k
 		bOffset := i * k * n
 		cOffset := i * m * n
 		blas32.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0,
-			a[aOffset:], k, bMat[bOffset:], n, 0.0, c[cOffset:], n)
+			a[aOffset:], k, b[bOffset:], n, 0.0, c[cOffset:], n)
 	}
 }
 
 // MatMulBatchedF64 performs batched matrix multiplication for float64: C[i] = A[i] * B[i]
-func MatMulBatchedF64(b, m, n, k int, a, bMat, c []float64) {
-	for i := range b {
+func MatMulBatchedF64(batch, m, n, k int, a, b, c []float64) {
+	for i := range batch {
 		aOffset := i * m * k
 		bOffset := i * k * n
 		cOffset := i * m * n
 		blas64.Gemm(blas.NoTrans, blas.NoTrans, m, n, k, 1.0,
-			a[aOffset:], k, bMat[bOffset:], n, 0.0, c[cOffset:], n)
+			a[aOffset:], k, b[bOffset:], n, 0.0, c[cOffset:], n)
 	}
 }
 
