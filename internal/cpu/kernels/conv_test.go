@@ -64,6 +64,62 @@ func TestMatMulF32(t *testing.T) {
 	}
 }
 
+func TestMatMulF64(t *testing.T) {
+	tests := []struct {
+		name    string
+		m, n, k int
+		a, b    []float64
+		want    []float64
+	}{
+		{
+			name: "Basic 2x2",
+			m:    2,
+			n:    2,
+			k:    2,
+			a:    []float64{1, 2, 3, 4},
+			b:    []float64{5, 6, 7, 8},
+			want: []float64{19, 22, 43, 50},
+		},
+		{
+			name: "Dot product",
+			m:    1,
+			n:    1,
+			k:    4,
+			a:    []float64{1, 2, 3, 4},
+			b:    []float64{4, 3, 2, 1},
+			want: []float64{20},
+		},
+		{
+			name: "Zero rows",
+			m:    0,
+			n:    3,
+			k:    2,
+			a:    []float64{},
+			b:    []float64{0, 0, 0, 0, 0, 0},
+			want: []float64{},
+		},
+		{
+			name: "Random 3x4 from 3x2 * 2x4",
+			m:    3,
+			n:    4,
+			k:    2,
+			a:    []float64{0.33669036626815796, 0.12880940735340118, 0.23446236550807953, 0.23033303022384644, -1.1228563785552979, -0.18632829189300537},
+			b:    []float64{2.2082014083862305, -0.637997031211853, 0.46165722608566284, 0.2673508822917938, 0.5349046587944031, 0.809357225894928, 1.110290288925171, -1.6897989511489868},
+			want: []float64{0.8123808930733025, -0.11055462951199768, 0.29845137464781146, -0.12764753496296066, 0.6409463366694759, 0.036835409248881845, 0.36397777195818737, -0.3265327926044175, -2.579160907940043, 0.5655728865633094, -0.7252532540572503, 0.014660708716455417},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := make([]float64, tt.m*tt.n)
+			kernels.MatMulF64(tt.m, tt.n, tt.k, tt.a, tt.b, c)
+			if !slices.EqualFunc(c, tt.want, func(a, b float64) bool { return math.Abs(a-b) < 1e-6 }) {
+				t.Errorf("got %v, want %v", c, tt.want)
+			}
+		})
+	}
+}
+
 func TestIm2colConv1dF32(t *testing.T) {
 	tests := []struct {
 		name                         string
