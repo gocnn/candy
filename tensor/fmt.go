@@ -9,7 +9,7 @@ import (
 // String returns a compact, PyTorch-style string representation of the tensor.
 func (t *Tensor[T]) String() string {
 	shape := t.layout.Shape()
-	if shape.ElemCount() == 0 {
+	if shape.Numel() == 0 {
 		return fmt.Sprintf("tensor([], shape=%v, dtype=%T, device=%s)", shape.Dims(), *new(T), t.device)
 	}
 	if shape.Rank() == 0 {

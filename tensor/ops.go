@@ -1257,7 +1257,7 @@ func MatMulForward[T spark.D]() ForwardFunc[T] {
 			return nil, fmt.Errorf("matmul forward: inner dims mismatch: %d vs %d", k, yd[len(yd)-2])
 		}
 		s := spark.NewShapeFrom(append(bs.Dims(), m, yd[len(yd)-1]))
-		data, err := x.storage.MatMul(x.layout, y.storage, y.layout, bs.ElemCount(), m, yd[len(yd)-1], k)
+		data, err := x.storage.MatMul(x.layout, y.storage, y.layout, bs.Numel(), m, yd[len(yd)-1], k)
 		if err != nil {
 			return nil, fmt.Errorf("matmul forward: failed to matmul: %w", err)
 		}
@@ -3576,8 +3576,8 @@ func ReshapeForward[T spark.D](s *spark.Shape) ForwardFunc[T] {
 			return nil, fmt.Errorf("reshape forward: expected 1 input, got %d", len(inputs))
 		}
 		x := inputs[0]
-		if s.ElemCount() != x.Shape().ElemCount() {
-			return nil, fmt.Errorf("reshape forward: element count mismatch: %d vs %d", s.ElemCount(), x.Shape().ElemCount())
+		if s.Numel() != x.Shape().Numel() {
+			return nil, fmt.Errorf("reshape forward: element count mismatch: %d vs %d", s.Numel(), x.Shape().Numel())
 		}
 		if !x.layout.IsContiguous() {
 			return nil, fmt.Errorf("reshape forward: non-contiguous tensor not supported")

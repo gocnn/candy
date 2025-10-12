@@ -8,5 +8,4 @@ import (
 
 func main() {
 	fmt.Println(spark.Logo)
-	fmt.Println("hello world")
 }

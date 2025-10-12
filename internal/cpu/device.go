@@ -52,7 +52,7 @@ func (c *CpuDevice[T]) SetSeed(seed uint64) error {
 
 // RandUniform generates a storage with uniformly distributed random values.
 func (c *CpuDevice[T]) RandUniform(shape *spark.Shape, dtype spark.DType, min, max float64) (spark.BackendStorage[T], error) {
-	storage := New(make([]T, shape.ElemCount()))
+	storage := New(make([]T, shape.Numel()))
 	data := storage.data
 
 	switch dtype {
@@ -99,7 +99,7 @@ func (c *CpuDevice[T]) RandUniform(shape *spark.Shape, dtype spark.DType, min, m
 
 // RandNormal generates a storage with normally distributed random values.
 func (c *CpuDevice[T]) RandNormal(shape *spark.Shape, dtype spark.DType, mean, std float64) (spark.BackendStorage[T], error) {
-	storage := New(make([]T, shape.ElemCount()))
+	storage := New(make([]T, shape.Numel()))
 	data := storage.data
 
 	switch dtype {
@@ -152,7 +152,7 @@ func (c *CpuDevice[T]) RandNormal(shape *spark.Shape, dtype spark.DType, mean, s
 
 // Alloc allocates a zero-initialized storage for the given shape.
 func (c *CpuDevice[T]) Alloc(shape *spark.Shape, dtype spark.DType) (spark.BackendStorage[T], error) {
-	return New(make([]T, shape.ElemCount())), nil
+	return New(make([]T, shape.Numel())), nil
 }
 
 // Zeros creates a storage filled with zeros.
@@ -167,7 +167,7 @@ func (c *CpuDevice[T]) Ones(shape *spark.Shape, dtype spark.DType) (spark.Backen
 
 // Full creates a storage filled with a specific value.
 func (c *CpuDevice[T]) Full(shape *spark.Shape, dtype spark.DType, value float64) (spark.BackendStorage[T], error) {
-	storage := New(make([]T, shape.ElemCount()))
+	storage := New(make([]T, shape.Numel()))
 	data := storage.data
 
 	for i := range data {

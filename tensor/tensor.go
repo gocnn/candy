@@ -352,9 +352,9 @@ func (t *Tensor[T]) Rank() int {
 	return t.layout.Rank()
 }
 
-// ElemCount returns element count.
-func (t *Tensor[T]) ElemCount() int {
-	return t.layout.ElemCount()
+// Numel returns element count.
+func (t *Tensor[T]) Numel() int {
+	return t.layout.Numel()
 }
 
 // SetStorage sets storage, returns self.
@@ -1877,7 +1877,7 @@ func (t *Tensor[T]) MustFlatten(start, end int) *Tensor[T] {
 
 // FlattenAll flattens to 1D.
 func (t *Tensor[T]) FlattenAll() (*Tensor[T], error) {
-	return t.Reshape(t.ElemCount())
+	return t.Reshape(t.Numel())
 }
 
 // MustFlattenAll flattens to 1D, panics on error.

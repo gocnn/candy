@@ -114,9 +114,9 @@ func (s *Layout) Dims5() (int, int, int, int, int, error) {
 	return s.shape.Dims5()
 }
 
-// ElemCount returns the total number of elements in the layout.
-func (l *Layout) ElemCount() int {
-	return l.shape.ElemCount()
+// Numel returns the total number of elements in the layout.
+func (l *Layout) Numel() int {
+	return l.shape.Numel()
 }
 
 // ContiguousOffsets returns the start and end offsets if the layout is contiguous,
@@ -126,7 +126,7 @@ func (l *Layout) ContiguousOffsets() (start, end int, ok bool) {
 		return 0, 0, false
 	}
 	start = l.StartOffset()
-	end = start + l.shape.ElemCount()
+	end = start + l.shape.Numel()
 	return start, end, true
 }
 
