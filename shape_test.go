@@ -124,18 +124,18 @@ func TestShapeDimPanic(t *testing.T) {
 	s.Dim(2)
 }
 
-func TestShapeElemCount(t *testing.T) {
+func TestShapeNumel(t *testing.T) {
 	s1 := spark.NewShape()
 	s2 := spark.NewShape(2, 3, 4)
 	s3 := spark.NewShape(2, 0, 4)
-	if s1.ElemCount() != 1 {
-		t.Errorf("ElemCount([]) = %d; want 1", s1.ElemCount())
+	if s1.Numel() != 1 {
+		t.Errorf("Numel([]) = %d; want 1", s1.Numel())
 	}
-	if s2.ElemCount() != 24 {
-		t.Errorf("ElemCount([2 3 4]) = %d; want 24", s2.ElemCount())
+	if s2.Numel() != 24 {
+		t.Errorf("Numel([2 3 4]) = %d; want 24", s2.Numel())
 	}
-	if s3.ElemCount() != 0 {
-		t.Errorf("ElemCount([2 0 4]) = %d; want 0", s3.ElemCount())
+	if s3.Numel() != 0 {
+		t.Errorf("Numel([2 0 4]) = %d; want 0", s3.Numel())
 	}
 }
 
