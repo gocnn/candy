@@ -86,8 +86,8 @@ func (s *Shape) Dim(dim int) int {
 	return s.dims[dim]
 }
 
-// ElemCount returns the total number of elements (product of all dimensions).
-func (s *Shape) ElemCount() int {
+// Numel returns the total number of elements (product of all dimensions).
+func (s *Shape) Numel() int {
 	if len(s.dims) == 0 {
 		return 1 // Scalar has 1 element.
 	}
@@ -226,7 +226,7 @@ func (s *Shape) BroadcastShapeMatmul(rhs *Shape) (*Shape, *Shape, error) {
 // Reshape returns a new shape with the given dimensions, inferring one dimension if -1 is provided.
 // The total element count must match.
 func (s *Shape) Reshape(newDims ...int) (*Shape, error) {
-	elCount := s.ElemCount()
+	elCount := s.Numel()
 	prod := 1
 	holeIdx := -1
 	resDims := slices.Clone(newDims)

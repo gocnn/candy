@@ -46,7 +46,7 @@ func (s *CpuStorage[T]) Affine(layout *spark.Layout, scale, bias T) (spark.Backe
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -80,21 +80,21 @@ func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BAddStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -115,21 +115,21 @@ func (s *CpuStorage[T]) Sub(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BSubStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -150,21 +150,21 @@ func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BMulStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -185,21 +185,21 @@ func (s *CpuStorage[T]) Div(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BDivStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -220,21 +220,21 @@ func (s *CpuStorage[T]) Maximum(rhs spark.BackendStorage[T], lhsLayout *spark.La
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BMaximumStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -255,21 +255,21 @@ func (s *CpuStorage[T]) Minimum(rhs spark.BackendStorage[T], lhsLayout *spark.La
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.BMinimumStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -290,21 +290,21 @@ func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.EqStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -325,21 +325,21 @@ func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.NeStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -360,21 +360,21 @@ func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.LtStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -395,21 +395,21 @@ func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.LeStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -430,21 +430,21 @@ func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.GtStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -465,21 +465,21 @@ func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]T, resLayout.ElemCount()))
+	result := New(make([]T, resLayout.Numel()))
 	kernels.GeStrided(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -500,21 +500,21 @@ func (s *CpuStorage[T]) EqU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.EqStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -535,21 +535,21 @@ func (s *CpuStorage[T]) NeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.NeStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -570,21 +570,21 @@ func (s *CpuStorage[T]) LtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.LtStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -605,21 +605,21 @@ func (s *CpuStorage[T]) LeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.LeStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -640,21 +640,21 @@ func (s *CpuStorage[T]) GtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.GtStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -675,21 +675,21 @@ func (s *CpuStorage[T]) GeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 	if resLayout == nil {
 		return nil, errors.New("resLayout cannot be nil")
 	}
-	if lhsLayout.ElemCount() != rhsLayout.ElemCount() || lhsLayout.ElemCount() != resLayout.ElemCount() {
+	if lhsLayout.Numel() != rhsLayout.Numel() || lhsLayout.Numel() != resLayout.Numel() {
 		return nil, errors.New("lhsLayout element count does not match rhsLayout element count")
 	}
 
-	result := New(make([]uint8, resLayout.ElemCount()))
+	result := New(make([]uint8, resLayout.Numel()))
 	kernels.GeStridedU8(
-		lhsLayout.ElemCount(), // numel
-		lhsLayout.Rank(),      // ndims
-		lhsLayout.Dims(),      // dims
-		lhsLayout.Stride(),    // stridesX1
-		rhsLayout.Stride(),    // stridesX2
-		resLayout.Stride(),    // stridesY
-		s.data,                // x1
-		rhsC.data,             // x2
-		result.data,           // y
+		lhsLayout.Numel(),  // numel
+		lhsLayout.Rank(),   // ndims
+		lhsLayout.Dims(),   // dims
+		lhsLayout.Stride(), // stridesX1
+		rhsLayout.Stride(), // stridesX2
+		resLayout.Stride(), // stridesY
+		s.data,             // x1
+		rhsC.data,          // x2
+		result.data,        // y
 	)
 
 	return result, nil
@@ -700,7 +700,7 @@ func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, e
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -1621,7 +1621,7 @@ func (s *CpuStorage[T]) ConstSet(layout *spark.Layout, val T) error {
 		return errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel <= 0 {
 		return errors.New("invalid layout: number of elements <= 0")
 	}
@@ -1685,7 +1685,7 @@ func (s *CpuStorage[T]) Gather(layout *spark.Layout, ids spark.BackendStorage[T]
 		rightSize *= srcDims[i]
 	}
 
-	idsDimSize := idsLayout.ElemCount() / leftSize / rightSize
+	idsDimSize := idsLayout.Numel() / leftSize / rightSize
 
 	// Call kernel based on type
 	switch any(s.data).(type) {
@@ -1734,7 +1734,7 @@ func (s *CpuStorage[T]) Scatter(layout *spark.Layout, ids spark.BackendStorage[T
 	}
 
 	// Create result storage with same shape as destination
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	// Copy destination data to result first
@@ -1801,7 +1801,7 @@ func (s *CpuStorage[T]) ScatterAdd(layout *spark.Layout, ids spark.BackendStorag
 	}
 
 	// Create result storage with same shape as destination
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	// Copy destination data to result first
@@ -1885,7 +1885,7 @@ func (s *CpuStorage[T]) FastSum(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -1915,7 +1915,7 @@ func (s *CpuStorage[T]) FastMin(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -1945,7 +1945,7 @@ func (s *CpuStorage[T]) FastMax(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -1975,7 +1975,7 @@ func (s *CpuStorage[T]) FastArgmin(layout *spark.Layout) (spark.BackendStorage[u
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2005,7 +2005,7 @@ func (s *CpuStorage[T]) FastArgmax(layout *spark.Layout) (spark.BackendStorage[u
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2037,7 +2037,7 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, dims []int) (spark.BackendStor
 		return nil, errors.New("sumDims cannot be empty")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2076,7 +2076,7 @@ func (s *CpuStorage[T]) Min(layout *spark.Layout, dim int) (spark.BackendStorage
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2119,7 +2119,7 @@ func (s *CpuStorage[T]) Max(layout *spark.Layout, dim int) (spark.BackendStorage
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2162,7 +2162,7 @@ func (s *CpuStorage[T]) Argmin(layout *spark.Layout, dim int) (spark.BackendStor
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2205,7 +2205,7 @@ func (s *CpuStorage[T]) Argmax(layout *spark.Layout, dim int) (spark.BackendStor
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2248,7 +2248,7 @@ func (s *CpuStorage[T]) FastSoftmax(layout *spark.Layout) (spark.BackendStorage[
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2272,7 +2272,7 @@ func (s *CpuStorage[T]) FastRmsNorm(layout *spark.Layout, alpha spark.BackendSto
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2316,7 +2316,7 @@ func (s *CpuStorage[T]) FastLayerNorm(layout *spark.Layout, alpha spark.BackendS
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2388,7 +2388,7 @@ func (s *CpuStorage[T]) RopeI(layout *spark.Layout, cos spark.BackendStorage[T],
 		return nil, errors.New("input sin must be contiguous")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2412,11 +2412,11 @@ func (s *CpuStorage[T]) RopeI(layout *spark.Layout, cos spark.BackendStorage[T],
 	}
 
 	expectedSize := b * t * d / 2
-	if cosLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	if cosLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.Numel())
 	}
-	if sinLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	if sinLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.Numel())
 	}
 
 	bh := b * h
@@ -2462,7 +2462,7 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, cos spark.BackendStorage[T], 
 		return nil, errors.New("input sin must be contiguous")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2486,11 +2486,11 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, cos spark.BackendStorage[T], 
 	}
 
 	expectedSize := b * t * d / 2
-	if cosLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	if cosLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.Numel())
 	}
-	if sinLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	if sinLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.Numel())
 	}
 
 	bh := b * h
@@ -2537,7 +2537,7 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, cos spark.BackendStorage[T
 		return nil, errors.New("input sin must be contiguous")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2561,11 +2561,11 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, cos spark.BackendStorage[T
 	}
 
 	expectedSize := b * t * h * d / 2
-	if cosLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.ElemCount())
+	if cosLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("cos size mismatch: expected %d, got %d", expectedSize, cosLayout.Numel())
 	}
-	if sinLayout.ElemCount() != expectedSize {
-		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.ElemCount())
+	if sinLayout.Numel() != expectedSize {
+		return nil, fmt.Errorf("sin size mismatch: expected %d, got %d", expectedSize, sinLayout.Numel())
 	}
 
 	strideB := t * h * d
@@ -2607,8 +2607,8 @@ func (s *CpuStorage[T]) WhereCond(condLayout *spark.Layout, t spark.BackendStora
 		return nil, errors.New("layouts cannot be nil")
 	}
 
-	elemCount := condLayout.ElemCount()
-	if tLayout.ElemCount() != elemCount || fLayout.ElemCount() != elemCount {
+	elemCount := condLayout.Numel()
+	if tLayout.Numel() != elemCount || fLayout.Numel() != elemCount {
 		return nil, errors.New("layout element counts must match")
 	}
 
@@ -2672,7 +2672,7 @@ func (s *CpuStorage[T]) Copy(layout *spark.Layout, src spark.BackendStorage[T]) 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2698,7 +2698,7 @@ func (s *CpuStorage[T]) Neg(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2723,7 +2723,7 @@ func (s *CpuStorage[T]) Recip(layout *spark.Layout) (spark.BackendStorage[T], er
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -2748,7 +2748,7 @@ func (s *CpuStorage[T]) Exp(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UExpStrided(
@@ -2769,7 +2769,7 @@ func (s *CpuStorage[T]) Log(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.ULogStrided(
@@ -2790,7 +2790,7 @@ func (s *CpuStorage[T]) Sin(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.USinStrided(
@@ -2811,7 +2811,7 @@ func (s *CpuStorage[T]) Cos(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UCosStrided(
@@ -2832,7 +2832,7 @@ func (s *CpuStorage[T]) Tanh(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UTanhStrided(
@@ -2853,7 +2853,7 @@ func (s *CpuStorage[T]) Erf(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UErfStrided(
@@ -2874,7 +2874,7 @@ func (s *CpuStorage[T]) Ceil(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UCeilStrided(
@@ -2895,7 +2895,7 @@ func (s *CpuStorage[T]) Floor(layout *spark.Layout) (spark.BackendStorage[T], er
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UFloorStrided(
@@ -2916,7 +2916,7 @@ func (s *CpuStorage[T]) Round(layout *spark.Layout) (spark.BackendStorage[T], er
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.URoundStrided(
@@ -2937,7 +2937,7 @@ func (s *CpuStorage[T]) Normcdf(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UNormcdfStrided(
@@ -2958,7 +2958,7 @@ func (s *CpuStorage[T]) Abs(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UAbsStrided(
@@ -2979,7 +2979,7 @@ func (s *CpuStorage[T]) Sqr(layout *spark.Layout) (spark.BackendStorage[T], erro
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.USqrStrided(
@@ -3000,7 +3000,7 @@ func (s *CpuStorage[T]) Sqrt(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	if numel != len(s.data) {
 		return nil, errors.New("layout element count does not match storage size")
 	}
@@ -3025,7 +3025,7 @@ func (s *CpuStorage[T]) Gelu(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UGeluStrided(
@@ -3046,7 +3046,7 @@ func (s *CpuStorage[T]) GeluErf(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UGeluErfStrided(
@@ -3067,7 +3067,7 @@ func (s *CpuStorage[T]) Relu(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UReluStrided(
@@ -3088,7 +3088,7 @@ func (s *CpuStorage[T]) Elu(layout *spark.Layout, alpha T) (spark.BackendStorage
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UEluStrided(
@@ -3110,7 +3110,7 @@ func (s *CpuStorage[T]) Silu(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.USiluStrided(
@@ -3131,7 +3131,7 @@ func (s *CpuStorage[T]) Powf(layout *spark.Layout, param T) (spark.BackendStorag
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.UPowfStrided(
@@ -3153,7 +3153,7 @@ func (s *CpuStorage[T]) Sigmoid(layout *spark.Layout) (spark.BackendStorage[T], 
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	kernels.USigmoidStrided(
@@ -3174,7 +3174,7 @@ func (s *CpuStorage[T]) Sign(layout *spark.Layout) (spark.BackendStorage[T], err
 		return nil, errors.New("layout cannot be nil")
 	}
 
-	numel := layout.ElemCount()
+	numel := layout.Numel()
 	result := New(make([]T, numel))
 
 	switch any(s.data).(type) {
