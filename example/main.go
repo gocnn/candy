@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/gocnn/spark"
 )
 
 func main() {
-	fmt.Println("demo")
+	fmt.Println(spark.Logo)
 }

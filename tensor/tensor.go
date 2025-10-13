@@ -1318,6 +1318,59 @@ func (t *Tensor[T]) MustFastSoftmax() *Tensor[T] {
 	return res
 }
 
+// Softmax computes the softmax along the specified dimension.
+func (x *Tensor[T]) Softmax(dim int) (*Tensor[T], error) {
+	d, err := spark.ResolveAxis(dim, x.Rank())
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve dim: %w", err)
+	}
+	m, err := x.MaxKeep(d)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute max: %w", err)
+	}
+	s, err := x.BroadcastSub(m)
+	if err != nil {
+		return nil, fmt.Errorf("failed to subtract max: %w", err)
+	}
+	e, err := s.Exp()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute exp: %w", err)
+	}
+	se, err := e.SumKeep([]int{d})
+	if err != nil {
+		return nil, fmt.Errorf("failed to sum exp: %w", err)
+	}
+	r, err := e.BroadcastDiv(se)
+	if err != nil {
+		return nil, fmt.Errorf("failed to divide by sum: %w", err)
+	}
+	return r, nil
+}
+
+// MustSoftmax soft maxes, panics on error.
+func (t *Tensor[T]) MustSoftmax(dim int) *Tensor[T] {
+	res, err := t.Softmax(dim)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// Dropout randomly zeroes elements with probability dropProb and rescales the remainder.
+func (x *Tensor[T]) Dropout(dropProb float64) (*Tensor[T], error) {
+	var mask *Tensor[T]
+	return ApplyOp([]*Tensor[T]{x}, DropoutForward(dropProb, &mask), DropoutBackward(&mask))
+}
+
+// MustDropout drops out values, panics on error.
+func (t *Tensor[T]) MustDropout(dropProb float64) *Tensor[T] {
+	res, err := t.Dropout(dropProb)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
 // LogSoftmax computes the log-softmax along the specified dimension.
 func (x *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
 	d, err := spark.ResolveAxis(dim, x.Rank())
