@@ -8,8 +8,6 @@ import (
 	"github.com/gocnn/spark/internal/cpu/kernels"
 )
 
-// Cast from float32
-
 func TestCastF32F32(t *testing.T) {
 	tests := []struct {
 		numel int
