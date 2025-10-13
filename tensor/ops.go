@@ -2363,6 +2363,66 @@ func FastSoftmaxBackward[T spark.D]() BackwardFunc[T] {
 	}
 }
 
+// DropoutForward returns a ForwardFunc for dropout.
+func DropoutForward[T spark.D](dropProb float64, mask **Tensor[T]) ForwardFunc[T] {
+	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("dropout forward: expected 1 input, got %d", len(inputs))
+		}
+		if mask == nil {
+			return nil, fmt.Errorf("dropout forward: mask storage is nil")
+		}
+		x := inputs[0]
+		if dropProb < 0 || dropProb >= 1 {
+			return nil, fmt.Errorf("dropout forward: probability must be in [0, 1), got %v", dropProb)
+		}
+		if !x.dtype.IsFloat() {
+			return nil, fmt.Errorf("dropout forward: requires float tensor, got %v", x.dtype)
+		}
+		r, err := x.RandLike(0, 1)
+		if err != nil {
+			return nil, fmt.Errorf("dropout forward: failed to generate random mask: %w", err)
+		}
+		p, err := Full[T](dropProb, x.Shape(), x.device)
+		if err != nil {
+			return nil, fmt.Errorf("dropout forward: failed to create probability tensor: %w", err)
+		}
+		m, err := r.Ge(p)
+		if err != nil {
+			return nil, fmt.Errorf("dropout forward: failed to compute mask: %w", err)
+		}
+		s, err := m.MulScalar(1.0 / (1.0 - dropProb))
+		if err != nil {
+			return nil, fmt.Errorf("dropout forward: failed to scale mask: %w", err)
+		}
+		res, err := x.Mul(s)
+		if err != nil {
+			return nil, fmt.Errorf("dropout forward: failed to apply mask: %w", err)
+		}
+		*mask = s.Detach()
+		return res, nil
+	}
+}            
+
+// DropoutBackward returns a BackwardFunc for dropout gradients.
+func DropoutBackward[T spark.D](mask **Tensor[T]) BackwardFunc[T] {
+	return func(g *Tensor[T], inputs []*Tensor[T]) ([]*Tensor[T], error) {
+		if len(inputs) != 1 {
+			return nil, fmt.Errorf("dropout backward: expected 1 input, got %d", len(inputs))
+		}
+		if mask == nil || *mask == nil {
+			return nil, fmt.Errorf("dropout backward: mask is not initialized")
+		}
+		m := (*mask).Detach()
+		dx, err := g.Mul(m)
+		if err != nil {
+			return nil, fmt.Errorf("dropout backward: failed to apply mask: %w", err)
+		}
+		*mask = nil
+		return []*Tensor[T]{dx}, nil
+	}
+}
+
 // WhereCondForward returns a ForwardFunc for conditional selection: c ? t : f.
 func WhereCondForward[T spark.D](c *Tensor[T]) ForwardFunc[T] {
 	return func(inputs []*Tensor[T]) (*Tensor[T], error) {
