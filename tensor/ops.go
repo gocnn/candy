@@ -2402,7 +2402,7 @@ func DropoutForward[T spark.D](dropProb float64, mask **Tensor[T]) ForwardFunc[T
 		*mask = s.Detach()
 		return res, nil
 	}
-}            
+}
 
 // DropoutBackward returns a BackwardFunc for dropout gradients.
 func DropoutBackward[T spark.D](mask **Tensor[T]) BackwardFunc[T] {
