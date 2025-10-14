@@ -750,6 +750,24 @@ func (t *Tensor[T]) MustGe(other *Tensor[T]) *Tensor[T] {
 	return res
 }
 
+// Clamp clamps values between tensor bounds.
+func (t *Tensor[T]) Clamp(minT, maxT *Tensor[T]) (*Tensor[T], error) {
+	r, err := t.Maximum(minT)
+	if err != nil {
+		return nil, err
+	}
+	return r.Minimum(maxT)
+}
+
+// MustClamp clamps between tensor bounds, panics on error.
+func (t *Tensor[T]) MustClamp(minT, maxT *Tensor[T]) *Tensor[T] {
+	res, err := t.Clamp(minT, maxT)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
 // BroadcastAdd adds with broadcast.
 func (t *Tensor[T]) BroadcastAdd(other *Tensor[T]) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t, other}, BroadcastAddForward[T](), BroadcastAddBackward[T]())
@@ -912,6 +930,24 @@ func (t *Tensor[T]) BroadcastGe(other *Tensor[T]) (*Tensor[T], error) {
 // MustBroadcastGe greater-equal with broadcast, panics on error.
 func (t *Tensor[T]) MustBroadcastGe(other *Tensor[T]) *Tensor[T] {
 	res, err := t.BroadcastGe(other)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// BroadcastClamp clamps values between broadcastable tensor bounds.
+func (t *Tensor[T]) BroadcastClamp(minT, maxT *Tensor[T]) (*Tensor[T], error) {
+	r, err := t.BroadcastMaximum(minT)
+	if err != nil {
+		return nil, err
+	}
+	return r.BroadcastMinimum(maxT)
+}
+
+// MustBroadcastClamp clamps between broadcastable bounds, panics on error.
+func (t *Tensor[T]) MustBroadcastClamp(minT, maxT *Tensor[T]) *Tensor[T] {
+	res, err := t.BroadcastClamp(minT, maxT)
 	if err != nil {
 		panic(err)
 	}
@@ -1356,21 +1392,6 @@ func (t *Tensor[T]) MustSoftmax(dim int) *Tensor[T] {
 	return res
 }
 
-// Dropout randomly zeroes elements with probability dropProb and rescales the remainder.
-func (x *Tensor[T]) Dropout(dropProb float64) (*Tensor[T], error) {
-	var mask *Tensor[T]
-	return ApplyOp([]*Tensor[T]{x}, DropoutForward(dropProb, &mask), DropoutBackward(&mask))
-}
-
-// MustDropout drops out values, panics on error.
-func (t *Tensor[T]) MustDropout(dropProb float64) *Tensor[T] {
-	res, err := t.Dropout(dropProb)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
 // LogSoftmax computes the log-softmax along the specified dimension.
 func (x *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
 	d, err := spark.ResolveAxis(dim, x.Rank())
@@ -1407,6 +1428,21 @@ func (x *Tensor[T]) LogSoftmax(dim int) (*Tensor[T], error) {
 // MustLogSoftmax log soft maxes, panics on error.
 func (t *Tensor[T]) MustLogSoftmax(dim int) *Tensor[T] {
 	res, err := t.LogSoftmax(dim)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+// Dropout randomly zeroes elements with probability dropProb and rescales the remainder.
+func (x *Tensor[T]) Dropout(dropProb float64) (*Tensor[T], error) {
+	var mask *Tensor[T]
+	return ApplyOp([]*Tensor[T]{x}, DropoutForward(dropProb, &mask), DropoutBackward(&mask))
+}
+
+// MustDropout drops out values, panics on error.
+func (t *Tensor[T]) MustDropout(dropProb float64) *Tensor[T] {
+	res, err := t.Dropout(dropProb)
 	if err != nil {
 		panic(err)
 	}
