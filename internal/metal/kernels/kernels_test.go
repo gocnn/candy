@@ -17,8 +17,8 @@ func TestKernelsEmbedded(t *testing.T) {
 		t.Errorf("GetKernel failed: %v", err)
 	}
 
-	t.Logf("Kernel %s size: %d bytes", kernels[0], len(data))
-	t.Logf("Kernel %s preview: %s", kernels[0], string(data[:min(200, len(data))]))
+	// t.Logf("Kernel %s size: %d bytes", kernels[0], len(data))
+	// t.Logf("Kernel %s preview: %s", kernels[0], string(data[:min(200, len(data))]))
 
 	if len(data) == 0 {
 		t.Error("Kernel data is empty")
