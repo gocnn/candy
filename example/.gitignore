@@ -33,3 +33,6 @@ go.work.sum
 
 data
 *.pth
+
+*.npy
+*.npz
