@@ -100,3 +100,36 @@ func (net *LeNet[T]) Parameters() []*tensor.Tensor[T] {
 	params = append(params, net.f3.Weight(), net.f3.Bias())
 	return params
 }
+
+func (net *LeNet[T]) Save(path string) error {
+	items := map[string]*tensor.Tensor[T]{}
+	p := net.c1.Parameters()
+	items["c1_w"], items["c1_b"] = p[0], p[1]
+	p = net.c2.Parameters()
+	items["c2_w"], items["c2_b"] = p[0], p[1]
+	items["f1_w"], items["f1_b"] = net.f1.Weight(), net.f1.Bias()
+	items["f2_w"], items["f2_b"] = net.f2.Weight(), net.f2.Bias()
+	items["f3_w"], items["f3_b"] = net.f3.Weight(), net.f3.Bias()
+	return tensor.WriteNPZ(path, items)
+}
+
+func (net *LeNet[T]) Load(path string) error {
+	names := []string{"c1_w", "c1_b", "c2_w", "c2_b", "f1_w", "f1_b", "f2_w", "f2_b", "f3_w", "f3_b"}
+	arrs, err := tensor.ReadNPZByName[T](path, names)
+	if err != nil {
+		return err
+	}
+	p := net.c1.Parameters()
+	p[0].SetStorage(arrs[0].Storage())
+	p[1].SetStorage(arrs[1].Storage())
+	p = net.c2.Parameters()
+	p[0].SetStorage(arrs[2].Storage())
+	p[1].SetStorage(arrs[3].Storage())
+	net.f1.Weight().SetStorage(arrs[4].Storage())
+	net.f1.Bias().SetStorage(arrs[5].Storage())
+	net.f2.Weight().SetStorage(arrs[6].Storage())
+	net.f2.Bias().SetStorage(arrs[7].Storage())
+	net.f3.Weight().SetStorage(arrs[8].Storage())
+	net.f3.Bias().SetStorage(arrs[9].Storage())
+	return nil
+}
