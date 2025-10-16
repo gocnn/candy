@@ -1038,6 +1038,40 @@ func (t *Tensor[T]) MustAvgPool2d(kH, kW, sH, sW int) *Tensor[T] {
 	return res
 }
 
+// AdaptiveAvgPool2d computes kernel and stride to produce exact outH×outW output, then calls AvgPool2d.
+func (t *Tensor[T]) AdaptiveAvgPool2d(outH, outW int) (*Tensor[T], error) {
+	if len(t.Dims()) != 4 {
+		return nil, fmt.Errorf("adaptive avgpool2d: expected 4D input, got %dD", len(t.Dims()))
+	}
+	inH, inW := t.Dim(2), t.Dim(3)
+	if outH <= 0 || outW <= 0 {
+		return nil, fmt.Errorf("adaptive avgpool2d: invalid output size %dx%d", outH, outW)
+	}
+	if inH < outH || inW < outW {
+		return nil, fmt.Errorf("adaptive avgpool2d: input smaller than output: %dx%d -> %dx%d", inH, inW, outH, outW)
+	}
+	sH := inH / outH
+	sW := inW / outW
+	if sH <= 0 || sW <= 0 {
+		return nil, fmt.Errorf("adaptive avgpool2d: computed stride <= 0")
+	}
+	kH := inH - (outH-1)*sH
+	kW := inW - (outW-1)*sW
+	if kH <= 0 || kW <= 0 {
+		return nil, fmt.Errorf("adaptive avgpool2d: computed kernel <= 0")
+	}
+	return t.AvgPool2d(kH, kW, sH, sW)
+}
+
+// MustAdaptiveAvgPool2d applies AdaptiveAvgPool2d and panics on error.
+func (t *Tensor[T]) MustAdaptiveAvgPool2d(outH, outW int) *Tensor[T] {
+	res, err := t.AdaptiveAvgPool2d(outH, outW)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
 // MaxPool2d applies 2D max pooling.
 func (t *Tensor[T]) MaxPool2d(kH, kW, sH, sW int) (*Tensor[T], error) {
 	return ApplyOp([]*Tensor[T]{t}, MaxPool2dForward[T](kH, kW, sH, sW), MaxPool2dBackward[T](kH, kW, sH, sW))
