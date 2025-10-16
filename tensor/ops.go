@@ -1445,12 +1445,21 @@ func Conv2dForward[T spark.D](p *spark.Conv2DParams) ForwardFunc[T] {
 		if x.Rank() != 4 || w.Rank() != 4 {
 			return nil, fmt.Errorf("conv2d forward: tensors must be 4D")
 		}
-		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, p.OutH(), p.OutW()})
+		hOut := p.OutH()
+		wOut := p.OutW()
+		s := spark.NewShapeFrom([]int{p.Batch, p.OutCh, hOut, wOut})
 		data, err := x.storage.Conv2d(x.layout, w.storage, w.layout, p)
 		if err != nil {
 			return nil, fmt.Errorf("conv2d forward: failed to conv2d: %w", err)
 		}
-		return NewFrom(data, spark.Contiguous(s), x.dtype, x.device), nil
+		var layout *spark.Layout
+		if x.layout.IsContiguous() && w.layout.IsContiguous() {
+			stride := []int{p.OutCh * hOut * wOut, 1, wOut * p.OutCh, p.OutCh}
+			layout = spark.NewLayout(s, stride, 0)
+		} else {
+			layout = spark.Contiguous(s)
+		}
+		return NewFrom(data, layout, x.dtype, x.device), nil
 	}
 }
 
@@ -1681,39 +1690,89 @@ func MaxPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 		if kH != sH || kW != sW {
 			return nil, fmt.Errorf("maxPool2d backward: kernel must equal stride: kH=%d, sH=%d, kW=%d, sW=%d", kH, sH, kW, sW)
 		}
+
 		x := inputs[0].Detach()
-		_, _, h, w, err := x.Dims4()
+		b, c, h, w, err := x.Dims4()
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to get 4D shape: %w", err)
 		}
+
 		p, err := x.MaxPool2d(kH, kW, sH, sW)
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to compute maxpool: %w", err)
 		}
-		pu, err := p.UpsampleNearest2d(h, w)
+		_, _, hOut, wOut, err := p.Dims4()
 		if err != nil {
-			return nil, fmt.Errorf("maxPool2d backward: failed to upsample maxpool: %w", err)
+			return nil, fmt.Errorf("maxPool2d backward: failed to get pooled shape: %w", err)
 		}
-		m, err := x.Eq(pu)
+
+		// Covered region size (aligned to pooling windows)
+		h1 := hOut * sH
+		w1 := wOut * sW
+
+		// Upsample pooled output only to the covered region
+		pu, err := p.UpsampleNearest2d(h1, w1)
+		if err != nil {
+			return nil, fmt.Errorf("maxPool2d backward: failed to upsample pooled output: %w", err)
+		}
+
+		// Create a view of x for the covered region: x0 = x[:, :, 0:h1, 0:w1]
+		xh, err := x.layout.Narrow(2, 0, h1)
+		if err != nil {
+			return nil, fmt.Errorf("maxPool2d backward: failed to narrow height: %w", err)
+		}
+		xhw, err := xh.Narrow(3, 0, w1)
+		if err != nil {
+			return nil, fmt.Errorf("maxPool2d backward: failed to narrow width: %w", err)
+		}
+		x0 := NewFrom[T](x.storage, xhw, x.dtype, x.device)
+
+		// Mask of maxima (tie-safe): 1 where x equals upsampled pool output in its window
+		m, err := x0.Eq(pu)
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to create mask: %w", err)
 		}
+
+		// Count maxima per pooling window: avg(mask) * (kH*kW)
 		ma, err := m.AvgPool2d(kH, kW, sH, sW)
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to average mask: %w", err)
 		}
-		sg, err := g.Mul(ma)
+		cnt, err := ma.MulScalar(float64(kH * kW))
 		if err != nil {
-			return nil, fmt.Errorf("maxPool2d backward: failed to scale grad: %w", err)
+			return nil, fmt.Errorf("maxPool2d backward: failed to scale mask count: %w", err)
 		}
-		gu, err := sg.UpsampleNearest2d(h, w)
+
+		// Split grad equally among maxima then upsample to covered region
+		sg, err := g.Div(cnt)
+		if err != nil {
+			return nil, fmt.Errorf("maxPool2d backward: failed to divide grad by count: %w", err)
+		}
+		gu, err := sg.UpsampleNearest2d(h1, w1)
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to upsample grad: %w", err)
 		}
-		dx, err := gu.Mul(m)
+		dx0, err := gu.Mul(m)
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to apply mask: %w", err)
 		}
+
+		// Place covered-region gradients into full-sized dx (zeros elsewhere)
+		dx, err := Zeros[T](x.Shape(), x.Device())
+		if err != nil {
+			return nil, fmt.Errorf("maxPool2d backward: failed to create dx: %w", err)
+		}
+		// Copy each [h1 x w1] block for every (b,c)
+		for bi := 0; bi < b; bi++ {
+			for ci := 0; ci < c; ci++ {
+				srcOffset := bi*c*h1*w1 + ci*h1*w1
+				dstOffset := bi*c*h*w + ci*h*w
+				if err := dx0.storage.Copy2d(dx.storage, h1, w1, w1, w, srcOffset, dstOffset); err != nil {
+					return nil, fmt.Errorf("maxPool2d backward: failed to copy dx block: %w", err)
+				}
+			}
+		}
+
 		return []*Tensor[T]{dx}, nil
 	}
 }
@@ -1789,9 +1848,7 @@ func GatherForward[T spark.D](dim int) ForwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("gather forward: failed to gather: %w", err)
 		}
-		s := append(append([]int{}, x.Dims()[:d]...), idx.Dims()...)
-		s = append(s, x.Dims()[d+1:]...)
-		return NewFrom(data, spark.Contiguous(spark.NewShapeFrom(s)), x.dtype, x.device), nil
+		return NewFrom(data, idx.layout.Clone(), x.dtype, x.device), nil
 	}
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gocnn/spark"
@@ -18,28 +17,32 @@ const (
 	lr     = 0.001
 )
 
-func main() {
-	fmt.Println("Starting LeNet-5 Training on MNIST")
+// func main() {
+// 	fmt.Println("Starting LeNet-5 Training on MNIST")
 
-	d := spark.CPU
-	traindata, err := mnist.New[float32]("./data", true, true)
-	if err != nil {
-		log.Fatal(err)
-	}
-	testdata, err := mnist.New[float32]("./data", false, true)
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	d := spark.CPU
+// 	traindata, err := mnist.New[float32]("./data", true, true)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	testdata, err := mnist.New[float32]("./data", false, true)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	m := NewLeNet[float32](d)
-	o, err := optim.NewAdamWWithLR(m.Parameters(), lr)
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	m := NewLeNet[float32](d)
+// 	o, err := optim.NewAdamWWithLR(m.Parameters(), lr)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	train(m, o, traindata, epochs, batch, d)
-	fmt.Printf("Final Test Accuracy: %.2f%%\n", 100*eval(m, testdata, batch, d))
-}
+// 	train(m, o, traindata, epochs, batch, d)
+// 	fmt.Printf("Final Test Accuracy: %.2f%%\n", 100*eval(m, testdata, batch, d))
+// 	if err := m.Save("lenet.npz"); err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	fmt.Println("Saved weights to lenet.npz")
+// }
 
 func train(m *LeNet[float32], o optim.Optimizer[float32], t *mnist.Dataset[float32], e, b int, d spark.Device) {
 	l := t.NewDataLoader(b, true, d)

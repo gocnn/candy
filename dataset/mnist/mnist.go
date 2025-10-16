@@ -117,8 +117,9 @@ func (ds *Dataset[T]) load() error {
 			var zero T
 			switch any(zero).(type) {
 			case float32, float64:
-				normalized := float32(px) / 255.0       // [0,1]
-				ds.imgs[i][j] = T(2.0*normalized - 1.0) // [-1,1]
+				// PyTorch-style normalization: (x/255 - mean) / std
+				normalized := float32(px) / 255.0
+				ds.imgs[i][j] = T((normalized - 0.1307) / 0.3081)
 			case uint8, uint32, int64:
 				ds.imgs[i][j] = T(px) // [0,255]
 			}

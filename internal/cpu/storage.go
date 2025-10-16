@@ -30,7 +30,7 @@ func (s *CpuStorage[T]) Clone() (spark.BackendStorage[T], error) {
 }
 
 func (s *CpuStorage[T]) Data() []T {
-	return slices.Clone(s.data)
+	return s.data
 }
 
 func (s *CpuStorage[T]) Device() spark.BackendDevice[T] {
@@ -889,21 +889,41 @@ func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage
 		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
 			kernels.MatMulBatchedF32(b, m, n, k, lhsData, rhsData, resultData)
 		} else {
-			lhsStrides := []int{m * k, k, 1} // [batch, row, col]
-			rhsStrides := []int{k * n, n, 1}
-			cStrides := []int{m * n, n, 1}
-			kernels.NaiveBatchedMatMulStridedF32(
-				b,
-				m,
-				n,
-				k,
-				lhsData,
-				rhsData,
-				resultData,
-				lhsStrides,
-				rhsStrides,
-				cStrides,
-			)
+			if b == 1 {
+				ls := lhsLayout.Stride()
+				rs := rhsLayout.Stride()
+				lhsStrides := []int{0, ls[len(ls)-2], ls[len(ls)-1]} // [batch,row,col]
+				rhsStrides := []int{0, rs[len(rs)-2], rs[len(rs)-1]}
+				cStrides := []int{0, n, 1}
+				kernels.NaiveBatchedMatMulStridedF32(
+					b,
+					m,
+					n,
+					k,
+					lhsData,
+					rhsData,
+					resultData,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			} else {
+				lhsStrides := []int{m * k, k, 1} // [batch, row, col]
+				rhsStrides := []int{k * n, n, 1}
+				cStrides := []int{m * n, n, 1}
+				kernels.NaiveBatchedMatMulStridedF32(
+					b,
+					m,
+					n,
+					k,
+					lhsData,
+					rhsData,
+					resultData,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			}
 		}
 	case []float64:
 		lhsData := any(s.data).([]float64)
@@ -913,41 +933,81 @@ func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage
 		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
 			kernels.MatMulBatchedF64(b, m, n, k, lhsData, rhsData, resultData)
 		} else {
-			lhsStrides := []int{m * k, k, 1}
-			rhsStrides := []int{k * n, n, 1}
-			cStrides := []int{m * n, n, 1}
-			kernels.NaiveBatchedMatMulStridedF64(
-				b,
-				m,
-				n,
-				k,
-				lhsData,
-				rhsData,
-				resultData,
-				lhsStrides,
-				rhsStrides,
-				cStrides,
-			)
+			if b == 1 {
+				ls := lhsLayout.Stride()
+				rs := rhsLayout.Stride()
+				lhsStrides := []int{0, ls[len(ls)-2], ls[len(ls)-1]}
+				rhsStrides := []int{0, rs[len(rs)-2], rs[len(rs)-1]}
+				cStrides := []int{0, n, 1}
+				kernels.NaiveBatchedMatMulStridedF64(
+					b,
+					m,
+					n,
+					k,
+					lhsData,
+					rhsData,
+					resultData,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			} else {
+				lhsStrides := []int{m * k, k, 1}
+				rhsStrides := []int{k * n, n, 1}
+				cStrides := []int{m * n, n, 1}
+				kernels.NaiveBatchedMatMulStridedF64(
+					b,
+					m,
+					n,
+					k,
+					lhsData,
+					rhsData,
+					resultData,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			}
 		}
 	case []uint8, []uint32, []int64:
 		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
 			kernels.NaiveBatchedMatMul(b, m, n, k, s.data, rhsC.data, result.data)
 		} else {
-			lhsStrides := []int{m * k, k, 1}
-			rhsStrides := []int{k * n, n, 1}
-			cStrides := []int{m * n, n, 1}
-			kernels.NaiveBatchedMatMulStrided(
-				b,
-				m,
-				n,
-				k,
-				s.data,
-				rhsC.data,
-				result.data,
-				lhsStrides,
-				rhsStrides,
-				cStrides,
-			)
+			if b == 1 {
+				ls := lhsLayout.Stride()
+				rs := rhsLayout.Stride()
+				lhsStrides := []int{0, ls[len(ls)-2], ls[len(ls)-1]}
+				rhsStrides := []int{0, rs[len(rs)-2], rs[len(rs)-1]}
+				cStrides := []int{0, n, 1}
+				kernels.NaiveBatchedMatMulStrided(
+					b,
+					m,
+					n,
+					k,
+					s.data,
+					rhsC.data,
+					result.data,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			} else {
+				lhsStrides := []int{m * k, k, 1}
+				rhsStrides := []int{k * n, n, 1}
+				cStrides := []int{m * n, n, 1}
+				kernels.NaiveBatchedMatMulStrided(
+					b,
+					m,
+					n,
+					k,
+					s.data,
+					rhsC.data,
+					result.data,
+					lhsStrides,
+					rhsStrides,
+					cStrides,
+				)
+			}
 		}
 	default:
 		return nil, errors.New("unsupported type for matmul")
@@ -1660,11 +1720,9 @@ func (s *CpuStorage[T]) Gather(layout *spark.Layout, ids spark.BackendStorage[T]
 		return nil, fmt.Errorf("dimension %d out of range", dim)
 	}
 
-	// Calculate result shape
-	resultDims := make([]int, 0, len(srcDims)-1+len(idsDims))
-	resultDims = append(resultDims, srcDims[:dim]...)
-	resultDims = append(resultDims, idsDims...)
-	resultDims = append(resultDims, srcDims[dim+1:]...)
+	// Result shape matches the index tensor shape
+	resultDims := make([]int, len(idsDims))
+	copy(resultDims, idsDims)
 
 	numel := 1
 	for _, d := range resultDims {
