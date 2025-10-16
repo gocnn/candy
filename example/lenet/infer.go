@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,16 +12,15 @@ import (
 	"github.com/gocnn/spark/tensor"
 )
 
-func readPGM(path string) ([]float32, int, int, error) {
-	b, err := os.ReadFile(path)
+func readPGM(p string) ([]float32, int, int, error) {
+	b, err := os.ReadFile(p)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	i := 0
-	nextToken := func() (string, error) {
+	next := func() (string, error) {
 		for i < len(b) {
-			c := b[i]
-			if c == '#' {
+			if b[i] == '#' {
 				for i < len(b) && b[i] != '\n' && b[i] != '\r' {
 					i++
 				}
@@ -36,7 +34,7 @@ func readPGM(path string) ([]float32, int, int, error) {
 		if i >= len(b) {
 			return "", fmt.Errorf("unexpected EOF")
 		}
-		start := i
+		s := i
 		for i < len(b) {
 			c := b[i]
 			if c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '#' {
@@ -44,25 +42,25 @@ func readPGM(path string) ([]float32, int, int, error) {
 			}
 			i++
 		}
-		return string(b[start:i]), nil
+		return string(b[s:i]), nil
 	}
 
-	magic, err := nextToken()
+	m, err := next()
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	if magic != "P5" && magic != "P2" {
-		return nil, 0, 0, fmt.Errorf("unsupported PGM magic %q", magic)
+	if m != "P5" && m != "P2" {
+		return nil, 0, 0, fmt.Errorf("unsupported PGM magic %q", m)
 	}
-	ws, err := nextToken()
+	ws, err := next()
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	hs, err := nextToken()
+	hs, err := next()
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	ms, err := nextToken()
+	ms, err := next()
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -74,7 +72,7 @@ func readPGM(path string) ([]float32, int, int, error) {
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	maxv, err := strconv.Atoi(ms)
+	mx, err := strconv.Atoi(ms)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -82,28 +80,28 @@ func readPGM(path string) ([]float32, int, int, error) {
 		i++
 	}
 	n := w * h
-	px := make([]float32, n)
-	if magic == "P5" {
-		if maxv <= 255 {
+	q := make([]float32, n)
+	if m == "P5" {
+		if mx <= 255 {
 			if i+n > len(b) {
 				return nil, 0, 0, fmt.Errorf("short pixel data")
 			}
-			for j := 0; j < n; j++ {
-				px[j] = float32(uint8(b[i+j])) / float32(maxv)
+			for j := range n {
+				q[j] = float32(uint8(b[i+j])) / float32(mx)
 			}
 		} else {
 			if i+2*n > len(b) {
 				return nil, 0, 0, fmt.Errorf("short pixel data")
 			}
-			for j := 0; j < n; j++ {
+			for j := range n {
 				v := int(b[i+2*j])<<8 | int(b[i+2*j+1])
-				px[j] = float32(v) / float32(maxv)
+				q[j] = float32(v) / float32(mx)
 			}
 		}
-		return px, w, h, nil
+		return q, w, h, nil
 	}
-	for j := 0; j < n; j++ {
-		t, err := nextToken()
+	for j := range n {
+		t, err := next()
 		if err != nil {
 			return nil, 0, 0, err
 		}
@@ -111,46 +109,44 @@ func readPGM(path string) ([]float32, int, int, error) {
 		if err != nil {
 			return nil, 0, 0, err
 		}
-		px[j] = float32(v) / float32(maxv)
+		q[j] = float32(v) / float32(mx)
 	}
-	return px, w, h, nil
+	return q, w, h, nil
 }
 
-func inferFile(net *LeNet[float32], path string, invert, autoInvert bool) error {
-	px, w, h, err := readPGM(path)
+func inferFile(net *LeNet[float32], f string, inv, auto bool) error {
+	p, w, h, err := readPGM(f)
 	if err != nil {
 		return err
 	}
 	if w != 28 || h != 28 {
 		return fmt.Errorf("expected 28x28 image, got %dx%d", w, h)
 	}
-	fmt.Println(path)
-	mnist.PrintImage(px)
-	// Optional inversion for white-background images
-	if invert || autoInvert {
-		mean := 0.0
-		for _, v := range px {
-			mean += float64(v)
+	fmt.Println(f)
+	mnist.PrintImage(p)
+	// optional inversion
+	if inv || auto {
+		s := 0.0
+		for _, v := range p {
+			s += float64(v)
 		}
-		mean /= float64(len(px))
-		if invert || (autoInvert && mean > 0.5) {
-			for i := range px {
-				px[i] = 1 - px[i]
+		s /= float64(len(p))
+		if inv || (auto && s > 0.5) {
+			for i := range p {
+				p[i] = 1 - p[i]
 			}
 		}
 	}
-	// Normalize to training stats
-	px2 := make([]float32, len(px))
-	for i, v := range px {
-		px2[i] = (v - 0.1307) / 0.3081
+	// normalize to training stats
+	q := make([]float32, len(p))
+	for i, v := range p {
+		q[i] = (v - 0.1307) / 0.3081
 	}
-	x, err := tensor.New(px2, spark.NewShape(1, 1, 28, 28), spark.CPU)
+	x, err := tensor.New(q, spark.NewShape(1, 1, 28, 28), spark.CPU)
 	if err != nil {
 		return err
 	}
-	z := net.MustForward(x)
-	p := z.MustSoftmax(1)
-	pd := p.Data()
+	pd := net.MustForward(x).MustSoftmax(1).Data()
 	fmt.Print("probabilities: [")
 	for i, v := range pd {
 		if i > 0 {
@@ -159,66 +155,48 @@ func inferFile(net *LeNet[float32], path string, invert, autoInvert bool) error 
 		fmt.Printf("%.4f", v)
 	}
 	fmt.Println("]")
-	bestI := 0
-	bestV := pd[0]
+	bi, bv := 0, pd[0]
 	for i := 1; i < len(pd); i++ {
-		if pd[i] > bestV {
-			bestV = pd[i]
-			bestI = i
+		if pd[i] > bv {
+			bi, bv = i, pd[i]
 		}
 	}
-	fmt.Printf("prediction: %d (%.4f)\n", bestI, bestV)
+	fmt.Printf("prediction: %d (%.4f)\n", bi, bv)
 	return nil
 }
 
-func inferDir(net *LeNet[float32], dir string, invert, autoInvert bool) error {
+func inferDir(net *LeNet[float32], dir string, inv, auto bool) error {
 	ents, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
-	var files []string
+	var fs []string
 	for _, e := range ents {
 		if e.IsDir() {
 			continue
 		}
-		name := e.Name()
-		if strings.EqualFold(filepath.Ext(name), ".pgm") {
-			files = append(files, filepath.Join(dir, name))
+		if strings.EqualFold(filepath.Ext(e.Name()), ".pgm") {
+			fs = append(fs, filepath.Join(dir, e.Name()))
 		}
 	}
-	if len(files) == 0 {
+	if len(fs) == 0 {
 		return fmt.Errorf("no .pgm files under %s", dir)
 	}
-	for _, f := range files {
-		if err := inferFile(net, f, invert, autoInvert); err != nil {
+	for _, f := range fs {
+		if err := inferFile(net, f, inv, auto); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func main() {
-	weights := flag.String("weights", "lenet.npz", "path to weights npz")
-	file := flag.String("file", "", "path to one .pgm file")
-	dir := flag.String("path", ".", "directory containing .pgm files")
-	invert := flag.Bool("invert", false, "invert grayscale (1-p)")
-	autoInvert := flag.Bool("auto-invert", true, "auto invert if image looks white-on-black")
-	flag.Parse()
-
+func RunInfer(w, f, dir string, inv, auto bool) error {
 	net := NewLeNet[float32](spark.CPU)
-	if err := net.Load(*weights); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if err := net.Load(w); err != nil {
+		return err
 	}
-	if *file != "" {
-		if err := inferFile(net, *file, *invert, *autoInvert); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
+	if f != "" {
+		return inferFile(net, f, inv, auto)
 	}
-	if err := inferDir(net, *dir, *invert, *autoInvert); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	return inferDir(net, dir, inv, auto)
 }

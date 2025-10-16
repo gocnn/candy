@@ -110,7 +110,7 @@ func (net *LeNet[T]) Save(path string) error {
 	items["f1_w"], items["f1_b"] = net.f1.Weight(), net.f1.Bias()
 	items["f2_w"], items["f2_b"] = net.f2.Weight(), net.f2.Bias()
 	items["f3_w"], items["f3_b"] = net.f3.Weight(), net.f3.Bias()
-	return tensor.WriteNPZ[T](path, items)
+	return tensor.WriteNPZ(path, items)
 }
 
 func (net *LeNet[T]) Load(path string) error {

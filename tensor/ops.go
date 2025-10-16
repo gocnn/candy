@@ -1725,7 +1725,7 @@ func MaxPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 		if err != nil {
 			return nil, fmt.Errorf("maxPool2d backward: failed to narrow width: %w", err)
 		}
-		x0 := NewFrom[T](x.storage, xhw, x.dtype, x.device)
+		x0 := NewFrom(x.storage, xhw, x.dtype, x.device)
 
 		// Mask of maxima (tie-safe): 1 where x equals upsampled pool output in its window
 		m, err := x0.Eq(pu)
@@ -1763,8 +1763,8 @@ func MaxPool2dBackward[T spark.D](kH, kW, sH, sW int) BackwardFunc[T] {
 			return nil, fmt.Errorf("maxPool2d backward: failed to create dx: %w", err)
 		}
 		// Copy each [h1 x w1] block for every (b,c)
-		for bi := 0; bi < b; bi++ {
-			for ci := 0; ci < c; ci++ {
+		for bi := range b {
+			for ci := range c {
 				srcOffset := bi*c*h1*w1 + ci*h1*w1
 				dstOffset := bi*c*h*w + ci*h*w
 				if err := dx0.storage.Copy2d(dx.storage, h1, w1, w1, w, srcOffset, dstOffset); err != nil {
