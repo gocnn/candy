@@ -887,7 +887,7 @@ func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage
 		resultData := any(result.data).([]float32)
 
 		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
-			kernels.MatMulBatchedF32(b, m, n, k, lhsData, rhsData, resultData)
+			kernels.NaiveBatchedMatMulF32(b, m, n, k, lhsData, rhsData, resultData)
 		} else {
 			if b == 1 {
 				ls := lhsLayout.Stride()
@@ -931,7 +931,7 @@ func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage
 		resultData := any(result.data).([]float64)
 
 		if lhsLayout.IsContiguous() && rhsLayout.IsContiguous() {
-			kernels.MatMulBatchedF64(b, m, n, k, lhsData, rhsData, resultData)
+			kernels.NaiveBatchedMatMulF64(b, m, n, k, lhsData, rhsData, resultData)
 		} else {
 			if b == 1 {
 				ls := lhsLayout.Stride()
