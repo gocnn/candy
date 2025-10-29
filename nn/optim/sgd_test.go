@@ -5,14 +5,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn/optim"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn/optim"
+	"github.com/gocnn/candy/tensor"
 )
 
 func TestNewSGD(t *testing.T) {
-	x := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU).RequiresGrad()
-	y := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU)
+	x := tensor.MustOnes[float32](candy.NewShape(2, 3), candy.CPU).RequiresGrad()
+	y := tensor.MustOnes[float32](candy.NewShape(2, 3), candy.CPU)
 	s, err := optim.NewSGD([]*tensor.Tensor[float32]{x, y}, 0.01)
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +38,7 @@ func TestSGDLearningRate(t *testing.T) {
 
 func TestSGDAdd(t *testing.T) {
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{}, 0.01)
-	x := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
+	x := tensor.MustOnes[float32](candy.NewShape(2), candy.CPU)
 	if err := s.Add(x); err == nil {
 		t.Error("expected error for non-var")
 	}
@@ -52,9 +52,9 @@ func TestSGDAdd(t *testing.T) {
 }
 
 func TestSGDStep(t *testing.T) {
-	x := tensor.MustFull[float32](2.0, spark.NewShape(2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](2.0, candy.NewShape(2), candy.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
-	g := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
+	g := tensor.MustOnes[float32](candy.NewShape(2), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
 	if err := s.Step(gs); err != nil {
@@ -68,7 +68,7 @@ func TestSGDStep(t *testing.T) {
 }
 
 func TestSGDStepNoGrad(t *testing.T) {
-	x := tensor.MustOnes[float32](spark.NewShape(2, 3), spark.CPU).RequiresGrad()
+	x := tensor.MustOnes[float32](candy.NewShape(2, 3), candy.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
 	gs := tensor.NewGradStore[float32]()
 	if err := s.Step(gs); err != nil {
@@ -82,8 +82,8 @@ func TestSGDStepNoGrad(t *testing.T) {
 }
 
 func TestSGDOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](3.0, spark.NewShape(2), spark.CPU).RequiresGrad()
-	y := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
+	x := tensor.MustFull[float32](3.0, candy.NewShape(2), candy.CPU).RequiresGrad()
+	y := tensor.MustOnes[float32](candy.NewShape(2), candy.CPU)
 	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.1)
 	if err := s.Optimize(loss); err != nil {
@@ -97,9 +97,9 @@ func TestSGDOptimize(t *testing.T) {
 }
 
 func TestSGDMustStep(t *testing.T) {
-	x := tensor.MustFull[float32](4.0, spark.NewShape(3), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](4.0, candy.NewShape(3), candy.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float32]{x}, 0.2)
-	g := tensor.MustOnes[float32](spark.NewShape(3), spark.CPU)
+	g := tensor.MustOnes[float32](candy.NewShape(3), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
 	s.MustStep(gs)
@@ -111,9 +111,9 @@ func TestSGDMustStep(t *testing.T) {
 }
 
 func TestSGDFloat64(t *testing.T) {
-	x := tensor.MustFull[float64](1.5, spark.NewShape(2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float64](1.5, candy.NewShape(2), candy.CPU).RequiresGrad()
 	s, _ := optim.NewSGD([]*tensor.Tensor[float64]{x}, 0.1)
-	g := tensor.MustOnes[float64](spark.NewShape(2), spark.CPU)
+	g := tensor.MustOnes[float64](candy.NewShape(2), candy.CPU)
 	gs := tensor.NewGradStore[float64]()
 	gs.Set(x, g)
 	if err := s.Step(gs); err != nil {

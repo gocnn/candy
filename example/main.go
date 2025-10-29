@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
+	"github.com/gocnn/candy"
 )
 
 func main() {
-	fmt.Println(spark.Logo)
+	fmt.Print(candy.Logo)
 }

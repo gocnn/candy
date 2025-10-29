@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn"
+	"github.com/gocnn/candy/tensor"
 )
 
-type ResNet50[T spark.D] struct {
+type ResNet50[T candy.D] struct {
 	conv1  *nn.Conv2d[T]
 	bn1    *nn.BatchNorm2d[T]
 	layer1 []*Bottleneck[T]
@@ -19,7 +19,7 @@ type ResNet50[T spark.D] struct {
 	train  bool
 }
 
-func NewLayer[T spark.D](inplanes *int, planes, blocks, stride int, device spark.Device) []*Bottleneck[T] {
+func NewLayer[T candy.D](inplanes *int, planes, blocks, stride int, device candy.Device) []*Bottleneck[T] {
 	out := make([]*Bottleneck[T], blocks)
 	out[0] = NewBottleneck[T](*inplanes, planes, stride, device)
 	*inplanes = planes * 4
@@ -29,7 +29,7 @@ func NewLayer[T spark.D](inplanes *int, planes, blocks, stride int, device spark
 	return out
 }
 
-func NewResNet50[T spark.D](numClasses int, device spark.Device) *ResNet50[T] {
+func NewResNet50[T candy.D](numClasses int, device candy.Device) *ResNet50[T] {
 	m := &ResNet50[T]{}
 	m.conv1 = nn.NewConv2d[T](3, 64, 7, 2, 3, device)
 	m.bn1 = nn.NewBatchNorm2d[T](64, device)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func BenchmarkAffineF32(b *testing.B) {

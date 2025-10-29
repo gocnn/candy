@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // ExampleTensor_String_empty demonstrates formatting an empty tensor.
 func ExampleTensor_String_empty() {
-	t := tensor.MustZeros[float32](spark.NewShape(0), spark.CPU)
+	t := tensor.MustZeros[float32](candy.NewShape(0), candy.CPU)
 	fmt.Println("\n", t)
 	// Output:
 	// tensor([], shape=[0], dtype=float32, device=cpu)
@@ -18,7 +18,7 @@ func ExampleTensor_String_empty() {
 
 // ExampleTensor_String_scalar demonstrates formatting a scalar tensor.
 func ExampleTensor_String_scalar() {
-	t := tensor.MustNew([]float32{3.14159}, spark.NewShape(), spark.CPU)
+	t := tensor.MustNew([]float32{3.14159}, candy.NewShape(), candy.CPU)
 	fmt.Println("\n", t)
 	// Output:
 	// tensor(3.14159, shape=[], dtype=float32, device=cpu)
@@ -26,7 +26,7 @@ func ExampleTensor_String_scalar() {
 
 // ExampleTensor_String_vector demonstrates formatting a 1D tensor (vector).
 func ExampleTensor_String_vector() {
-	t := tensor.MustNew([]float32{1.0, 2.5, 3.0, 4.25, 5.0}, spark.NewShape(5), spark.CPU)
+	t := tensor.MustNew([]float32{1.0, 2.5, 3.0, 4.25, 5.0}, candy.NewShape(5), candy.CPU)
 	fmt.Println("\n", t)
 	// Output:
 	// tensor([  1.,  2.5,   3., 4.25,   5.], shape=[5], dtype=float32, device=cpu)
@@ -37,7 +37,7 @@ func ExampleTensor_String_matrix() {
 	t := tensor.MustNew([]float32{
 		1.0, 2.0, 3.0,
 		4.0, 5.0, 6.0,
-	}, spark.NewShape(2, 3), spark.CPU)
+	}, candy.NewShape(2, 3), candy.CPU)
 	fmt.Println("\n", t)
 	// Output:
 	// tensor([[1., 2., 3.],
@@ -51,7 +51,7 @@ func ExampleTensor_String_special() {
 		-math.MaxFloat64, 2.2250738585072014e-308, 4.9406564584124654e-324, 0.0, // -MaxFloat64, MinNormalFloat64, SmallestNonzeroFloat64, Zero
 		0.0, 42.0, -999999999999.999, 0.000000000000001, // Negative zero, normal, large negative, tiny positive
 	}
-	t := tensor.MustNew(data, spark.NewShape(3, 4), spark.CPU)
+	t := tensor.MustNew(data, candy.NewShape(3, 4), candy.CPU)
 	fmt.Println("\n", t)
 	// Output:
 	// tensor([[         nan,          inf,         -inf,  1.7977e+308],

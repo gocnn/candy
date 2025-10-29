@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func TestMatMulF32(t *testing.T) {
@@ -119,8 +119,6 @@ func TestMatMulF64(t *testing.T) {
 		})
 	}
 }
-
-
 
 func TestIm2colConv1dF32(t *testing.T) {
 	tests := []struct {

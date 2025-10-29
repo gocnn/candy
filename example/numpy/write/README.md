@@ -1,6 +1,6 @@
 # NPY/NPZ Write Example
 
-Demonstrates writing NPY/NPZ files using Spark framework.
+Demonstrates writing NPY/NPZ files using candy framework.
 
 ```bash
 # Generate NPY/NPZ files

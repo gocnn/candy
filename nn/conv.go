@@ -4,26 +4,26 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // Conv2d represents a 2D convolutional layer: y = conv2d(x, w) + b.
-type Conv2d[T spark.D] struct {
+type Conv2d[T candy.D] struct {
 	w      *tensor.Tensor[T]   // Weight tensor
 	b      *tensor.Tensor[T]   // Bias tensor
-	params *spark.Conv2DParams // Convolution parameters
+	params *candy.Conv2DParams // Convolution parameters
 }
 
 // NewConv2d creates a new 2D convolutional layer with Xavier initialization.
-func NewConv2d[T spark.D](inCh, outCh, kSize, stride, pad int, device spark.Device) *Conv2d[T] {
+func NewConv2d[T candy.D](inCh, outCh, kSize, stride, pad int, device candy.Device) *Conv2d[T] {
 	std := math.Sqrt(2.0 / float64(inCh*kSize*kSize))
-	w, err := tensor.RandN[T](0, std, spark.NewShape(outCh, inCh, kSize, kSize), device)
+	w, err := tensor.RandN[T](0, std, candy.NewShape(outCh, inCh, kSize, kSize), device)
 	if err != nil {
 		panic(fmt.Errorf("conv2d: failed to create weight: %w", err))
 	}
 	w.SetIsVar(true)
-	b, err := tensor.Zeros[T](spark.NewShape(outCh), device)
+	b, err := tensor.Zeros[T](candy.NewShape(outCh), device)
 	if err != nil {
 		panic(fmt.Errorf("conv2d: failed to create bias: %w", err))
 	}
@@ -31,7 +31,7 @@ func NewConv2d[T spark.D](inCh, outCh, kSize, stride, pad int, device spark.Devi
 	return &Conv2d[T]{
 		w: w,
 		b: b,
-		params: &spark.Conv2DParams{
+		params: &candy.Conv2DParams{
 			Batch:  1, // Updated dynamically
 			InCh:   inCh,
 			OutCh:  outCh,

@@ -3,16 +3,16 @@ package tensor
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
+	"github.com/gocnn/candy"
 )
 
 // GradStore maps tensor IDs to their gradient tensors for backpropagation.
-type GradStore[T spark.D] struct {
+type GradStore[T candy.D] struct {
 	m map[TensorID]*Tensor[T]
 }
 
 // NewGradStore returns a new gradient store.
-func NewGradStore[T spark.D]() *GradStore[T] {
+func NewGradStore[T candy.D]() *GradStore[T] {
 	return &GradStore[T]{m: make(map[TensorID]*Tensor[T])}
 }
 
@@ -85,7 +85,7 @@ func (s *GradStore[T]) Clear() {
 }
 
 // Backward computes gradients for all variable tensors contributing to the root tensor.
-func Backward[T spark.D](root *Tensor[T], store *GradStore[T]) error {
+func Backward[T candy.D](root *Tensor[T], store *GradStore[T]) error {
 	if !root.IsVar() {
 		return nil
 	}

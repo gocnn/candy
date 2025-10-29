@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/dataset/mnist"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/dataset/mnist"
+	"github.com/gocnn/candy/tensor"
 )
 
 func readPGM(p string) ([]float32, int, int, error) {
@@ -142,7 +142,7 @@ func inferFile(net *LeNet[float32], f string, inv, auto bool) error {
 	for i, v := range p {
 		q[i] = (v - 0.1307) / 0.3081
 	}
-	x, err := tensor.New(q, spark.NewShape(1, 1, 28, 28), spark.CPU)
+	x, err := tensor.New(q, candy.NewShape(1, 1, 28, 28), candy.CPU)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func inferDir(net *LeNet[float32], dir string, inv, auto bool) error {
 }
 
 func RunInfer(w, f, dir string, inv, auto bool) error {
-	net := NewLeNet[float32](spark.CPU)
+	net := NewLeNet[float32](candy.CPU)
 	if err := net.Load(w); err != nil {
 		return err
 	}

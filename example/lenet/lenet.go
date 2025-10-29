@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn"
+	"github.com/gocnn/candy/tensor"
 )
 
 // LeNet defines the LeNet-5 architecture.
-type LeNet[T spark.D] struct {
+type LeNet[T candy.D] struct {
 	c1 *nn.Conv2d[T] // Conv1: 1 -> 6 channels
 	c2 *nn.Conv2d[T] // Conv2: 6 -> 16 channels
 	f1 *nn.Linear[T] // FC1: 400 -> 120
@@ -18,7 +18,7 @@ type LeNet[T spark.D] struct {
 }
 
 // NewLeNet creates a new LeNet-5 model.
-func NewLeNet[T spark.D](device spark.Device) *LeNet[T] {
+func NewLeNet[T candy.D](device candy.Device) *LeNet[T] {
 	return &LeNet[T]{
 		c1: nn.NewConv2d[T](1, 6, 5, 1, 2, device),
 		c2: nn.NewConv2d[T](6, 16, 5, 1, 0, device),

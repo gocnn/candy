@@ -1,28 +1,28 @@
-package spark_test
+package candy_test
 
 import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark"
+	"github.com/gocnn/candy"
 )
 
 func TestShapeNewShape(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	if !slices.Equal(s.Dims(), []int{2, 3, 4}) {
 		t.Errorf("NewShape(2, 3, 4) = %v; want [2 3 4]", s.Dims())
 	}
 }
 
 func TestShapeNewShapeFrom(t *testing.T) {
-	s := spark.NewShapeFrom([]int{1, 2})
+	s := candy.NewShapeFrom([]int{1, 2})
 	if !slices.Equal(s.Dims(), []int{1, 2}) {
 		t.Errorf("NewShapeFrom([1, 2]) = %v; want [1 2]", s.Dims())
 	}
 }
 
 func TestShapeClone(t *testing.T) {
-	s := spark.NewShape(2, 3)
+	s := candy.NewShape(2, 3)
 	clone := s.Clone()
 	if !clone.Equal(s) {
 		t.Errorf("Clone() = %v; want %v", clone, s)
@@ -30,9 +30,9 @@ func TestShapeClone(t *testing.T) {
 }
 
 func TestShapeEqual(t *testing.T) {
-	s1 := spark.NewShape(2, 3)
-	s2 := spark.NewShape(2, 3)
-	s3 := spark.NewShape(2, 4)
+	s1 := candy.NewShape(2, 3)
+	s2 := candy.NewShape(2, 3)
+	s3 := candy.NewShape(2, 4)
 	if !s1.Equal(s2) {
 		t.Errorf("Equal([2 3], [2 3]) = false; want true")
 	}
@@ -42,8 +42,8 @@ func TestShapeEqual(t *testing.T) {
 }
 
 func TestShapeIsScalar(t *testing.T) {
-	s1 := spark.NewShape()
-	s2 := spark.NewShape(1)
+	s1 := candy.NewShape()
+	s2 := candy.NewShape(1)
 	if !s1.IsScalar() {
 		t.Errorf("IsScalar([]) = false; want true")
 	}
@@ -53,8 +53,8 @@ func TestShapeIsScalar(t *testing.T) {
 }
 
 func TestShapeIsVector(t *testing.T) {
-	s1 := spark.NewShape(5)
-	s2 := spark.NewShape(2, 3)
+	s1 := candy.NewShape(5)
+	s2 := candy.NewShape(2, 3)
 	if !s1.IsVector() {
 		t.Errorf("IsVector([5]) = false; want true")
 	}
@@ -64,8 +64,8 @@ func TestShapeIsVector(t *testing.T) {
 }
 
 func TestShapeIsMatrix(t *testing.T) {
-	s1 := spark.NewShape(2, 3)
-	s2 := spark.NewShape(4)
+	s1 := candy.NewShape(2, 3)
+	s2 := candy.NewShape(4)
 	if !s1.IsMatrix() {
 		t.Errorf("IsMatrix([2 3]) = false; want true")
 	}
@@ -75,8 +75,8 @@ func TestShapeIsMatrix(t *testing.T) {
 }
 
 func TestShapeString(t *testing.T) {
-	s1 := spark.NewShape()
-	s2 := spark.NewShape(2, 3, 4)
+	s1 := candy.NewShape()
+	s2 := candy.NewShape(2, 3, 4)
 	if s1.String() != "[]" {
 		t.Errorf("String([]) = %q; want []", s1.String())
 	}
@@ -86,14 +86,14 @@ func TestShapeString(t *testing.T) {
 }
 
 func TestShapeRank(t *testing.T) {
-	s := spark.NewShape(1, 2, 3)
+	s := candy.NewShape(1, 2, 3)
 	if s.Rank() != 3 {
 		t.Errorf("Rank([1 2 3]) = %d; want 3", s.Rank())
 	}
 }
 
 func TestShapeDims(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	dims := s.Dims()
 	if !slices.Equal(dims, []int{2, 3, 4}) {
 		t.Errorf("Dims() = %v; want [2 3 4]", dims)
@@ -105,7 +105,7 @@ func TestShapeDims(t *testing.T) {
 }
 
 func TestShapeDim(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	if s.Dim(1) != 3 {
 		t.Errorf("Dim(1) = %d; want 3", s.Dim(1))
 	}
@@ -115,7 +115,7 @@ func TestShapeDim(t *testing.T) {
 }
 
 func TestShapeDimPanic(t *testing.T) {
-	s := spark.NewShape(2, 3)
+	s := candy.NewShape(2, 3)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("Dim(2) did not panic")
@@ -125,9 +125,9 @@ func TestShapeDimPanic(t *testing.T) {
 }
 
 func TestShapeNumel(t *testing.T) {
-	s1 := spark.NewShape()
-	s2 := spark.NewShape(2, 3, 4)
-	s3 := spark.NewShape(2, 0, 4)
+	s1 := candy.NewShape()
+	s2 := candy.NewShape(2, 3, 4)
+	s3 := candy.NewShape(2, 0, 4)
 	if s1.Numel() != 1 {
 		t.Errorf("Numel([]) = %d; want 1", s1.Numel())
 	}
@@ -140,7 +140,7 @@ func TestShapeNumel(t *testing.T) {
 }
 
 func TestShapeStrideContiguous(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	strides := s.StrideContiguous()
 	if !slices.Equal(strides, []int{12, 4, 1}) {
 		t.Errorf("StrideContiguous([2 3 4]) = %v; want [12 4 1]", strides)
@@ -148,7 +148,7 @@ func TestShapeStrideContiguous(t *testing.T) {
 }
 
 func TestShapeIsContiguous(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	if !s.IsContiguous([]int{12, 4, 1}) {
 		t.Errorf("IsContiguous([12 4 1]) = false; want true")
 	}
@@ -158,7 +158,7 @@ func TestShapeIsContiguous(t *testing.T) {
 }
 
 func TestShapeIsFortranContiguous(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	if !s.IsFortranContiguous([]int{1, 2, 6}) {
 		t.Errorf("IsFortranContiguous([1 2 6]) = false; want true")
 	}
@@ -168,28 +168,28 @@ func TestShapeIsFortranContiguous(t *testing.T) {
 }
 
 func TestShapeExtend(t *testing.T) {
-	s := spark.NewShape(2, 3)
+	s := candy.NewShape(2, 3)
 	newShape := s.Extend(4, 5)
-	if !newShape.Equal(spark.NewShape(2, 3, 4, 5)) {
+	if !newShape.Equal(candy.NewShape(2, 3, 4, 5)) {
 		t.Errorf("Extend(4, 5) = %v; want [2 3 4 5]", newShape)
 	}
 }
 
 func TestShapeBroadcastShapeBinaryOp(t *testing.T) {
-	s1 := spark.NewShape(3, 1, 4)
-	s2 := spark.NewShape(2, 4)
+	s1 := candy.NewShape(3, 1, 4)
+	s2 := candy.NewShape(2, 4)
 	result, err := s1.BroadcastShapeBinaryOp(s2)
 	if err != nil {
 		t.Errorf("BroadcastShapeBinaryOp failed: %v", err)
 	}
-	if !result.Equal(spark.NewShape(3, 2, 4)) {
+	if !result.Equal(candy.NewShape(3, 2, 4)) {
 		t.Errorf("BroadcastShapeBinaryOp([3 1 4], [2 4]) = %v; want [3 2 4]", result)
 	}
 }
 
 func TestShapeBroadcastShapeBinaryOpError(t *testing.T) {
-	s1 := spark.NewShape(3, 4)
-	s2 := spark.NewShape(2, 5)
+	s1 := candy.NewShape(3, 4)
+	s2 := candy.NewShape(2, 5)
 	_, err := s1.BroadcastShapeBinaryOp(s2)
 	if err == nil {
 		t.Errorf("BroadcastShapeBinaryOp([3 4], [2 5]) did not error")
@@ -197,20 +197,20 @@ func TestShapeBroadcastShapeBinaryOpError(t *testing.T) {
 }
 
 func TestShapeBroadcastShapeMatmul(t *testing.T) {
-	s1 := spark.NewShape(2, 3, 4)
-	s2 := spark.NewShape(4, 5)
+	s1 := candy.NewShape(2, 3, 4)
+	s2 := candy.NewShape(4, 5)
 	lhs, rhs, err := s1.BroadcastShapeMatmul(s2)
 	if err != nil {
 		t.Errorf("BroadcastShapeMatmul failed: %v", err)
 	}
-	if !lhs.Equal(spark.NewShape(2, 3, 4)) || !rhs.Equal(spark.NewShape(2, 4, 5)) {
+	if !lhs.Equal(candy.NewShape(2, 3, 4)) || !rhs.Equal(candy.NewShape(2, 4, 5)) {
 		t.Errorf("BroadcastShapeMatmul([2 3 4], [4 5]) = %v, %v; want [2 3 4], [2 4 5]", lhs, rhs)
 	}
 }
 
 func TestShapeBroadcastShapeMatmulError(t *testing.T) {
-	s1 := spark.NewShape(2, 3, 5)
-	s2 := spark.NewShape(4, 5)
+	s1 := candy.NewShape(2, 3, 5)
+	s2 := candy.NewShape(4, 5)
 	_, _, err := s1.BroadcastShapeMatmul(s2)
 	if err == nil {
 		t.Errorf("BroadcastShapeMatmul([2 3 5], [4 5]) did not error")
@@ -218,8 +218,8 @@ func TestShapeBroadcastShapeMatmulError(t *testing.T) {
 }
 
 func TestShapeResolveAxes(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
-	axes, err := spark.ResolveAxes([]int{0, -1}, s)
+	s := candy.NewShape(2, 3, 4)
+	axes, err := candy.ResolveAxes([]int{0, -1}, s)
 	if err != nil {
 		t.Errorf("ResolveAxes([0, -1]) failed: %v", err)
 	}
@@ -229,26 +229,26 @@ func TestShapeResolveAxes(t *testing.T) {
 }
 
 func TestShapeResolveAxesError(t *testing.T) {
-	s := spark.NewShape(2, 3)
-	_, err := spark.ResolveAxes([]int{0, 0}, s)
+	s := candy.NewShape(2, 3)
+	_, err := candy.ResolveAxes([]int{0, 0}, s)
 	if err == nil {
 		t.Errorf("ResolveAxes([0, 0]) did not error")
 	}
 }
 
 func TestShapeDims0(t *testing.T) {
-	s := spark.NewShape()
+	s := candy.NewShape()
 	if err := s.Dims0(); err != nil {
 		t.Errorf("Dims0() failed: %v", err)
 	}
-	s2 := spark.NewShape(1)
+	s2 := candy.NewShape(1)
 	if err := s2.Dims0(); err == nil {
 		t.Errorf("Dims0([1]) did not error")
 	}
 }
 
 func TestShapeDims1(t *testing.T) {
-	s := spark.NewShape(5)
+	s := candy.NewShape(5)
 	d, err := s.Dims1()
 	if err != nil || d != 5 {
 		t.Errorf("Dims1([5]) = %d, %v; want 5, nil", d, err)
@@ -256,7 +256,7 @@ func TestShapeDims1(t *testing.T) {
 }
 
 func TestShapeDims2(t *testing.T) {
-	s := spark.NewShape(2, 3)
+	s := candy.NewShape(2, 3)
 	d1, d2, err := s.Dims2()
 	if err != nil || d1 != 2 || d2 != 3 {
 		t.Errorf("Dims2([2 3]) = %d, %d, %v; want 2, 3, nil", d1, d2, err)
@@ -264,7 +264,7 @@ func TestShapeDims2(t *testing.T) {
 }
 
 func TestShapeDims3(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	d1, d2, d3, err := s.Dims3()
 	if err != nil || d1 != 2 || d2 != 3 || d3 != 4 {
 		t.Errorf("Dims3([2 3 4]) = %d, %d, %d, %v; want 2, 3, 4, nil", d1, d2, d3, err)
@@ -272,7 +272,7 @@ func TestShapeDims3(t *testing.T) {
 }
 
 func TestShapeDims4(t *testing.T) {
-	s := spark.NewShape(2, 3, 4, 5)
+	s := candy.NewShape(2, 3, 4, 5)
 	d1, d2, d3, d4, err := s.Dims4()
 	if err != nil || d1 != 2 || d2 != 3 || d3 != 4 || d4 != 5 {
 		t.Errorf("Dims4([2 3 4 5]) = %d, %d, %d, %d, %v; want 2, 3, 4, 5, nil", d1, d2, d3, d4, err)
@@ -280,7 +280,7 @@ func TestShapeDims4(t *testing.T) {
 }
 
 func TestShapeDims5(t *testing.T) {
-	s := spark.NewShape(2, 3, 4, 5, 6)
+	s := candy.NewShape(2, 3, 4, 5, 6)
 	d1, d2, d3, d4, d5, err := s.Dims5()
 	if err != nil || d1 != 2 || d2 != 3 || d3 != 4 || d4 != 5 || d5 != 6 {
 		t.Errorf("Dims5([2 3 4 5 6]) = %d, %d, %d, %d, %d, %v; want 2, 3, 4, 5, 6, nil", d1, d2, d3, d4, d5, err)
@@ -288,18 +288,18 @@ func TestShapeDims5(t *testing.T) {
 }
 
 func TestShapeReshape(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	newShape, err := s.Reshape(4, -1, 3)
 	if err != nil {
 		t.Errorf("Reshape(4, -1, 3) failed: %v", err)
 	}
-	if !newShape.Equal(spark.NewShape(4, 2, 3)) {
+	if !newShape.Equal(candy.NewShape(4, 2, 3)) {
 		t.Errorf("Reshape(4, -1, 3) = %v; want [4 2 3]", newShape)
 	}
 }
 
 func TestShapeReshapeError(t *testing.T) {
-	s := spark.NewShape(2, 3, 4)
+	s := candy.NewShape(2, 3, 4)
 	_, err := s.Reshape(4, 5, 6)
 	if err == nil {
 		t.Errorf("Reshape(4, 5, 6) did not error")

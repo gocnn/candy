@@ -4,21 +4,21 @@ import (
 	"iter"
 	"math/rand"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // DataLoader manages batch iteration over a generic dataset.
-type DataLoader[T spark.D] struct {
+type DataLoader[T candy.D] struct {
 	dataset   *Dataset[T]
 	batchSize int
 	shuffle   bool
 	indices   []int
-	device    spark.Device
+	device    candy.Device
 }
 
 // NewDataLoader creates a DataLoader for batch iteration.
-func (ds *Dataset[T]) NewDataLoader(batchSize int, shuffle bool, device spark.Device) *DataLoader[T] {
+func (ds *Dataset[T]) NewDataLoader(batchSize int, shuffle bool, device candy.Device) *DataLoader[T] {
 	indices := make([]int, ds.Len())
 	for i := range indices {
 		indices[i] = i
@@ -73,12 +73,12 @@ func (dl *DataLoader[T]) AllTensors() iter.Seq2[*tensor.Tensor[T], *tensor.Tenso
 			}
 
 			// Create tensors
-			imageTensor, err := tensor.New(imageData, spark.NewShape(batchSize, 1, 28, 28), dl.device)
+			imageTensor, err := tensor.New(imageData, candy.NewShape(batchSize, 1, 28, 28), dl.device)
 			if err != nil {
 				panic(err) // In production, consider better error handling
 			}
 
-			labelTensor, err := tensor.New(labelData, spark.NewShape(batchSize), dl.device)
+			labelTensor, err := tensor.New(labelData, candy.NewShape(batchSize), dl.device)
 			if err != nil {
 				panic(err) // In production, consider better error handling
 			}
@@ -113,6 +113,6 @@ func (dl *DataLoader[T]) IsShuffled() bool {
 }
 
 // Device returns the device for tensor creation.
-func (dl *DataLoader[T]) Device() spark.Device {
+func (dl *DataLoader[T]) Device() candy.Device {
 	return dl.device
 }

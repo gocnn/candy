@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/dataset/progress"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/dataset/progress"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 )
 
 // Dataset holds MNIST images and labels with generic precision.
-type Dataset[T spark.D] struct {
+type Dataset[T candy.D] struct {
 	imgs  [][]T   // Normalized images [0,1]
 	lbls  []uint8 // Labels (0-9)
 	root  string
@@ -32,7 +32,7 @@ type Dataset[T spark.D] struct {
 }
 
 // New creates an MNIST dataset with specified precision type.
-func New[T spark.D](root string, train, download bool) (*Dataset[T], error) {
+func New[T candy.D](root string, train, download bool) (*Dataset[T], error) {
 	ds := &Dataset[T]{root: root, train: train}
 	if err := ds.ensureFiles(download); err != nil {
 		return nil, fmt.Errorf("failed to ensure files: %w", err)
@@ -44,7 +44,7 @@ func New[T spark.D](root string, train, download bool) (*Dataset[T], error) {
 }
 
 // MustNew creates an MNIST dataset with specified precision type, panics on error.
-func MustNew[T spark.D](root string, train, download bool) *Dataset[T] {
+func MustNew[T candy.D](root string, train, download bool) *Dataset[T] {
 	ds, err := New[T](root, train, download)
 	if err != nil {
 		panic(err)

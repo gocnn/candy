@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 func openImage(path string) (image.Image, error) {
@@ -175,13 +175,13 @@ func main() {
 	img = preprocess224(img)
 
 	xData := toCHW224(img)
-	x, err := tensor.New(xData, spark.NewShape(1, 3, 224, 224), spark.CPU)
+	x, err := tensor.New(xData, candy.NewShape(1, 3, 224, 224), candy.CPU)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "tensor.New:", err)
 		os.Exit(1)
 	}
 
-	net := NewResNet50[float32](1000, spark.CPU)
+	net := NewResNet50[float32](1000, candy.CPU)
 	net.Eval()
 	if err := net.Load(*weights); err != nil {
 		fmt.Fprintln(os.Stderr, "load weights:", err)

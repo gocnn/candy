@@ -1,4 +1,4 @@
-module github.com/gocnn/spark
+module github.com/gocnn/candy
 
 go 1.25
 

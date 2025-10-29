@@ -3,12 +3,12 @@ package mnist
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
+	"github.com/gocnn/candy"
 )
 
 // PrintImage displays a 28x28 MNIST image as ASCII art in the terminal.
 // This function automatically handles different numeric types appropriately.
-func PrintImage[T spark.D](pixels []T) {
+func PrintImage[T candy.D](pixels []T) {
 	// Use any to work around type constraints
 	switch p := any(pixels).(type) {
 	case []float32:

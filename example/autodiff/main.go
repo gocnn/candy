@@ -3,15 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // Computes f(x, y) = sqrt((x + y) * (x - y)) + x / y and its gradients
 func main() {
 	// Initialize input tensors
-	x := tensor.MustNew([]float64{3.0}, spark.NewShape(1), spark.CPU).RequiresGrad()
-	y := tensor.MustNew([]float64{2.0}, spark.NewShape(1), spark.CPU).RequiresGrad()
+	x := tensor.MustNew([]float64{3.0}, candy.NewShape(1), candy.CPU).RequiresGrad()
+	y := tensor.MustNew([]float64{2.0}, candy.NewShape(1), candy.CPU).RequiresGrad()
 
 	// Forward pass
 	result := x.MustAdd(y).MustMul(x.MustSub(y)).MustSqrt().MustAdd(x.MustDiv(y))

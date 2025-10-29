@@ -1,9 +1,9 @@
 package kernels
 
-import "github.com/gocnn/spark"
+import "github.com/gocnn/candy"
 
 type D interface {
-	spark.D
+	candy.D
 
 	~float32 | ~float64 | ~uint8 | ~uint32 | ~int64
 }

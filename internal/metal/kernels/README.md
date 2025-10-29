@@ -1,6 +1,6 @@
 # Metal Kernels
 
-This package contains Metal kernels used from spark. Some of these implementations
+This package contains Metal kernels used from candy. Some of these implementations
 come from the [candle-kernels crate](https://github.com/huggingface/candle).
 
 ## License

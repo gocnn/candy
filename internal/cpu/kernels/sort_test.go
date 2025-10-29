@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func TestAsortAscI64F32(t *testing.T) {

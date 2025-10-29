@@ -3,11 +3,11 @@ package nn
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
-type BatchNorm2d[T spark.D] struct {
+type BatchNorm2d[T candy.D] struct {
 	numFeatures int
 	runningMean *tensor.Tensor[T]
 	runningVar  *tensor.Tensor[T]
@@ -18,24 +18,24 @@ type BatchNorm2d[T spark.D] struct {
 	train       bool
 }
 
-func NewBatchNorm2d[T spark.D](numFeatures int, device spark.Device) *BatchNorm2d[T] {
+func NewBatchNorm2d[T candy.D](numFeatures int, device candy.Device) *BatchNorm2d[T] {
 	if numFeatures <= 0 {
 		panic("batchnorm2d: numFeatures must be > 0")
 	}
-	rm, err := tensor.Zeros[T](spark.NewShape(numFeatures), device)
+	rm, err := tensor.Zeros[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: running mean: %w", err))
 	}
-	rv, err := tensor.Ones[T](spark.NewShape(numFeatures), device)
+	rv, err := tensor.Ones[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: running var: %w", err))
 	}
-	w, err := tensor.Ones[T](spark.NewShape(numFeatures), device)
+	w, err := tensor.Ones[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: weight: %w", err))
 	}
 	w.SetIsVar(true)
-	b, err := tensor.Zeros[T](spark.NewShape(numFeatures), device)
+	b, err := tensor.Zeros[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: bias: %w", err))
 	}
@@ -52,15 +52,15 @@ func NewBatchNorm2d[T spark.D](numFeatures int, device spark.Device) *BatchNorm2
 	}
 }
 
-func NewBatchNorm2dNoAffine[T spark.D](numFeatures int, device spark.Device) *BatchNorm2d[T] {
+func NewBatchNorm2dNoAffine[T candy.D](numFeatures int, device candy.Device) *BatchNorm2d[T] {
 	if numFeatures <= 0 {
 		panic("batchnorm2d: numFeatures must be > 0")
 	}
-	rm, err := tensor.Zeros[T](spark.NewShape(numFeatures), device)
+	rm, err := tensor.Zeros[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: running mean: %w", err))
 	}
-	rv, err := tensor.Ones[T](spark.NewShape(numFeatures), device)
+	rv, err := tensor.Ones[T](candy.NewShape(numFeatures), device)
 	if err != nil {
 		panic(fmt.Errorf("batchnorm2d: running var: %w", err))
 	}

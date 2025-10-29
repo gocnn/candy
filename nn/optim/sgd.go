@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 var _ Optimizer[float32] = (*SGD[float32])(nil)
@@ -13,13 +13,13 @@ var _ Optimizer[float64] = (*SGD[float64])(nil)
 
 // SGD implements the Stochastic Gradient Descent optimizer.
 // Contrary to the PyTorch implementation of SGD, this version does not support momentum.
-type SGD[T spark.D] struct {
+type SGD[T candy.D] struct {
 	vs []*tensor.Tensor[T] // Variables to optimize
 	lr float64             // Learning rate
 }
 
 // NewSGD creates a new SGD optimizer with the given variables and learning rate.
-func NewSGD[T spark.D](vars []*tensor.Tensor[T], lr float64) (*SGD[T], error) {
+func NewSGD[T candy.D](vars []*tensor.Tensor[T], lr float64) (*SGD[T], error) {
 	vs := make([]*tensor.Tensor[T], 0, len(vars))
 	for _, v := range vars {
 		if v.IsVar() {

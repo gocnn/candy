@@ -1,11 +1,11 @@
 # NPY/NPZ Read Example
 
-Demonstrates reading NPY/NPZ files using Spark framework.
+Demonstrates reading NPY/NPZ files using candy framework.
 
 ```bash
 # Generate NPY/NPZ files
 python main.py
 
-# Read with Spark
+# Read with candy
 go run mian.go
 ```

@@ -5,27 +5,27 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
-var _ spark.BackendStorage[float32] = (*CpuStorage[float32])(nil)
-var _ spark.BackendStorage[float64] = (*CpuStorage[float64])(nil)
-var _ spark.BackendStorage[uint8] = (*CpuStorage[uint8])(nil)
-var _ spark.BackendStorage[uint32] = (*CpuStorage[uint32])(nil)
-var _ spark.BackendStorage[int64] = (*CpuStorage[int64])(nil)
+var _ candy.BackendStorage[float32] = (*CpuStorage[float32])(nil)
+var _ candy.BackendStorage[float64] = (*CpuStorage[float64])(nil)
+var _ candy.BackendStorage[uint8] = (*CpuStorage[uint8])(nil)
+var _ candy.BackendStorage[uint32] = (*CpuStorage[uint32])(nil)
+var _ candy.BackendStorage[int64] = (*CpuStorage[int64])(nil)
 
 type CpuStorage[T kernels.D] struct {
 	data   []T
 	device *CpuDevice[T]
-	dtype  spark.DType
+	dtype  candy.DType
 }
 
 func New[T kernels.D](data []T) *CpuStorage[T] {
-	return &CpuStorage[T]{data: data, device: &CpuDevice[T]{}, dtype: spark.DTypeOf[T]()}
+	return &CpuStorage[T]{data: data, device: &CpuDevice[T]{}, dtype: candy.DTypeOf[T]()}
 }
 
-func (s *CpuStorage[T]) Clone() (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Clone() (candy.BackendStorage[T], error) {
 	return &CpuStorage[T]{data: slices.Clone(s.data), device: s.device, dtype: s.dtype}, nil
 }
 
@@ -33,16 +33,16 @@ func (s *CpuStorage[T]) Data() []T {
 	return s.data
 }
 
-func (s *CpuStorage[T]) Device() spark.BackendDevice[T] {
+func (s *CpuStorage[T]) Device() candy.BackendDevice[T] {
 	return s.device
 }
 
-func (s *CpuStorage[T]) DType() spark.DType {
+func (s *CpuStorage[T]) DType() candy.DType {
 	return s.dtype
 }
 
 // Affine performs an affine transformation on the storage.
-func (s *CpuStorage[T]) Affine(layout *spark.Layout, scale, bias T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Affine(layout *candy.Layout, scale, bias T) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -66,7 +66,7 @@ func (s *CpuStorage[T]) Affine(layout *spark.Layout, scale, bias T) (spark.Backe
 }
 
 // Add performs element-wise addition of two tensors.
-func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Add(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -101,7 +101,7 @@ func (s *CpuStorage[T]) Add(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Sub performs element-wise subtraction of two tensors.
-func (s *CpuStorage[T]) Sub(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sub(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -136,7 +136,7 @@ func (s *CpuStorage[T]) Sub(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Mul performs element-wise multiplication of two tensors.
-func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Mul(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -171,7 +171,7 @@ func (s *CpuStorage[T]) Mul(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Div performs element-wise division of two tensors.
-func (s *CpuStorage[T]) Div(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Div(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -206,7 +206,7 @@ func (s *CpuStorage[T]) Div(rhs spark.BackendStorage[T], lhsLayout *spark.Layout
 }
 
 // Max performs element-wise maximum of two tensors.
-func (s *CpuStorage[T]) Maximum(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Maximum(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -241,7 +241,7 @@ func (s *CpuStorage[T]) Maximum(rhs spark.BackendStorage[T], lhsLayout *spark.La
 }
 
 // Min performs element-wise minimum of two tensors.
-func (s *CpuStorage[T]) Minimum(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Minimum(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -276,7 +276,7 @@ func (s *CpuStorage[T]) Minimum(rhs spark.BackendStorage[T], lhsLayout *spark.La
 }
 
 // Eq performs element-wise equality comparison of two tensors.
-func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Eq(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -311,7 +311,7 @@ func (s *CpuStorage[T]) Eq(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Ne performs element-wise not-equal comparison of two tensors.
-func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Ne(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -346,7 +346,7 @@ func (s *CpuStorage[T]) Ne(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Lt performs element-wise less-than comparison of two tensors.
-func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Lt(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -381,7 +381,7 @@ func (s *CpuStorage[T]) Lt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Le performs element-wise less-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Le(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -416,7 +416,7 @@ func (s *CpuStorage[T]) Le(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Gt performs element-wise greater-than comparison of two tensors.
-func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Gt(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -451,7 +451,7 @@ func (s *CpuStorage[T]) Gt(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // Ge performs element-wise greater-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Ge(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -486,7 +486,7 @@ func (s *CpuStorage[T]) Ge(rhs spark.BackendStorage[T], lhsLayout *spark.Layout,
 }
 
 // EqU8 performs element-wise equality comparison of two tensors.
-func (s *CpuStorage[T]) EqU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) EqU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -521,7 +521,7 @@ func (s *CpuStorage[T]) EqU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // NeU8 performs element-wise not-equal comparison of two tensors.
-func (s *CpuStorage[T]) NeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) NeU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -556,7 +556,7 @@ func (s *CpuStorage[T]) NeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // LtU8 performs element-wise less-than comparison of two tensors.
-func (s *CpuStorage[T]) LtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) LtU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -591,7 +591,7 @@ func (s *CpuStorage[T]) LtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // LeU8 performs element-wise less-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) LeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) LeU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -626,7 +626,7 @@ func (s *CpuStorage[T]) LeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // GtU8 performs element-wise greater-than comparison of two tensors.
-func (s *CpuStorage[T]) GtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) GtU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -661,7 +661,7 @@ func (s *CpuStorage[T]) GtU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // GeU8 performs element-wise greater-than-or-equal comparison of two tensors.
-func (s *CpuStorage[T]) GeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layout, rhsLayout *spark.Layout, resLayout *spark.Layout) (spark.BackendStorage[uint8], error) {
+func (s *CpuStorage[T]) GeU8(rhs candy.BackendStorage[T], lhsLayout *candy.Layout, rhsLayout *candy.Layout, resLayout *candy.Layout) (candy.BackendStorage[uint8], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -696,7 +696,7 @@ func (s *CpuStorage[T]) GeU8(rhs spark.BackendStorage[T], lhsLayout *spark.Layou
 }
 
 // ToDtype performs type conversion to the specified target type.
-func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) ToDtype(layout *candy.Layout, dtype candy.DType) (any, error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -713,41 +713,41 @@ func (s *CpuStorage[T]) ToDtype(layout *spark.Layout, dtype spark.DType) (any, e
 
 	// Handle type conversions based on source type
 	switch srcDtype {
-	case spark.F32:
+	case candy.F32:
 		return s.CastFromF32(numel, layout, dtype)
-	case spark.F64:
+	case candy.F64:
 		return s.CastFromF64(numel, layout, dtype)
-	case spark.U8:
+	case candy.U8:
 		return s.CastFromU8(numel, layout, dtype)
-	case spark.U32:
+	case candy.U32:
 		return s.CastFromU32(numel, layout, dtype)
-	case spark.I64:
+	case candy.I64:
 		return s.CastFromI64(numel, layout, dtype)
 	default:
 		return nil, errors.New("unsupported source type: " + srcDtype.String())
 	}
 }
 
-func (s *CpuStorage[T]) CastFromF32(numel int, layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) CastFromF32(numel int, layout *candy.Layout, dtype candy.DType) (any, error) {
 	srcData := any(s.data).([]float32)
 	stride := layout.Stride()
 	dims := layout.Dims()
 	ndims := layout.Rank()
 
 	switch dtype {
-	case spark.F64:
+	case candy.F64:
 		result := New(make([]float64, numel))
 		kernels.CastStridedF32F64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U8:
+	case candy.U8:
 		result := New(make([]uint8, numel))
 		kernels.CastStridedF32U8(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U32:
+	case candy.U32:
 		result := New(make([]uint32, numel))
 		kernels.CastStridedF32U32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.I64:
+	case candy.I64:
 		result := New(make([]int64, numel))
 		kernels.CastStridedF32I64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
@@ -755,26 +755,26 @@ func (s *CpuStorage[T]) CastFromF32(numel int, layout *spark.Layout, dtype spark
 	return nil, errors.New("unsupported target type: " + dtype.String())
 }
 
-func (s *CpuStorage[T]) CastFromF64(numel int, layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) CastFromF64(numel int, layout *candy.Layout, dtype candy.DType) (any, error) {
 	srcData := any(s.data).([]float64)
 	stride := layout.Stride()
 	dims := layout.Dims()
 	ndims := layout.Rank()
 
 	switch dtype {
-	case spark.F32:
+	case candy.F32:
 		result := New(make([]float32, numel))
 		kernels.CastStridedF64F32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U8:
+	case candy.U8:
 		result := New(make([]uint8, numel))
 		kernels.CastStridedF64U8(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U32:
+	case candy.U32:
 		result := New(make([]uint32, numel))
 		kernels.CastStridedF64U32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.I64:
+	case candy.I64:
 		result := New(make([]int64, numel))
 		kernels.CastStridedF64I64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
@@ -782,26 +782,26 @@ func (s *CpuStorage[T]) CastFromF64(numel int, layout *spark.Layout, dtype spark
 	return nil, errors.New("unsupported target type: " + dtype.String())
 }
 
-func (s *CpuStorage[T]) CastFromU8(numel int, layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) CastFromU8(numel int, layout *candy.Layout, dtype candy.DType) (any, error) {
 	srcData := any(s.data).([]uint8)
 	stride := layout.Stride()
 	dims := layout.Dims()
 	ndims := layout.Rank()
 
 	switch dtype {
-	case spark.F32:
+	case candy.F32:
 		result := New(make([]float32, numel))
 		kernels.CastStridedU8F32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.F64:
+	case candy.F64:
 		result := New(make([]float64, numel))
 		kernels.CastStridedU8F64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U32:
+	case candy.U32:
 		result := New(make([]uint32, numel))
 		kernels.CastStridedU8U32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.I64:
+	case candy.I64:
 		result := New(make([]int64, numel))
 		kernels.CastStridedU8I64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
@@ -809,26 +809,26 @@ func (s *CpuStorage[T]) CastFromU8(numel int, layout *spark.Layout, dtype spark.
 	return nil, errors.New("unsupported target type: " + dtype.String())
 }
 
-func (s *CpuStorage[T]) CastFromU32(numel int, layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) CastFromU32(numel int, layout *candy.Layout, dtype candy.DType) (any, error) {
 	srcData := any(s.data).([]uint32)
 	stride := layout.Stride()
 	dims := layout.Dims()
 	ndims := layout.Rank()
 
 	switch dtype {
-	case spark.F32:
+	case candy.F32:
 		result := New(make([]float32, numel))
 		kernels.CastStridedU32F32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.F64:
+	case candy.F64:
 		result := New(make([]float64, numel))
 		kernels.CastStridedU32F64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U8:
+	case candy.U8:
 		result := New(make([]uint8, numel))
 		kernels.CastStridedU32U8(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.I64:
+	case candy.I64:
 		result := New(make([]int64, numel))
 		kernels.CastStridedU32I64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
@@ -836,26 +836,26 @@ func (s *CpuStorage[T]) CastFromU32(numel int, layout *spark.Layout, dtype spark
 	return nil, errors.New("unsupported target type: " + dtype.String())
 }
 
-func (s *CpuStorage[T]) CastFromI64(numel int, layout *spark.Layout, dtype spark.DType) (any, error) {
+func (s *CpuStorage[T]) CastFromI64(numel int, layout *candy.Layout, dtype candy.DType) (any, error) {
 	srcData := any(s.data).([]int64)
 	stride := layout.Stride()
 	dims := layout.Dims()
 	ndims := layout.Rank()
 
 	switch dtype {
-	case spark.F32:
+	case candy.F32:
 		result := New(make([]float32, numel))
 		kernels.CastStridedI64F32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.F64:
+	case candy.F64:
 		result := New(make([]float64, numel))
 		kernels.CastStridedI64F64(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U8:
+	case candy.U8:
 		result := New(make([]uint8, numel))
 		kernels.CastStridedI64U8(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
-	case spark.U32:
+	case candy.U32:
 		result := New(make([]uint32, numel))
 		kernels.CastStridedI64U32(numel, ndims, dims, stride, stride, srcData, result.data)
 		return result, nil
@@ -864,7 +864,7 @@ func (s *CpuStorage[T]) CastFromI64(numel int, layout *spark.Layout, dtype spark
 }
 
 // MatMul performs matrix multiplication: C = A * B
-func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage[T], rhsLayout *spark.Layout, b, m, n, k int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) MatMul(lhsLayout *candy.Layout, rhs candy.BackendStorage[T], rhsLayout *candy.Layout, b, m, n, k int) (candy.BackendStorage[T], error) {
 	rhsC, ok := rhs.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("rhs storage must be CpuStorage")
@@ -1017,7 +1017,7 @@ func (s *CpuStorage[T]) MatMul(lhsLayout *spark.Layout, rhs spark.BackendStorage
 }
 
 // Conv1d performs 1D convolution using im2col + BLAS for supported types.
-func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.Conv1DParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Conv1d(layout *candy.Layout, kernel candy.BackendStorage[T], kernelLayout *candy.Layout, params *candy.Conv1DParams) (candy.BackendStorage[T], error) {
 	kernelC, ok := kernel.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("kernel storage must be CpuStorage")
@@ -1124,7 +1124,7 @@ func (s *CpuStorage[T]) Conv1d(layout *spark.Layout, kernel spark.BackendStorage
 }
 
 // ConvTranspose1d performs 1D transposed convolution (deconvolution) for supported types.
-func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ConvT1DParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) ConvTranspose1d(layout *candy.Layout, kernel candy.BackendStorage[T], kernelLayout *candy.Layout, params *candy.ConvT1DParams) (candy.BackendStorage[T], error) {
 	kernelC, ok := kernel.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("kernel storage must be CpuStorage")
@@ -1201,7 +1201,7 @@ func (s *CpuStorage[T]) ConvTranspose1d(layout *spark.Layout, kernel spark.Backe
 }
 
 // Conv2d performs 2D convolution using im2col + BLAS for supported types.
-func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.Conv2DParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Conv2d(layout *candy.Layout, kernel candy.BackendStorage[T], kernelLayout *candy.Layout, params *candy.Conv2DParams) (candy.BackendStorage[T], error) {
 	kernelC, ok := kernel.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("kernel storage must be CpuStorage")
@@ -1320,7 +1320,7 @@ func (s *CpuStorage[T]) Conv2d(layout *spark.Layout, kernel spark.BackendStorage
 }
 
 // ConvTranspose2d performs 2D transposed convolution (deconvolution) for supported types.
-func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.BackendStorage[T], kernelLayout *spark.Layout, params *spark.ConvT2DParams) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) ConvTranspose2d(layout *candy.Layout, kernel candy.BackendStorage[T], kernelLayout *candy.Layout, params *candy.ConvT2DParams) (candy.BackendStorage[T], error) {
 	kernelC, ok := kernel.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("kernel storage must be CpuStorage")
@@ -1406,7 +1406,7 @@ func (s *CpuStorage[T]) ConvTranspose2d(layout *spark.Layout, kernel spark.Backe
 }
 
 // AvgPool2d performs 2D average pooling for supported types.
-func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) AvgPool2d(layout *candy.Layout, kH, kW, sH, sW int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1496,7 +1496,7 @@ func (s *CpuStorage[T]) AvgPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spa
 }
 
 // MaxPool2d performs 2D max pooling for supported types.
-func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) MaxPool2d(layout *candy.Layout, kH, kW, sH, sW int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1590,7 +1590,7 @@ func (s *CpuStorage[T]) MaxPool2d(layout *spark.Layout, kH, kW, sH, sW int) (spa
 }
 
 // UpsampleNearest2d performs 2D nearest neighbor upsampling for supported types.
-func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, targetH, targetW int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) UpsampleNearest2d(layout *candy.Layout, targetH, targetW int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1676,7 +1676,7 @@ func (s *CpuStorage[T]) UpsampleNearest2d(layout *spark.Layout, targetH, targetW
 }
 
 // ConstSet sets all elements to a constant value for supported types.
-func (s *CpuStorage[T]) ConstSet(layout *spark.Layout, val T) error {
+func (s *CpuStorage[T]) ConstSet(layout *candy.Layout, val T) error {
 	if layout == nil {
 		return errors.New("layout cannot be nil")
 	}
@@ -1699,7 +1699,7 @@ func (s *CpuStorage[T]) ConstSet(layout *spark.Layout, val T) error {
 }
 
 // Gather performs gather operation along a specified dimension with same-type indices
-func (s *CpuStorage[T]) Gather(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Gather(layout *candy.Layout, ids candy.BackendStorage[T], idsLayout *candy.Layout, dim int) (candy.BackendStorage[T], error) {
 	if layout == nil || idsLayout == nil {
 		return nil, errors.New("layout and idsLayout cannot be nil")
 	}
@@ -1765,7 +1765,7 @@ func (s *CpuStorage[T]) Gather(layout *spark.Layout, ids spark.BackendStorage[T]
 }
 
 // Scatter performs scatter operation along a specified dimension with same-type indices
-func (s *CpuStorage[T]) Scatter(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, src spark.BackendStorage[T], srcLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Scatter(layout *candy.Layout, ids candy.BackendStorage[T], idsLayout *candy.Layout, src candy.BackendStorage[T], srcLayout *candy.Layout, dim int) (candy.BackendStorage[T], error) {
 	if layout == nil || idsLayout == nil || srcLayout == nil {
 		return nil, errors.New("layouts cannot be nil")
 	}
@@ -1832,7 +1832,7 @@ func (s *CpuStorage[T]) Scatter(layout *spark.Layout, ids spark.BackendStorage[T
 }
 
 // ScatterAdd performs scatter-add operation along a specified dimension with same-type indices
-func (s *CpuStorage[T]) ScatterAdd(layout *spark.Layout, ids spark.BackendStorage[T], idsLayout *spark.Layout, src spark.BackendStorage[T], srcLayout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) ScatterAdd(layout *candy.Layout, ids candy.BackendStorage[T], idsLayout *candy.Layout, src candy.BackendStorage[T], srcLayout *candy.Layout, dim int) (candy.BackendStorage[T], error) {
 	if layout == nil || idsLayout == nil || srcLayout == nil {
 		return nil, errors.New("layouts cannot be nil")
 	}
@@ -1899,7 +1899,7 @@ func (s *CpuStorage[T]) ScatterAdd(layout *spark.Layout, ids spark.BackendStorag
 }
 
 // Copy2d copies a 2D region from source to destination for supported types.
-func (s *CpuStorage[T]) Copy2d(dst spark.BackendStorage[T], d1, d2 int, srcStride1, dstStride1, srcOffset, dstOffset int) error {
+func (s *CpuStorage[T]) Copy2d(dst candy.BackendStorage[T], d1, d2 int, srcStride1, dstStride1, srcOffset, dstOffset int) error {
 	dstC, ok := dst.(*CpuStorage[T])
 	if !ok {
 		return errors.New("dst storage must be CpuStorage")
@@ -1938,7 +1938,7 @@ func (s *CpuStorage[T]) Copy2d(dst spark.BackendStorage[T], d1, d2 int, srcStrid
 }
 
 // FastSum computes the sum over the last dimension
-func (s *CpuStorage[T]) FastSum(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastSum(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1968,7 +1968,7 @@ func (s *CpuStorage[T]) FastSum(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // FastMin computes the minimum over the last dimension
-func (s *CpuStorage[T]) FastMin(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastMin(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -1998,7 +1998,7 @@ func (s *CpuStorage[T]) FastMin(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // FastMax computes the maximum over the last dimension
-func (s *CpuStorage[T]) FastMax(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastMax(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2028,7 +2028,7 @@ func (s *CpuStorage[T]) FastMax(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // FastArgmin computes the indices of minimum values over the last dimension
-func (s *CpuStorage[T]) FastArgmin(layout *spark.Layout) (spark.BackendStorage[uint32], error) {
+func (s *CpuStorage[T]) FastArgmin(layout *candy.Layout) (candy.BackendStorage[uint32], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2058,7 +2058,7 @@ func (s *CpuStorage[T]) FastArgmin(layout *spark.Layout) (spark.BackendStorage[u
 }
 
 // FastArgmax computes the indices of maximum values over the last dimension
-func (s *CpuStorage[T]) FastArgmax(layout *spark.Layout) (spark.BackendStorage[uint32], error) {
+func (s *CpuStorage[T]) FastArgmax(layout *candy.Layout) (candy.BackendStorage[uint32], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2087,7 +2087,7 @@ func (s *CpuStorage[T]) FastArgmax(layout *spark.Layout) (spark.BackendStorage[u
 	return result, nil
 }
 
-func (s *CpuStorage[T]) Sum(layout *spark.Layout, dims []int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sum(layout *candy.Layout, dims []int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2129,7 +2129,7 @@ func (s *CpuStorage[T]) Sum(layout *spark.Layout, dims []int) (spark.BackendStor
 }
 
 // Min computes the minimum over the specified dimension
-func (s *CpuStorage[T]) Min(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Min(layout *candy.Layout, dim int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2172,7 +2172,7 @@ func (s *CpuStorage[T]) Min(layout *spark.Layout, dim int) (spark.BackendStorage
 }
 
 // Max computes the maximum over the specified dimension
-func (s *CpuStorage[T]) Max(layout *spark.Layout, dim int) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Max(layout *candy.Layout, dim int) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2215,7 +2215,7 @@ func (s *CpuStorage[T]) Max(layout *spark.Layout, dim int) (spark.BackendStorage
 }
 
 // Argmin computes the index of minimum over the specified dimension
-func (s *CpuStorage[T]) Argmin(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+func (s *CpuStorage[T]) Argmin(layout *candy.Layout, dim int) (candy.BackendStorage[uint32], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2258,7 +2258,7 @@ func (s *CpuStorage[T]) Argmin(layout *spark.Layout, dim int) (spark.BackendStor
 }
 
 // Argmax computes the index of maximum over the specified dimension
-func (s *CpuStorage[T]) Argmax(layout *spark.Layout, dim int) (spark.BackendStorage[uint32], error) {
+func (s *CpuStorage[T]) Argmax(layout *candy.Layout, dim int) (candy.BackendStorage[uint32], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2301,7 +2301,7 @@ func (s *CpuStorage[T]) Argmax(layout *spark.Layout, dim int) (spark.BackendStor
 }
 
 // FastSoftmax performs softmax along the last dimension
-func (s *CpuStorage[T]) FastSoftmax(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastSoftmax(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2325,7 +2325,7 @@ func (s *CpuStorage[T]) FastSoftmax(layout *spark.Layout) (spark.BackendStorage[
 }
 
 // FastRmsNorm performs RMS normalization along the last dimension
-func (s *CpuStorage[T]) FastRmsNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastRmsNorm(layout *candy.Layout, alpha candy.BackendStorage[T], alphaLayout *candy.Layout, eps T) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2369,7 +2369,7 @@ func (s *CpuStorage[T]) FastRmsNorm(layout *spark.Layout, alpha spark.BackendSto
 }
 
 // FastLayerNorm performs Layer normalization along the last dimension
-func (s *CpuStorage[T]) FastLayerNorm(layout *spark.Layout, alpha spark.BackendStorage[T], alphaLayout *spark.Layout, beta spark.BackendStorage[T], betaLayout *spark.Layout, eps T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) FastLayerNorm(layout *candy.Layout, alpha candy.BackendStorage[T], alphaLayout *candy.Layout, beta candy.BackendStorage[T], betaLayout *candy.Layout, eps T) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2425,7 +2425,7 @@ func (s *CpuStorage[T]) FastLayerNorm(layout *spark.Layout, alpha spark.BackendS
 }
 
 // RopeI performs rotary position embedding (rope_i variant)
-func (s *CpuStorage[T]) RopeI(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) RopeI(layout *candy.Layout, cos candy.BackendStorage[T], cosLayout *candy.Layout, sin candy.BackendStorage[T], sinLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2499,7 +2499,7 @@ func (s *CpuStorage[T]) RopeI(layout *spark.Layout, cos spark.BackendStorage[T],
 }
 
 // Rope performs rotary position embedding (rope variant)
-func (s *CpuStorage[T]) Rope(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Rope(layout *candy.Layout, cos candy.BackendStorage[T], cosLayout *candy.Layout, sin candy.BackendStorage[T], sinLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2574,7 +2574,7 @@ func (s *CpuStorage[T]) Rope(layout *spark.Layout, cos spark.BackendStorage[T], 
 }
 
 // RopeThd performs rotary position embedding (rope_thd variant)
-func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, cos spark.BackendStorage[T], cosLayout *spark.Layout, sin spark.BackendStorage[T], sinLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) RopeThd(layout *candy.Layout, cos candy.BackendStorage[T], cosLayout *candy.Layout, sin candy.BackendStorage[T], sinLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2650,7 +2650,7 @@ func (s *CpuStorage[T]) RopeThd(layout *spark.Layout, cos spark.BackendStorage[T
 // WhereCond performs element-wise selection based on condition.
 // If s[i] != 0, result[i] = t[i], otherwise result[i] = f[i].
 // Note: s can be uint8, uint32, or int64 type (condition mask).
-func (s *CpuStorage[T]) WhereCond(condLayout *spark.Layout, t spark.BackendStorage[T], tLayout *spark.Layout, f spark.BackendStorage[T], fLayout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) WhereCond(condLayout *candy.Layout, t candy.BackendStorage[T], tLayout *candy.Layout, f candy.BackendStorage[T], fLayout *candy.Layout) (candy.BackendStorage[T], error) {
 	tC, ok := t.(*CpuStorage[T])
 	if !ok {
 		return nil, errors.New("true storage must be CpuStorage")
@@ -2725,7 +2725,7 @@ func (s *CpuStorage[T]) WhereCond(condLayout *spark.Layout, t spark.BackendStora
 }
 
 // Copy performs element-wise copy operation
-func (s *CpuStorage[T]) Copy(layout *spark.Layout, src spark.BackendStorage[T]) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Copy(layout *candy.Layout, src candy.BackendStorage[T]) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2751,7 +2751,7 @@ func (s *CpuStorage[T]) Copy(layout *spark.Layout, src spark.BackendStorage[T]) 
 }
 
 // Neg performs element-wise negation operation
-func (s *CpuStorage[T]) Neg(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Neg(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2776,7 +2776,7 @@ func (s *CpuStorage[T]) Neg(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Recip performs element-wise reciprocal operation
-func (s *CpuStorage[T]) Recip(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Recip(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2801,7 +2801,7 @@ func (s *CpuStorage[T]) Recip(layout *spark.Layout) (spark.BackendStorage[T], er
 }
 
 // Exp performs element-wise exponential operation
-func (s *CpuStorage[T]) Exp(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Exp(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2822,7 +2822,7 @@ func (s *CpuStorage[T]) Exp(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Log performs element-wise logarithm operation
-func (s *CpuStorage[T]) Log(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Log(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2843,7 +2843,7 @@ func (s *CpuStorage[T]) Log(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Sin performs element-wise sine operation
-func (s *CpuStorage[T]) Sin(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sin(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2864,7 +2864,7 @@ func (s *CpuStorage[T]) Sin(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Cos performs element-wise cosine operation
-func (s *CpuStorage[T]) Cos(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Cos(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2885,7 +2885,7 @@ func (s *CpuStorage[T]) Cos(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Tanh performs element-wise hyperbolic tangent operation
-func (s *CpuStorage[T]) Tanh(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Tanh(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2906,7 +2906,7 @@ func (s *CpuStorage[T]) Tanh(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // Erf performs element-wise error function operation
-func (s *CpuStorage[T]) Erf(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Erf(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2927,7 +2927,7 @@ func (s *CpuStorage[T]) Erf(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Ceil performs element-wise ceiling operation
-func (s *CpuStorage[T]) Ceil(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Ceil(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2948,7 +2948,7 @@ func (s *CpuStorage[T]) Ceil(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // Floor performs element-wise floor operation
-func (s *CpuStorage[T]) Floor(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Floor(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2969,7 +2969,7 @@ func (s *CpuStorage[T]) Floor(layout *spark.Layout) (spark.BackendStorage[T], er
 }
 
 // Round performs element-wise round operation
-func (s *CpuStorage[T]) Round(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Round(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -2990,7 +2990,7 @@ func (s *CpuStorage[T]) Round(layout *spark.Layout) (spark.BackendStorage[T], er
 }
 
 // Normcdf performs element-wise normal CDF operation
-func (s *CpuStorage[T]) Normcdf(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Normcdf(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3011,7 +3011,7 @@ func (s *CpuStorage[T]) Normcdf(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // Abs performs element-wise absolute value operation
-func (s *CpuStorage[T]) Abs(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Abs(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3032,7 +3032,7 @@ func (s *CpuStorage[T]) Abs(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Sqr performs element-wise square operation
-func (s *CpuStorage[T]) Sqr(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sqr(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3053,7 +3053,7 @@ func (s *CpuStorage[T]) Sqr(layout *spark.Layout) (spark.BackendStorage[T], erro
 }
 
 // Sqrt performs element-wise square root operation
-func (s *CpuStorage[T]) Sqrt(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sqrt(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3078,7 +3078,7 @@ func (s *CpuStorage[T]) Sqrt(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // Gelu performs element-wise GELU activation operation
-func (s *CpuStorage[T]) Gelu(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Gelu(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3099,7 +3099,7 @@ func (s *CpuStorage[T]) Gelu(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // GeluErf performs element-wise GELU (ERF-based) activation operation
-func (s *CpuStorage[T]) GeluErf(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) GeluErf(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3120,7 +3120,7 @@ func (s *CpuStorage[T]) GeluErf(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // Relu performs element-wise ReLU activation operation
-func (s *CpuStorage[T]) Relu(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Relu(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3141,7 +3141,7 @@ func (s *CpuStorage[T]) Relu(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // Elu performs element-wise ELU activation operation with parameter alpha
-func (s *CpuStorage[T]) Elu(layout *spark.Layout, alpha T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Elu(layout *candy.Layout, alpha T) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3163,7 +3163,7 @@ func (s *CpuStorage[T]) Elu(layout *spark.Layout, alpha T) (spark.BackendStorage
 }
 
 // Silu performs element-wise SiLU (Swish) activation operation
-func (s *CpuStorage[T]) Silu(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Silu(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3184,7 +3184,7 @@ func (s *CpuStorage[T]) Silu(layout *spark.Layout) (spark.BackendStorage[T], err
 }
 
 // Powf performs element-wise power operation with parameter param
-func (s *CpuStorage[T]) Powf(layout *spark.Layout, param T) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Powf(layout *candy.Layout, param T) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3206,7 +3206,7 @@ func (s *CpuStorage[T]) Powf(layout *spark.Layout, param T) (spark.BackendStorag
 }
 
 // Sigmoid performs element-wise sigmoid activation operation
-func (s *CpuStorage[T]) Sigmoid(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sigmoid(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}
@@ -3227,7 +3227,7 @@ func (s *CpuStorage[T]) Sigmoid(layout *spark.Layout) (spark.BackendStorage[T], 
 }
 
 // Sign performs element-wise sign operation
-func (s *CpuStorage[T]) Sign(layout *spark.Layout) (spark.BackendStorage[T], error) {
+func (s *CpuStorage[T]) Sign(layout *candy.Layout) (candy.BackendStorage[T], error) {
 	if layout == nil {
 		return nil, errors.New("layout cannot be nil")
 	}

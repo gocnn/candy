@@ -1,4 +1,4 @@
-package spark
+package candy
 
 // FwdAlgo represents forward convolution algorithms supported by cuDNN.
 type FwdAlgo int

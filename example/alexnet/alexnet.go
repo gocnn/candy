@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn"
+	"github.com/gocnn/candy/tensor"
 )
 
 // AlexNet defines the AlexNet architecture (ImageNet variant).
 // Dropout is applied only in training mode.
-type AlexNet[T spark.D] struct {
+type AlexNet[T candy.D] struct {
 	// features
 	c1 *nn.Conv2d[T] // 3 -> 64,  k=11, s=4, p=2
 	c2 *nn.Conv2d[T] // 64 -> 192, k=5,  s=1, p=2
@@ -27,7 +27,7 @@ type AlexNet[T spark.D] struct {
 }
 
 // NewAlexNet creates a new AlexNet model. Input is expected to be NCHW with H=W=224 for 6x6 after last pool.
-func NewAlexNet[T spark.D](numClasses int, device spark.Device) *AlexNet[T] {
+func NewAlexNet[T candy.D](numClasses int, device candy.Device) *AlexNet[T] {
 	if numClasses <= 0 {
 		numClasses = 1000
 	}

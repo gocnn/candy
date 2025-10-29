@@ -1,12 +1,12 @@
 package optim
 
 import (
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // Optimizer defines the interface for all optimizers.
-type Optimizer[T spark.D] interface {
+type Optimizer[T candy.D] interface {
 	// Step performs a single optimization step using the provided gradients.
 	Step(grads *tensor.GradStore[T]) error
 

@@ -3,7 +3,7 @@ package kernels_test
 import (
 	"testing"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func TestIsContiguous(t *testing.T) {

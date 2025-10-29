@@ -1,6 +1,6 @@
 # CUDA Kernels
 
-This package contains CUDA kernels used from spark. Some of these implementations
+This package contains CUDA kernels used from candy. Some of these implementations
 come from the [candle-kernels crate](https://github.com/huggingface/candle) and [dfdx crate](https://github.com/coreylowman/dfdx).
 
 ## License

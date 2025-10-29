@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func TestFastSumF32(t *testing.T) {

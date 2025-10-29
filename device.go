@@ -1,4 +1,4 @@
-package spark
+package candy
 
 type Device int
 

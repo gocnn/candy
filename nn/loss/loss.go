@@ -3,12 +3,12 @@ package loss
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // NLL computes the negative log likelihood loss for log probabilities.
-func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+func NLL[T candy.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	xs, ys := x.Shape(), y.Shape()
 	if ys.Rank() != 1 {
 		return nil, fmt.Errorf("nll loss: target must be 1D, got %dD", ys.Rank())
@@ -37,7 +37,7 @@ func NLL[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 }
 
 // MustNLL computes the negative log likelihood loss for log probabilities.
-func MustNLL[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+func MustNLL[T candy.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 	ls, err := NLL(x, y)
 	if err != nil {
 		panic(err)
@@ -46,7 +46,7 @@ func MustNLL[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 }
 
 // CrossEntropy computes the cross-entropy loss for logits.
-func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+func CrossEntropy[T candy.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	if x.Rank() != 2 {
 		return nil, fmt.Errorf("cross entropy loss: input must be 2D, got %dD", x.Rank())
 	}
@@ -58,7 +58,7 @@ func CrossEntropy[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) 
 }
 
 // MustCrossEntropy computes the cross-entropy loss for logits.
-func MustCrossEntropy[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+func MustCrossEntropy[T candy.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 	ls, err := CrossEntropy(x, y)
 	if err != nil {
 		panic(err)
@@ -67,7 +67,7 @@ func MustCrossEntropy[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 }
 
 // MSE computes the mean squared error loss between input and target.
-func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+func MSE[T candy.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	diff, err := x.Sub(y)
 	if err != nil {
 		return nil, fmt.Errorf("mse loss: failed to compute x - y: %w", err)
@@ -84,7 +84,7 @@ func MSE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 }
 
 // MustMSE computes the mean squared error loss between input and target.
-func MustMSE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+func MustMSE[T candy.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 	ls, err := MSE(x, y)
 	if err != nil {
 		panic(err)
@@ -94,7 +94,7 @@ func MustMSE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 
 // BCE computes the binary cross-entropy loss for logits.
 // Stable formula: BCE = 1/N * Σ [max(x,0) - x*y + log(1 + exp(-|x|))]
-func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+func BCE[T candy.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	zero, err := tensor.Zeros[T](x.Shape(), x.Device())
 	if err != nil {
 		return nil, fmt.Errorf("bce loss: failed to create zero tensor: %w", err)
@@ -147,7 +147,7 @@ func BCE[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 }
 
 // MustBCE computes the binary cross-entropy loss for logits.
-func MustBCE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+func MustBCE[T candy.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 	ls, err := BCE(x, y)
 	if err != nil {
 		panic(err)
@@ -156,7 +156,7 @@ func MustBCE[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 }
 
 // L1Loss computes the L1 (mean absolute error) loss between input and target.
-func L1Loss[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
+func L1Loss[T candy.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 	diff, err := x.Sub(y)
 	if err != nil {
 		return nil, fmt.Errorf("l1 loss: failed to compute x - y: %w", err)
@@ -173,7 +173,7 @@ func L1Loss[T spark.D](x, y *tensor.Tensor[T]) (*tensor.Tensor[T], error) {
 }
 
 // MustL1Loss computes the L1 (mean absolute error) loss between input and target.
-func MustL1Loss[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
+func MustL1Loss[T candy.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 	ls, err := L1Loss(x, y)
 	if err != nil {
 		panic(err)
@@ -182,7 +182,7 @@ func MustL1Loss[T spark.D](x, y *tensor.Tensor[T]) *tensor.Tensor[T] {
 }
 
 // SmoothL1Loss computes the Smooth L1 (Huber) loss between input and target.
-func SmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tensor[T], error) {
+func SmoothL1Loss[T candy.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tensor[T], error) {
 	if beta <= 0 {
 		beta = 1.0
 	}
@@ -226,7 +226,7 @@ func SmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) (*tensor.Tens
 }
 
 // MustSmoothL1Loss computes the Smooth L1 (Huber) loss between input and target.
-func MustSmoothL1Loss[T spark.D](x, y *tensor.Tensor[T], beta float64) *tensor.Tensor[T] {
+func MustSmoothL1Loss[T candy.D](x, y *tensor.Tensor[T], beta float64) *tensor.Tensor[T] {
 	ls, err := SmoothL1Loss(x, y, beta)
 	if err != nil {
 		panic(err)

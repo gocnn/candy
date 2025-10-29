@@ -6,16 +6,16 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 func TestNPYRoundTripF32(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "f32.npy")
 	data := []float32{0, 1.5, -2.25, 3.75}
-	shape := spark.NewShapeFrom([]int{2, 2})
-	tx, err := tensor.New(data, shape, spark.CPU)
+	shape := candy.NewShapeFrom([]int{2, 2})
+	tx, err := tensor.New(data, shape, candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,8 +43,8 @@ func TestNPYRoundTripF64(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "f64.npy")
 	data := []float64{math.Pi, -1e-3, 7.0}
-	shape := spark.NewShapeFrom([]int{3})
-	tx, err := tensor.New(data, shape, spark.CPU)
+	shape := candy.NewShapeFrom([]int{3})
+	tx, err := tensor.New(data, shape, candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,8 +71,8 @@ func TestNPYRoundTripU8(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "u8.npy")
 	data := []uint8{0, 1, 255, 42}
-	shape := spark.NewShapeFrom([]int{2, 2})
-	tx, err := tensor.New(data, shape, spark.CPU)
+	shape := candy.NewShapeFrom([]int{2, 2})
+	tx, err := tensor.New(data, shape, candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,8 +99,8 @@ func TestNPYRoundTripU32(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "u32.npy")
 	data := []uint32{0, 1, 4000000000 - 1}
-	shape := spark.NewShapeFrom([]int{3})
-	tx, err := tensor.New(data, shape, spark.CPU)
+	shape := candy.NewShapeFrom([]int{3})
+	tx, err := tensor.New(data, shape, candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,8 +123,8 @@ func TestNPYRoundTripI64(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "i64.npy")
 	data := []int64{-9, 0, 7, math.MaxInt32 + 1}
-	shape := spark.NewShapeFrom([]int{2, 2})
-	tx, err := tensor.New(data, shape, spark.CPU)
+	shape := candy.NewShapeFrom([]int{2, 2})
+	tx, err := tensor.New(data, shape, candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestNPYRoundTripI64(t *testing.T) {
 func TestNPYScalar(t *testing.T) {
 	t.Parallel()
 	p1 := filepath.Join(t.TempDir(), "scalar.npy")
-	t1, err := tensor.New([]float32{42}, spark.NewShape(), spark.CPU)
+	t1, err := tensor.New([]float32{42}, candy.NewShape(), candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestNPYScalar(t *testing.T) {
 func TestNPYEmpty(t *testing.T) {
 	t.Parallel()
 	p2 := filepath.Join(t.TempDir(), "empty.npy")
-	t2, err := tensor.New([]uint8{}, spark.NewShapeFrom([]int{0}), spark.CPU)
+	t2, err := tensor.New([]uint8{}, candy.NewShapeFrom([]int{0}), candy.CPU)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestNPYEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadNPY empty: %v", err)
 	}
-	if !r2.Shape().Equal(spark.NewShapeFrom([]int{0})) {
+	if !r2.Shape().Equal(candy.NewShapeFrom([]int{0})) {
 		t.Fatalf("empty shape: %v", r2.Shape())
 	}
 	if len(r2.Data()) != 0 {
@@ -190,8 +190,8 @@ func TestNPYEmpty(t *testing.T) {
 func TestNPZRoundTrip(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "a.npz")
-	a := tensor.MustNew([]float32{1, 2, 3, 4}, spark.NewShapeFrom([]int{2, 2}), spark.CPU)
-	b := tensor.MustNew([]float32{5, 6, 7}, spark.NewShapeFrom([]int{3}), spark.CPU)
+	a := tensor.MustNew([]float32{1, 2, 3, 4}, candy.NewShapeFrom([]int{2, 2}), candy.CPU)
+	b := tensor.MustNew([]float32{5, 6, 7}, candy.NewShapeFrom([]int{3}), candy.CPU)
 	if err := tensor.WriteNPZ(path, map[string]*tensor.Tensor[float32]{"A": a, "B": b}); err != nil {
 		t.Fatalf("WriteNPZ: %v", err)
 	}
@@ -216,8 +216,8 @@ func TestNPZRoundTrip(t *testing.T) {
 func TestNPZReadByNameOrder(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "b.npz")
-	a := tensor.MustNew([]float32{1, 2}, spark.NewShapeFrom([]int{2}), spark.CPU)
-	b := tensor.MustNew([]float32{3, 4, 5}, spark.NewShapeFrom([]int{3}), spark.CPU)
+	a := tensor.MustNew([]float32{1, 2}, candy.NewShapeFrom([]int{2}), candy.CPU)
+	b := tensor.MustNew([]float32{3, 4, 5}, candy.NewShapeFrom([]int{3}), candy.CPU)
 	if err := tensor.WriteNPZ(path, map[string]*tensor.Tensor[float32]{"first": a, "second": b}); err != nil {
 		t.Fatalf("WriteNPZ: %v", err)
 	}

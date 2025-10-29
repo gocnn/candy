@@ -5,14 +5,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn/optim"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn/optim"
+	"github.com/gocnn/candy/tensor"
 )
 
 func TestNewAdamW(t *testing.T) {
-	x := tensor.MustFull[float32](2.5, spark.NewShape(3, 4), spark.CPU).RequiresGrad()
-	y := tensor.MustFull[float32](-1.0, spark.NewShape(3, 4), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](2.5, candy.NewShape(3, 4), candy.CPU).RequiresGrad()
+	y := tensor.MustFull[float32](-1.0, candy.NewShape(3, 4), candy.CPU).RequiresGrad()
 	p := optim.DefaultAdamWParams()
 	a, err := optim.NewAdamW([]*tensor.Tensor[float32]{x, y}, p)
 	if err != nil {
@@ -27,7 +27,7 @@ func TestNewAdamW(t *testing.T) {
 }
 
 func TestNewAdamWWithLR(t *testing.T) {
-	x := tensor.MustFull[float32](0.5, spark.NewShape(2, 3), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](0.5, candy.NewShape(2, 3), candy.CPU).RequiresGrad()
 	a, err := optim.NewAdamWWithLR([]*tensor.Tensor[float32]{x}, 0.02)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestAdamWLearningRate(t *testing.T) {
 
 func TestAdamWAdd(t *testing.T) {
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{}, optim.DefaultAdamWParams())
-	x := tensor.MustFull[float32](1.5, spark.NewShape(2, 2), spark.CPU)
+	x := tensor.MustFull[float32](1.5, candy.NewShape(2, 2), candy.CPU)
 	if err := a.Add(x); err == nil {
 		t.Error("expected error for non-var")
 	}
@@ -78,10 +78,10 @@ func TestAdamWAdd(t *testing.T) {
 }
 
 func TestAdamWStep(t *testing.T) {
-	x := tensor.MustFull[float32](2.0, spark.NewShape(2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](2.0, candy.NewShape(2), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.1, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
-	g := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
+	g := tensor.MustOnes[float32](candy.NewShape(2), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
 	if err := a.Step(gs); err != nil {
@@ -95,7 +95,7 @@ func TestAdamWStep(t *testing.T) {
 }
 
 func TestAdamWStepNoGrad(t *testing.T) {
-	x := tensor.MustFull[float32](2.0, spark.NewShape(3, 2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](2.0, candy.NewShape(3, 2), candy.CPU).RequiresGrad()
 	a, _ := optim.NewAdamWWithLR([]*tensor.Tensor[float32]{x}, 0.05)
 	gs := tensor.NewGradStore[float32]()
 	if err := a.Step(gs); err != nil {
@@ -110,12 +110,12 @@ func TestAdamWStepNoGrad(t *testing.T) {
 }
 
 func TestAdamWStepMultipleTensors(t *testing.T) {
-	x := tensor.MustFull[float32](4.0, spark.NewShape(2, 3), spark.CPU).RequiresGrad()
-	y := tensor.MustFull[float32](-2.0, spark.NewShape(3, 2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](4.0, candy.NewShape(2, 3), candy.CPU).RequiresGrad()
+	y := tensor.MustFull[float32](-2.0, candy.NewShape(3, 2), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.05, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.01}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x, y}, p)
-	gx := tensor.MustFull[float32](1.5, spark.NewShape(2, 3), spark.CPU)
-	gy := tensor.MustFull[float32](-0.5, spark.NewShape(3, 2), spark.CPU)
+	gx := tensor.MustFull[float32](1.5, candy.NewShape(2, 3), candy.CPU)
+	gy := tensor.MustFull[float32](-0.5, candy.NewShape(3, 2), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, gx)
 	gs.Set(y, gy)
@@ -135,8 +135,8 @@ func TestAdamWStepMultipleTensors(t *testing.T) {
 }
 
 func TestAdamWOptimize(t *testing.T) {
-	x := tensor.MustFull[float32](2.5, spark.NewShape(2, 2), spark.CPU).RequiresGrad()
-	y := tensor.MustFull[float32](0.5, spark.NewShape(2, 2), spark.CPU)
+	x := tensor.MustFull[float32](2.5, candy.NewShape(2, 2), candy.CPU).RequiresGrad()
+	y := tensor.MustFull[float32](0.5, candy.NewShape(2, 2), candy.CPU)
 	loss := x.MustSub(y).MustPowf(2).MustSum([]int{0})
 	p := optim.AdamWParams{LearningRate: 0.05, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
@@ -151,10 +151,10 @@ func TestAdamWOptimize(t *testing.T) {
 }
 
 func TestAdamWMustStep(t *testing.T) {
-	x := tensor.MustFull[float32](5.0, spark.NewShape(3, 2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](5.0, candy.NewShape(3, 2), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.15, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
-	g := tensor.MustFull[float32](2.5, spark.NewShape(3, 2), spark.CPU)
+	g := tensor.MustFull[float32](2.5, candy.NewShape(3, 2), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
 	a.MustStep(gs)
@@ -166,10 +166,10 @@ func TestAdamWMustStep(t *testing.T) {
 }
 
 func TestAdamWFloat64(t *testing.T) {
-	x := tensor.MustFull[float64](2.75, spark.NewShape(2, 3), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float64](2.75, candy.NewShape(2, 3), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.05, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.0}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float64]{x}, p)
-	g := tensor.MustFull[float64](1.25, spark.NewShape(2, 3), spark.CPU)
+	g := tensor.MustFull[float64](1.25, candy.NewShape(2, 3), candy.CPU)
 	gs := tensor.NewGradStore[float64]()
 	gs.Set(x, g)
 	if err := a.Step(gs); err != nil {
@@ -183,10 +183,10 @@ func TestAdamWFloat64(t *testing.T) {
 }
 
 func TestAdamWWeightDecay(t *testing.T) {
-	x := tensor.MustFull[float32](2.0, spark.NewShape(2), spark.CPU).RequiresGrad()
+	x := tensor.MustFull[float32](2.0, candy.NewShape(2), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.1, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.1}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
-	g := tensor.MustOnes[float32](spark.NewShape(2), spark.CPU)
+	g := tensor.MustOnes[float32](candy.NewShape(2), candy.CPU)
 	gs := tensor.NewGradStore[float32]()
 	gs.Set(x, g)
 	if err := a.Step(gs); err != nil {
@@ -201,14 +201,14 @@ func TestAdamWWeightDecay(t *testing.T) {
 
 func TestAdamWMultipleStepsComplex(t *testing.T) {
 	data := []float32{1.0, 2.0, 3.0, 4.0}
-	x := tensor.MustNew(data, spark.NewShape(2, 2), spark.CPU).RequiresGrad()
+	x := tensor.MustNew(data, candy.NewShape(2, 2), candy.CPU).RequiresGrad()
 	p := optim.AdamWParams{LearningRate: 0.01, Beta1: 0.9, Beta2: 0.999, Epsilon: 1e-8, WeightDecay: 0.01}
 	a, _ := optim.NewAdamW([]*tensor.Tensor[float32]{x}, p)
 
 	// Step 1
 	g1 := []float32{0.5, 1.0, 1.5, 2.0}
 	gs1 := tensor.NewGradStore[float32]()
-	gs1.Set(x, tensor.MustNew(g1, spark.NewShape(2, 2), spark.CPU))
+	gs1.Set(x, tensor.MustNew(g1, candy.NewShape(2, 2), candy.CPU))
 	if err := a.Step(gs1); err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +221,7 @@ func TestAdamWMultipleStepsComplex(t *testing.T) {
 	// Step 2
 	g2 := []float32{-0.5, 0.0, 0.5, 1.0}
 	gs2 := tensor.NewGradStore[float32]()
-	gs2.Set(x, tensor.MustNew(g2, spark.NewShape(2, 2), spark.CPU))
+	gs2.Set(x, tensor.MustNew(g2, candy.NewShape(2, 2), candy.CPU))
 	if err := a.Step(gs2); err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +232,7 @@ func TestAdamWMultipleStepsComplex(t *testing.T) {
 	}
 
 	// Step 3
-	g3 := tensor.MustOnes[float32](spark.NewShape(2, 2), spark.CPU)
+	g3 := tensor.MustOnes[float32](candy.NewShape(2, 2), candy.CPU)
 	gs3 := tensor.NewGradStore[float32]()
 	gs3.Set(x, g3)
 	if err := a.Step(gs3); err != nil {

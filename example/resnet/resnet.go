@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/nn"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/nn"
+	"github.com/gocnn/candy/tensor"
 )
 
-type Bottleneck[T spark.D] struct {
+type Bottleneck[T candy.D] struct {
 	conv1    *nn.Conv2d[T]
 	bn1      *nn.BatchNorm2d[T]
 	conv2    *nn.Conv2d[T]
@@ -19,7 +19,7 @@ type Bottleneck[T spark.D] struct {
 	downBn   *nn.BatchNorm2d[T]
 }
 
-func NewBottleneck[T spark.D](inplanes, planes, stride int, device spark.Device) *Bottleneck[T] {
+func NewBottleneck[T candy.D](inplanes, planes, stride int, device candy.Device) *Bottleneck[T] {
 	b := &Bottleneck[T]{
 		conv1: nn.NewConv2d[T](inplanes, planes, 1, 1, 0, device),
 		bn1:   nn.NewBatchNorm2d[T](planes, device),

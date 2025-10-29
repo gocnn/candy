@@ -1,4 +1,4 @@
-package spark
+package candy
 
 // BackendStorage defines operations for tensor storage management.
 type BackendStorage[T D] interface {

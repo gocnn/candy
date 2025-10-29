@@ -6,7 +6,7 @@ import (
 
 	"slices"
 
-	"github.com/gocnn/spark/internal/cpu/kernels"
+	"github.com/gocnn/candy/internal/cpu/kernels"
 )
 
 func TestWhereI64F32(t *testing.T) {

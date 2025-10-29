@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // AdamWParams holds parameters for the AdamW optimizer.
@@ -30,7 +30,7 @@ func DefaultAdamWParams() AdamWParams {
 }
 
 // adamVar holds a variable and its momentum states for AdamW.
-type adamVar[T spark.D] struct {
+type adamVar[T candy.D] struct {
 	v *tensor.Tensor[T] // Variable tensor
 	m *tensor.Tensor[T] // First moment
 	s *tensor.Tensor[T] // Second moment
@@ -40,14 +40,14 @@ var _ Optimizer[float32] = (*AdamW[float32])(nil)
 var _ Optimizer[float64] = (*AdamW[float64])(nil)
 
 // AdamW implements the AdamW optimizer.
-type AdamW[T spark.D] struct {
+type AdamW[T candy.D] struct {
 	vars []adamVar[T]
 	step int
 	p    AdamWParams
 }
 
 // NewAdamW creates a new AdamW optimizer with the given parameters.
-func NewAdamW[T spark.D](vars []*tensor.Tensor[T], p AdamWParams) (*AdamW[T], error) {
+func NewAdamW[T candy.D](vars []*tensor.Tensor[T], p AdamWParams) (*AdamW[T], error) {
 	vs := make([]adamVar[T], 0, len(vars))
 	for _, v := range vars {
 		if !v.IsVar() {
@@ -67,7 +67,7 @@ func NewAdamW[T spark.D](vars []*tensor.Tensor[T], p AdamWParams) (*AdamW[T], er
 }
 
 // NewAdamWWithLR creates an AdamW optimizer with a custom learning rate.
-func NewAdamWWithLR[T spark.D](vars []*tensor.Tensor[T], lr float64) (*AdamW[T], error) {
+func NewAdamWWithLR[T candy.D](vars []*tensor.Tensor[T], lr float64) (*AdamW[T], error) {
 	p := DefaultAdamWParams()
 	p.LearningRate = lr
 	return NewAdamW(vars, p)

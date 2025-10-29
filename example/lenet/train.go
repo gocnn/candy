@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/dataset/mnist"
-	"github.com/gocnn/spark/nn/loss"
-	"github.com/gocnn/spark/nn/optim"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/dataset/mnist"
+	"github.com/gocnn/candy/nn/loss"
+	"github.com/gocnn/candy/nn/optim"
+	"github.com/gocnn/candy/tensor"
 )
 
 const (
@@ -58,7 +58,7 @@ func train(m *LeNet[float32], o optim.Optimizer[float32], l *mnist.DataLoader[fl
 	fmt.Printf("Epoch %d/%d - Loss: %.4f, Acc: %.2f%%, Time: %v\n", epoch, epochs, tl/float64(n), 100*a/float64(n), time.Since(es))
 }
 
-func eval(m *LeNet[float32], ds *mnist.Dataset[float32], b int, d spark.Device) float64 {
+func eval(m *LeNet[float32], ds *mnist.Dataset[float32], b int, d candy.Device) float64 {
 	fmt.Println("Evaluating on test set...")
 	l := ds.NewDataLoader(b, false, d)
 	var a float64
@@ -74,7 +74,7 @@ func eval(m *LeNet[float32], ds *mnist.Dataset[float32], b int, d spark.Device) 
 func RunTrain(dir, out string) error {
 	fmt.Println("Starting LeNet-5 Training on MNIST")
 
-	d := spark.CPU
+	d := candy.CPU
 	tr, err := mnist.New[float32](dir, true, true)
 	if err != nil {
 		return err

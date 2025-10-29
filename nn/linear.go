@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gocnn/spark"
-	"github.com/gocnn/spark/tensor"
+	"github.com/gocnn/candy"
+	"github.com/gocnn/candy/tensor"
 )
 
 // Linear represents a linear transformation layer: y = xW^T + b.
-type Linear[T spark.D] struct {
+type Linear[T candy.D] struct {
 	w *tensor.Tensor[T] // Weight tensor
 	b *tensor.Tensor[T] // Bias tensor (optional)
 }
 
 // NewLinear creates a new linear layer with given weight and optional bias.
-func NewLinear[T spark.D](w, b *tensor.Tensor[T]) *Linear[T] {
+func NewLinear[T candy.D](w, b *tensor.Tensor[T]) *Linear[T] {
 	return &Linear[T]{w: w, b: b}
 }
 
 // NewLinearLayer creates a linear layer with PyTorch-style Kaiming Uniform initialization.
-func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device) *Linear[T] {
+func NewLinearLayer[T candy.D](inDim, outDim int, bias bool, device candy.Device) *Linear[T] {
 	bound := math.Sqrt(1.0 / float64(inDim))
-	w, err := tensor.Rand[T](-bound, bound, spark.NewShape(outDim, inDim), device)
+	w, err := tensor.Rand[T](-bound, bound, candy.NewShape(outDim, inDim), device)
 	if err != nil {
 		panic(fmt.Errorf("linear: failed to create weight: %w", err))
 	}
@@ -30,7 +30,7 @@ func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device
 	var b *tensor.Tensor[T]
 	if bias {
 		bBound := 1.0 / math.Sqrt(float64(inDim))
-		b, err = tensor.Rand[T](-bBound, bBound, spark.NewShape(outDim), device)
+		b, err = tensor.Rand[T](-bBound, bBound, candy.NewShape(outDim), device)
 		if err != nil {
 			panic(fmt.Errorf("linear: failed to create bias: %w", err))
 		}
@@ -40,7 +40,7 @@ func NewLinearLayer[T spark.D](inDim, outDim int, bias bool, device spark.Device
 }
 
 // NewLinearNoBias creates a linear layer without bias.
-func NewLinearNoBias[T spark.D](inDim, outDim int, device spark.Device) *Linear[T] {
+func NewLinearNoBias[T candy.D](inDim, outDim int, device candy.Device) *Linear[T] {
 	return NewLinearLayer[T](inDim, outDim, false, device)
 }
 

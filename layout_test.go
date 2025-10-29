@@ -1,16 +1,16 @@
-package spark_test
+package candy_test
 
 import (
 	"slices"
 	"testing"
 
-	"github.com/gocnn/spark"
+	"github.com/gocnn/candy"
 )
 
 func TestLayoutNewLayout(t *testing.T) {
-	shape := spark.NewShape(2, 3)
+	shape := candy.NewShape(2, 3)
 	stride := []int{3, 1}
-	l := spark.NewLayout(shape, stride, 5)
+	l := candy.NewLayout(shape, stride, 5)
 
 	if !l.Shape().Equal(shape) {
 		t.Errorf("NewLayout shape = %v; want %v", l.Shape(), shape)
@@ -29,12 +29,12 @@ func TestLayoutNewLayoutPanic(t *testing.T) {
 			t.Errorf("NewLayout did not panic on stride mismatch")
 		}
 	}()
-	spark.NewLayout(spark.NewShape(2, 3), []int{1}, 0)
+	candy.NewLayout(candy.NewShape(2, 3), []int{1}, 0)
 }
 
 func TestLayoutContiguousWithOffset(t *testing.T) {
-	shape := spark.NewShape(2, 3)
-	l := spark.ContiguousWithOffset(shape, 5)
+	shape := candy.NewShape(2, 3)
+	l := candy.ContiguousWithOffset(shape, 5)
 
 	expectedStride := []int{3, 1}
 	if !slices.Equal(l.Stride(), expectedStride) {
@@ -46,8 +46,8 @@ func TestLayoutContiguousWithOffset(t *testing.T) {
 }
 
 func TestLayoutContiguous(t *testing.T) {
-	shape := spark.NewShape(2, 3)
-	l := spark.Contiguous(shape)
+	shape := candy.NewShape(2, 3)
+	l := candy.Contiguous(shape)
 
 	expectedStride := []int{3, 1}
 	if !slices.Equal(l.Stride(), expectedStride) {
@@ -59,16 +59,16 @@ func TestLayoutContiguous(t *testing.T) {
 }
 
 func TestLayoutShape(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 	s := l.Shape()
-	expected := spark.NewShape(2, 3)
+	expected := candy.NewShape(2, 3)
 	if !s.Equal(expected) {
 		t.Errorf("Shape() = %v; want %v", s, expected)
 	}
 }
 
 func TestLayoutStride(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 	stride := l.Stride()
 	expected := []int{3, 1}
 	if !slices.Equal(stride, expected) {
@@ -83,15 +83,15 @@ func TestLayoutStride(t *testing.T) {
 }
 
 func TestLayoutStartOffset(t *testing.T) {
-	l := spark.ContiguousWithOffset(spark.NewShape(2, 3), 5)
+	l := candy.ContiguousWithOffset(candy.NewShape(2, 3), 5)
 	if l.StartOffset() != 5 {
 		t.Errorf("StartOffset() = %d; want 5", l.StartOffset())
 	}
 }
 
 func TestLayoutString(t *testing.T) {
-	l1 := spark.Contiguous(spark.NewShape(2, 3))
-	l2 := spark.ContiguousWithOffset(spark.NewShape(2, 3), 5)
+	l1 := candy.Contiguous(candy.NewShape(2, 3))
+	l2 := candy.ContiguousWithOffset(candy.NewShape(2, 3), 5)
 
 	expected1 := "Layout{shape=[2 3], stride=[3 1]}"
 	if l1.String() != expected1 {
@@ -105,7 +105,7 @@ func TestLayoutString(t *testing.T) {
 }
 
 func TestLayoutClone(t *testing.T) {
-	original := spark.Contiguous(spark.NewShape(2, 3))
+	original := candy.Contiguous(candy.NewShape(2, 3))
 	clone := original.Clone()
 
 	if !clone.Shape().Equal(original.Shape()) {
@@ -127,7 +127,7 @@ func TestLayoutClone(t *testing.T) {
 }
 
 func TestLayoutDims(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 	dims := l.Dims()
 	expected := []int{2, 3}
 	if !slices.Equal(dims, expected) {
@@ -136,7 +136,7 @@ func TestLayoutDims(t *testing.T) {
 }
 
 func TestLayoutDim(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3, 4))
+	l := candy.Contiguous(candy.NewShape(2, 3, 4))
 
 	if l.Dim(1) != 3 {
 		t.Errorf("Dim(1) = %d; want 3", l.Dim(1))
@@ -147,13 +147,13 @@ func TestLayoutDim(t *testing.T) {
 }
 
 func TestLayoutContiguousOffsets(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 	start, end, ok := l.ContiguousOffsets()
 	if !ok || start != 0 || end != 6 {
 		t.Errorf("ContiguousOffsets() = %d, %d, %v; want 0, 6, true", start, end, ok)
 	}
 
-	nonContiguous := spark.NewLayout(spark.NewShape(2, 3), []int{1, 2}, 0)
+	nonContiguous := candy.NewLayout(candy.NewShape(2, 3), []int{1, 2}, 0)
 	_, _, ok = nonContiguous.ContiguousOffsets()
 	if ok {
 		t.Errorf("ContiguousOffsets() ok=true for non-contiguous layout")
@@ -161,41 +161,41 @@ func TestLayoutContiguousOffsets(t *testing.T) {
 }
 
 func TestLayoutIsContiguous(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 	if !l.IsContiguous() {
 		t.Errorf("IsContiguous() = false; want true")
 	}
 
-	nonContiguous := spark.NewLayout(spark.NewShape(2, 3), []int{1, 2}, 0)
+	nonContiguous := candy.NewLayout(candy.NewShape(2, 3), []int{1, 2}, 0)
 	if nonContiguous.IsContiguous() {
 		t.Errorf("IsContiguous() = true for non-contiguous layout")
 	}
 }
 
 func TestLayoutIsFortranContiguous(t *testing.T) {
-	shape := spark.NewShape(2, 3)
+	shape := candy.NewShape(2, 3)
 	stride := []int{1, 2}
-	l := spark.NewLayout(shape, stride, 0)
+	l := candy.NewLayout(shape, stride, 0)
 
 	if !l.IsFortranContiguous() {
 		t.Errorf("IsFortranContiguous() = false; want true")
 	}
 
-	cContiguous := spark.Contiguous(shape)
+	cContiguous := candy.Contiguous(shape)
 	if cContiguous.IsFortranContiguous() {
 		t.Errorf("IsFortranContiguous() = true for C-contiguous layout")
 	}
 }
 
 func TestLayoutNarrow(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3, 4))
+	l := candy.Contiguous(candy.NewShape(2, 3, 4))
 	nl, err := l.Narrow(1, 1, 2)
 
 	if err != nil {
 		t.Errorf("Narrow failed: %v", err)
 	}
 
-	expectedShape := spark.NewShape(2, 2, 4)
+	expectedShape := candy.NewShape(2, 2, 4)
 	if !nl.Shape().Equal(expectedShape) {
 		t.Errorf("Narrow shape = %v; want %v", nl.Shape(), expectedShape)
 	}
@@ -211,7 +211,7 @@ func TestLayoutNarrow(t *testing.T) {
 }
 
 func TestLayoutNarrowError(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 
 	_, err := l.Narrow(0, 0, 3)
 	if err == nil {
@@ -235,14 +235,14 @@ func TestLayoutNarrowError(t *testing.T) {
 }
 
 func TestLayoutTranspose(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3, 4))
+	l := candy.Contiguous(candy.NewShape(2, 3, 4))
 	tl, err := l.Transpose(0, 2)
 
 	if err != nil {
 		t.Errorf("Transpose failed: %v", err)
 	}
 
-	expectedShape := spark.NewShape(4, 3, 2)
+	expectedShape := candy.NewShape(4, 3, 2)
 	if !tl.Shape().Equal(expectedShape) {
 		t.Errorf("Transpose shape = %v; want %v", tl.Shape(), expectedShape)
 	}
@@ -254,7 +254,7 @@ func TestLayoutTranspose(t *testing.T) {
 }
 
 func TestLayoutTransposeError(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 
 	_, err := l.Transpose(0, 2)
 	if err == nil {
@@ -268,14 +268,14 @@ func TestLayoutTransposeError(t *testing.T) {
 }
 
 func TestLayoutPermute(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3, 4))
+	l := candy.Contiguous(candy.NewShape(2, 3, 4))
 	pl, err := l.Permute([]int{2, 0, 1})
 
 	if err != nil {
 		t.Errorf("Permute failed: %v", err)
 	}
 
-	expectedShape := spark.NewShape(4, 2, 3)
+	expectedShape := candy.NewShape(4, 2, 3)
 	if !pl.Shape().Equal(expectedShape) {
 		t.Errorf("Permute shape = %v; want %v", pl.Shape(), expectedShape)
 	}
@@ -287,7 +287,7 @@ func TestLayoutPermute(t *testing.T) {
 }
 
 func TestLayoutPermuteError(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 
 	_, err := l.Permute([]int{0})
 	if err == nil {
@@ -306,8 +306,8 @@ func TestLayoutPermuteError(t *testing.T) {
 }
 
 func TestLayoutBroadcastAs(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(1, 3))
-	tgt := spark.NewShape(2, 1, 3)
+	l := candy.Contiguous(candy.NewShape(1, 3))
+	tgt := candy.NewShape(2, 1, 3)
 	bl, err := l.BroadcastAs(tgt)
 
 	if err != nil {
@@ -325,15 +325,15 @@ func TestLayoutBroadcastAs(t *testing.T) {
 }
 
 func TestLayoutBroadcastAsError(t *testing.T) {
-	l := spark.Contiguous(spark.NewShape(2, 3))
+	l := candy.Contiguous(candy.NewShape(2, 3))
 
-	tgt := spark.NewShape(3)
+	tgt := candy.NewShape(3)
 	_, err := l.BroadcastAs(tgt)
 	if err == nil {
 		t.Errorf("BroadcastAs did not error on lower rank target")
 	}
 
-	tgt = spark.NewShape(2, 1, 4)
+	tgt = candy.NewShape(2, 1, 4)
 	_, err = l.BroadcastAs(tgt)
 	if err == nil {
 		t.Errorf("BroadcastAs did not error on incompatible dims")
@@ -341,9 +341,9 @@ func TestLayoutBroadcastAsError(t *testing.T) {
 }
 
 func TestLayoutOffsetsB(t *testing.T) {
-	shape := spark.NewShape(2, 1, 3, 1)
+	shape := candy.NewShape(2, 1, 3, 1)
 	stride := []int{0, 0, 1, 0}
-	l := spark.NewLayout(shape, stride, 5)
+	l := candy.NewLayout(shape, stride, 5)
 
 	offs, ok := l.OffsetsB()
 	if !ok {
