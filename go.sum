@@ -1,2 +1,6 @@
+github.com/gocnn/gocu v0.7.4 h1:g+xZLSGznn/lCCkpmSzQsH8o1dlbwOyhGlbM/Lg0Uh8=
+github.com/gocnn/gocu v0.7.4/go.mod h1:BpR09rytV10rlxPzApMcW2dPnofeNYtAV4mDiVEDZwM=
 github.com/gocnn/gomat v0.5.0 h1:9fu+isUwElSKJlr6SG8wLn82oK8hO+jO2R31b6LFwUc=
 github.com/gocnn/gomat v0.5.0/go.mod h1:aSd2So+c4XCb8V2aCl3JBMb2PAo2WhqCHyqUWuyZo0g=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=

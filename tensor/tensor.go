@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/gocnn/candy"
-	"github.com/gocnn/candy/internal/cpu"
+	"github.com/gocnn/candy/tensor/internal/cpu"
 )
 
 // counter provides atomic increment for unique IDs.

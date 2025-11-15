@@ -1,0 +1,3 @@
+[submodule "llm/internal/flashattn/cutlass"]
+	path = llm/internal/flashattn/cutlass
+	url = https://github.com/NVIDIA/cutlass.git
